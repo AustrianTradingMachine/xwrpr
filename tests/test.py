@@ -1,7 +1,7 @@
 from config import XTB, generate_logger
 DEMO=True
 
-logger=generate_logger(name="XTB",path='/home/philipp/Trading/XTB/Logger')
+logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTB/Logger')
 
 print(XTB.WRAPPER_VERSION)
 print(XTB.API_VERSION)
@@ -9,8 +9,15 @@ print(XTB.API_VERSION)
 
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-major, minor, patch=XTBData.getVersion()
+version=XTBData.getVersion()
 
-print(f"Major: {major}, Minor: {minor}, Patch: {patch}")
+print('major:', version['major'])
+print('minor:', version['minor'])
+print('patch:', version['patch'])
+
+
+th=XTBData.getTradingHours(symbols=['EURUSD'])
+
+print(th)
 
 del XTBData

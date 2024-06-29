@@ -58,7 +58,7 @@ class _GeneralHandler(Client):
 
         super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, logger=self._logger)
     
-    def _send_request(self,command, stream=None, arguments=None, tag=None):
+    def _send_request(self,command, stream=None, arguments=None, tag=None, pretty=None):
         """
         Send a request to the XTB API.
 
@@ -76,10 +76,21 @@ class _GeneralHandler(Client):
 
         if stream is not None:
             req_dict['streamSessionId']=stream
-        if arguments is not None:
-            req_dict['arguments']=arguments
+        if command=='getCandles':
+            if arguments is not None:
+                req_dict['symbol']=arguments['symbol']
+        elif command=='getTickPrices':
+            if arguments is not None:
+                req_dict['symbols']=arguments['symbols']
+                req_dict['minArrivalTime']=arguments['minArrivalTime']
+                req_dict['maxLevel']=arguments['maxLevel']
+        else:
+            if arguments is not None:
+                req_dict['arguments']=arguments
         if tag is not None:
             req_dict['customTag']=tag
+        if pretty is not None:
+            req_dict['prettyPrint']=pretty
 
         if not self.send(json.dumps(req_dict)):
                 self._logger.error("Failed to send message")
@@ -231,7 +242,7 @@ class _DataHandler(_GeneralHandler):
 
         return status
 
-    def getData(self, request, **kwargs):
+    def getData(self, command, **kwargs):
         """
         Retrieves data from the XTB API.
 
@@ -250,7 +261,7 @@ class _DataHandler(_GeneralHandler):
               
         retried=False
         while True:
-            if not self._send_request(command='get'+request,arguments=kwargs if bool(kwargs) else None):
+            if not self._send_request(command='get'+command,arguments=kwargs if bool(kwargs) else None):
                 self._logger.error("Failed to send request")
                 if not retried:
                     retried=True
@@ -269,7 +280,7 @@ class _DataHandler(_GeneralHandler):
 
         status=response['status']
 
-        pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), request)
+        pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
         if status:
             self._logger.info(pretty_request +" recieved")
             return response['returnData']
@@ -402,8 +413,7 @@ class _StreamHandler(_GeneralHandler):
         self._dh._register_stream_handler(self)
         self._logger.info("Stream handler registered")
 
-        self._running=dict()
-        self._thread=dict()
+        self._streams=dict()
 
         self._logger.info("Stream handler created")
             
@@ -417,7 +427,7 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the cleanup operations were successful, False otherwise.
         """
-        for request in self._running:
+        for request in self._streams:
             self._endStream(request)
 
         if not self.close():
@@ -430,22 +440,23 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("Handler deleted")
         return True
         
-    def streamData(self, request, **kwargs):
+    def streamData(self, command, **kwargs):
         """
         Stream data for a given request.
 
         Args:
-            request (str): The request to stream data for.
-            **kwargs: Additional keyword arguments.
+            request (str): The request to be sent.
+            **kwargs: Additional arguments for the request.
 
         Returns:
-            bool: True if the request was successfully sent, False otherwise.
+            int: The index of the running stream.
+
         """
         self._ssid = self._dh._ssid
 
         retried = False
         while True:
-            if not self._send_request(command='get'+request, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
+            if not self._send_request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
                 self._logger.error("Failed to send request")
                 if not retried:
                     retried = True
@@ -453,15 +464,18 @@ class _StreamHandler(_GeneralHandler):
                     continue
                 return False
             break
+        
+        index = len(self._streams['stream'])
+        self._streams[index]['command'] = command
+        self._streams[index]['arguments'] = kwargs
+        self._streams[index]['stream'] = True
+        self._streams[index]['thread'] = Thread(target=self._readStream, args=(index), deamon=True)
+        self._streams[index]['thread'].start()
 
-        self._running[request] = True
-        self._thread[request] = Thread(target=self._readStream, args=(request), deamon=True)
-        self._thread[request].start()
-
-        self._logger.info("Stream started for "+request)
-        return True
+        self._logger.info("Stream started for "+command)
+        return index
             
-    def _readStream(self,request):
+    def _readStream(self,index):
         """
         Read and process the streamed data for the specified request.
 
@@ -471,7 +485,7 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the data was successfully received, False otherwise.
         """
-        while self._running[request]:
+        while self._streams[index]['stream']:
             retried=False
             while True: 
                 response= self._recieve_response()
@@ -486,18 +500,19 @@ class _StreamHandler(_GeneralHandler):
             
             status=response['status']
                 
-            pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), request)
+            command=self._streams[index]['command']
+            pretty_command = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
             if status:
-                self._logger.info(pretty_request +" recieved")
+                self._logger.info(pretty_command +" recieved")
                 return response['data']
             else:
-                self._logger.error("Error: "+pretty_request+" not recieved")
+                self._logger.error("Error: "+pretty_command+" not recieved")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
-                self._running[request]=False
+                self._streams[index]['stream']=False
                 return status
                 
-    def endStream(self, request):
+    def endStream(self, index):
         """
         Stops the stream for the specified request.
 
@@ -509,12 +524,14 @@ class _StreamHandler(_GeneralHandler):
         """
         self._ssid = self._dh._ssid
 
-        if not self._send_request(command='stop' + request, stream=self._ssid):
+        command=self._streams[index]['command']
+        arguments=self._streams[index]['arguments']
+        if not self._send_request(command='stop' + command, arguments=arguments,stream=self._ssid):
             self._logger.error("Failed to end stream")
             return False
-        self._running[request] = False
+        self._streams[index]['stream'] = False
 
-        self._logger.info("Stream ended for "+request)
+        self._logger.info("Stream ended for "+self._streams[index]['request'])
         return True
             
     def _reconnect(self):
@@ -630,17 +647,20 @@ class HandlerManager():
             else:
                 self._handlers['data'][handler]['status'] = 'inactive'
                 for stream in list(self._handlers['data'][handler]['streamhandler']):
-                    self._delete_handler(stream)
-                return True
+                    self._handlers['stream'][stream]['status'] = 'inactive'
+                    self._handlers['data'][handler]['streamhandler'].remove(stream)
         elif isinstance(handler, _StreamHandler):
             if not handler.delete():
                 self._logger.error("Error: Could not delete handler")
+                return False
             else:
                 self._handlers['stream'][handler]['status'] = 'inactive'
                 parent = self._get_parentHandler(handler)
                 self._handlers['data'][parent]['streamhandler'].remove(handler)
         else:
             raise ValueError("Error: Invalid handler type")
+        
+        return True
 
     def _get_name(self, handler):
         """
@@ -742,7 +762,7 @@ class HandlerManager():
         self._logger.info("Creating DataHandler")
 
         index = len(self._handlers['data'])
-        name = 'DataHandler' + str(index)
+        name = 'DH_' + str(index)
         dh_logger = self._logger.getChild(name)
 
         dh = _DataHandler(demo=self._demo, logger=dh_logger)
@@ -769,7 +789,7 @@ class HandlerManager():
         self._logger.info("Creating StreamHandler")
 
         index = len(self._handlers['stream'])
-        name = 'StreamHandler' + str(index)
+        name = 'SH_' + str(index)
         sh_logger = self._logger.getChild(name)
 
         dh = self._get_DataHandler()
