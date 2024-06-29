@@ -3,8 +3,14 @@ DEMO=True
 
 logger=generate_logger(name="XTB",path='/home/philipp/Trading/XTB/Logger')
 
-XTBData=XTB.XTB(demo=DEMO, logger=logger)
+print(XTB.WRAPPER_VERSION)
+print(XTB.API_VERSION)
 
-XTBData.getVersion()
+
+XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+
+major, minor, patch=XTBData.getVersion()
+
+print(f"Major: {major}, Minor: {minor}, Patch: {patch}")
 
 del XTBData

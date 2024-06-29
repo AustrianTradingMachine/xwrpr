@@ -2,7 +2,6 @@ import logging
 import os
 
 
-
 def generate_logger(stream_level: str = None, file_level: str = None, name: str = None, path: str = None):
     """
     Sets up and returns a logger object with the specified configurations.

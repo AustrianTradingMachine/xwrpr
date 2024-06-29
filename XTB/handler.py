@@ -629,7 +629,7 @@ class HandlerManager():
                 return False
             else:
                 self._handlers['data'][handler]['status'] = 'inactive'
-                for stream in self._handlers['data'][handler]['streamhandler']:
+                for stream in list(self._handlers['data'][handler]['streamhandler']):
                     self._delete_handler(stream)
                 return True
         elif isinstance(handler, _StreamHandler):
@@ -747,6 +747,7 @@ class HandlerManager():
 
         dh = _DataHandler(demo=self._demo, logger=dh_logger)
         self._handlers['data'][dh] = {'name': name, 'status': 'active'}
+        self._handlers['data'][dh]['streamhandler'] = []
         self._connections += 1
 
         return dh

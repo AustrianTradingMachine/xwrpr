@@ -17,25 +17,17 @@ class Wrapper(HandlerManager):
 
         super().__init__(demo=self._demo, logger = self._logger)
 
-
-    def getAllSymbols(self):
+    def getVersion(self):
         dh=self.get_DataHandler()
-
-        response=dh.getData("AllSymbols")
-
+        response=dh.getData("Version")
         if not response:
             return False
         
-        for symbol in response:
-            print(symbol)
+        version=response['version']
+        major, minor, patch = version.split('.')
 
-    def getVersion(self):
-        dh=self.get_DataHandler()
+        return major, minor, patch
 
-        response=dh.getData("Version")
-
-        if not response:
-            return False
         
 
 
