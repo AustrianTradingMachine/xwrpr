@@ -76,17 +76,8 @@ class _GeneralHandler(Client):
 
         if stream is not None:
             req_dict['streamSessionId']=stream
-        if command=='getCandles':
-            if arguments is not None:
-                req_dict['symbol']=arguments['symbol']
-        elif command=='getTickPrices':
-            if arguments is not None:
-                req_dict['symbols']=arguments['symbols']
-                req_dict['minArrivalTime']=arguments['minArrivalTime']
-                req_dict['maxLevel']=arguments['maxLevel']
-        else:
-            if arguments is not None:
-                req_dict['arguments']=arguments
+        if arguments is not None:
+                req_dict.update(arguments)
         if tag is not None:
             req_dict['customTag']=tag
         if pretty is not None:
@@ -191,7 +182,7 @@ class _DataHandler(_GeneralHandler):
         if not self.open():
             self._logger.error("Log in failed")
             return False
-        if not self._send_request(command='login',arguments=dict(userId=self._userid, password=account.password)):
+        if not self._send_request(command='login',arguments={arguments: {userId: self._userid, password: account.password}})):
             self._logger.error("Log in failed")
             return False
         response=self._recieve_response()
@@ -247,7 +238,7 @@ class _DataHandler(_GeneralHandler):
         Retrieves data from the XTB API.
 
         Args:
-            request (str): The type of data to retrieve.
+            command (str): The type of data to retrieve.
             **kwargs: Additional arguments for the data request.
 
         Returns:
@@ -261,7 +252,7 @@ class _DataHandler(_GeneralHandler):
               
         retried=False
         while True:
-            if not self._send_request(command='get'+command,arguments=kwargs if bool(kwargs) else None):
+            if not self._send_request(command='get'+command,arguments={arguments: {kwargs}} if bool(kwargs) else None):
                 self._logger.error("Failed to send request")
                 if not retried:
                     retried=True
@@ -445,7 +436,7 @@ class _StreamHandler(_GeneralHandler):
         Stream data for a given request.
 
         Args:
-            request (str): The request to be sent.
+            command (str): The request to be sent.
             **kwargs: Additional arguments for the request.
 
         Returns:
@@ -475,12 +466,12 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("Stream started for "+command)
         return index
             
-    def _readStream(self,index):
+    def _readStream(self,index: int):
         """
         Read and process the streamed data for the specified request.
 
         Args:
-            request (str): The request to read data for.
+            index (int): The index to read data for.
 
         Returns:
             bool: True if the data was successfully received, False otherwise.
@@ -512,12 +503,12 @@ class _StreamHandler(_GeneralHandler):
                 self._streams[index]['stream']=False
                 return status
                 
-    def endStream(self, index):
+    def endStream(self, index: int):
         """
         Stops the stream for the specified request.
 
         Parameters:
-        - request (str): The request to stop the stream for.
+        - index (int): The index to stop the stream for.
 
         Returns:
         None
