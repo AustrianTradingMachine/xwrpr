@@ -1,14 +1,18 @@
 from setuptools import setup, find_packages
 
+# Use a context manager for safely reading the long description
+with open('README.md', 'r', encoding='utf-8') as fh:
+    long_description = fh.read()
+
 setup(
     name="XTB",
     version="1.0.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="AustrianTradingMachine",
+    author_email="",
     description="A wrapper for the XTB API",
-    long_description=open('README.md').read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
-    url="https://github.com/yourusername/my_package",
+    url="https://github.com/AustrianTradingMachine/XTB",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -17,7 +21,13 @@ setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        # List your package dependencies here
-        # e.g. 'requests', 'numpy'
+        'socket',
+        'ssl',
+        'time',
+        'select',
+        'json',
+        're',
+        'threading',
+        'logging',
     ],
 )
