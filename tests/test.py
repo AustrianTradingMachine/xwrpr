@@ -1,12 +1,9 @@
-from wrapper import DataWrapper
-import time
+from config import XTB, generate_logger
+DEMO=True
 
+logger=generate_logger(name="XTB",path='/home/philipp/Trading/XTB/Logger')
 
-DEMO=False
-
-
-
-XTBData=DataWrapper(name="data1",demo=DEMO)
+XTBData=XTB.XTB(demo=DEMO, logger=logger)
 
 XTBData.getVersion()
 

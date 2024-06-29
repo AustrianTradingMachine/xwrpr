@@ -1,9 +1,12 @@
 import json
 import re
+import os
+import logging
+from math import floor
 from threading import Thread, Lock
-from client import Client
-from utils import set_logger
-import account as account
+from XTB.client import Client
+from XTB.utils import generate_logger
+from XTB import account
 
 
 # XTB API socket
@@ -13,15 +16,10 @@ XTB_API_PORT_DEMO_STREAM=5125
 XTB_API_PORT_REAL=5112
 XTB_API_PORT_REAL_STREAM=5113
 
-# XTB API websocket
-XTB_API_ADDRESS_DEMO='wss://ws.xtb.com/demo'
-XTB_API_ADDRESS_DEMO_STREAM='wss://ws.xtb.com/demoStream'
-XTB_API_ADDRESS_REAL='wss://ws.xtb.com/real'
-XTB_API_ADDRESS_REAL_STREAM='wss://ws.xtb.com/realStream'
-
 # XTB API connection parameters
 XTB_API_SEND_TIMEOUT=800 #max 1000ms possible
 XTB_API_SEND_INTERVAL=250 #min 200ms possible
+XTB_API_MAX_CONNECTIONS=50
 XTB_API_MAX_CONNECTION_FAILS=5
 XTB_API_MAX_SEND_DATA=960 # max size of data sent to server at once. 1024 possible
 XTB_API_MAX_RECIEVE_DATA=4096 # max size of data sent to server at once
@@ -38,10 +36,17 @@ class _GeneralHandler(Client):
         logger: The logger object for logging messages.
     """
     def __init__(self, host: str=None, port: int=None, userid: str=None, logger=None):
+        if logger:
+            if not isinstance(logger, logging.Logger):
+                raise ValueError("The logger argument must be an instance of logging.Logger.")
+            
+            self._logger = logger
+        else:
+            self._logger=generate_logger(name='GeneralHandler', path=os.path.join(os.getcwd(), "logs"))
+
         self._host=host
         self._port=port
         self._userid=userid
-        self._logger = logger or set_logger(__name__)
 
         self._encrypted=True
         self._timeout=XTB_API_SEND_TIMEOUT/1000
@@ -106,35 +111,28 @@ class _GeneralHandler(Client):
 
         return message
 
-class DataHandler(_GeneralHandler):
+class _DataHandler(_GeneralHandler):
     """
     DataHandler class for retrieving data from the XTB API.
 
     Args:
-        name (str, optional): The name of the data handler.
         demo (bool, optional): Flag indicating whether to use the demo mode. Default is True.
         logger (object, optional): Logger object for logging messages.
 
-    Raises:
-        ValueError: If both 'name' and 'logger' are provided or if neither 'name' nor 'logger' are provided.
     """
 
-    def __init__(self, demo: bool=True, name: str=None, logger = None):
-        if name and logger:
-            raise ValueError("You can either provide 'name' or 'logger', but not both.")
-        
-        if name:
-            self._name = name
-            self._logger = set_logger(self._name)
-        elif logger:
+    def __init__(self, demo: bool=True, logger = None):
+        if logger:
+            if not isinstance(logger, logging.Logger):
+                raise ValueError("The logger argument must be an instance of logging.Logger.")
+            
             self._logger = logger
-            self._name = None
         else:
-            raise ValueError("You must provide either 'name' or 'logger'.")
-
+            self._logger=generate_logger(name='DataHandler', path=os.path.join(os.getcwd(), "logs"))
+        
         self._demo=demo
-        self._host=XTP_API_HOST
 
+        self._host=XTP_API_HOST
         if self._demo:
             self._port=XTB_API_PORT_DEMO
             self._userid=account.userid_demo
@@ -354,12 +352,6 @@ class DataHandler(_GeneralHandler):
     def set_demo(self, demo):
         raise ValueError("Error: Demo cannot be changed")
     
-    def get_name(self):
-        return self._name
-    
-    def set_name(self, name):
-        raise ValueError("Error: Name cannot be changed")
-    
     def get_logger(self):
         return self._logger
     
@@ -367,32 +359,35 @@ class DataHandler(_GeneralHandler):
         raise ValueError("Error: Logger cannot be changed")
     
     demo = property(get_demo, set_demo, doc='Get/set the demo mode')
-    name = property(get_name, set_name, doc='Get/set the name')
     logger = property(get_logger, set_logger, doc='Get/set the logger')
 
 
-class StreamHandler(_GeneralHandler):
-    def __init__(self, dataHandler=None, demo: bool=True, name: str=None,  logger = None):
-        self._dh=dataHandler
+class _StreamHandler(_GeneralHandler):
+    """
+    Class for handling streaming data from XTB API.
 
-        if not isinstance(self._dh, DataHandler):
+    Args:
+        dataHandler (DataHandler): The DataHandler object.
+        demo (bool, optional): Flag indicating whether to use demo mode. Defaults to True.
+        logger (Logger, optional): The logger object. Defaults to None.
+    """
+
+    def __init__(self, dataHandler=None, demo: bool=True, logger = None):
+        if logger:
+            if not isinstance(logger, logging.Logger):
+                raise ValueError("The logger argument must be an instance of logging.Logger.")
+            
+            self._logger = logger
+        else:
+            self._logger=generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
+        
+        self._dh=dataHandler
+        if not isinstance(self._dh, _DataHandler):
             raise ValueError("Error: DataHandler object required")
         
-        if name and logger:
-            raise ValueError("You can either provide 'name' or 'logger', but not both.")
-        
-        if name:
-            self._name = name
-            self._logger = set_logger(self._name)
-        elif logger:
-            self._logger = logger
-            self._name = None
-        else:
-            raise ValueError("You must provide either 'name' or 'logger'.")
-        
         self._demo=demo
-        self._host=XTP_API_HOST
 
+        self._host=XTP_API_HOST
         if self._demo:
             self._port=XTB_API_PORT_DEMO_STREAM
             self._userid=account.userid_demo
@@ -572,12 +567,6 @@ class StreamHandler(_GeneralHandler):
     def set_demo(self, demo):
         raise ValueError("Error: Demo cannot be changed")
     
-    def get_name(self):
-        return self._name
-    
-    def set_name(self, name):
-        raise ValueError("Error: Name cannot be changed")
-    
     def get_logger(self):
         return self._logger
     
@@ -586,5 +575,237 @@ class StreamHandler(_GeneralHandler):
     
     dataHandler = property(get_datahandler, set_datahandler, doc='Get/set the DataHandler object')
     demo = property(get_demo, set_demo, doc='Get/set the demo mode')
-    name = property(get_name, set_name, doc='Get/set the name')
     logger = property(get_logger, set_logger, doc='Get/set the logger')
+
+class HandlerManager():
+    """
+    The HandlerManager class manages the creation and deletion of data and stream handlers for the XTB package.
+
+    Args:
+        demo (bool, optional): Specifies whether to use the demo mode. Defaults to True.
+        logger (logging.Logger, optional): The logger instance to use. Defaults to None.
+
+    """
+    def __init__(self, demo: bool=True, logger=None):
+        self._demo=demo
+
+        if logger:
+            if not isinstance(logger, logging.Logger):
+                raise ValueError("The logger argument must be an instance of logging.Logger.")
+            
+            self._logger = logger
+        else:
+            self._logger=generate_logger(name='HandlerManager', path=os.path.join(os.getcwd(), "logs"))
+
+        self._handlers = {'data': {}, 'stream': {}}
+        self._max_streams=floor(1/(XTB_API_SEND_INTERVAL/1000))
+        self._max_connections=XTB_API_MAX_CONNECTIONS
+        self._connections=0
+
+    def __del__(self):
+            """
+            Destructor method that is automatically called when the object is about to be destroyed.
+            It deletes all the handlers in the `_handlers['data']` list.
+            """
+            for handler in self._handlers['data']:
+                self._delete_handler(handler)
+
+    def _delete_handler(self, handler):
+        """
+        Deletes the specified handler.
+
+        Args:
+            handler: The handler object to be deleted.
+
+        Returns:
+            bool: True if the handler is successfully deleted, False otherwise.
+
+        Raises:
+            ValueError: If the handler type is invalid.
+        """
+        if isinstance(handler, _DataHandler):
+            if not handler.delete():
+                self._logger.error("Error: Could not delete handler")
+                return False
+            else:
+                self._handlers['data'][handler]['status'] = 'inactive'
+                for stream in self._handlers['data'][handler]['streamhandler']:
+                    self._delete_handler(stream)
+                return True
+        elif isinstance(handler, _StreamHandler):
+            if not handler.delete():
+                self._logger.error("Error: Could not delete handler")
+            else:
+                self._handlers['stream'][handler]['status'] = 'inactive'
+                parent = self._get_parentHandler(handler)
+                self._handlers['data'][parent]['streamhandler'].remove(handler)
+        else:
+            raise ValueError("Error: Invalid handler type")
+
+    def _get_name(self, handler):
+        """
+        Get the name of the handler.
+
+        Parameters:
+        - handler: The handler object whose name needs to be retrieved.
+
+        Returns:
+        - The name of the handler.
+
+        Raises:
+        - ValueError: If the handler type is invalid.
+        """
+        if isinstance(handler, _DataHandler):
+            return self._handlers['data'][handler]['name']
+        elif isinstance(handler, _StreamHandler):
+            return self._handlers['stream'][handler]['name']
+        else:
+            raise ValueError("Error: Invalid handler type")
+
+    def _get_status(self, handler):
+        """
+        Get the status of a handler.
+
+        Parameters:
+        - handler: The handler object whose status is to be retrieved.
+
+        Returns:
+        - The status of the handler.
+
+        Raises:
+        - ValueError: If an invalid handler type is provided.
+        """
+        if isinstance(handler, _DataHandler):
+            return self._handlers['data'][handler]['status']
+        elif isinstance(handler, _StreamHandler):
+            return self._handlers['stream'][handler]['status']
+        else:
+            raise ValueError("Error: Invalid handler type")
+        
+    def _get_parentHandler(self, handler):
+        """
+        Returns the parent data handler for a given handler.
+
+        Parameters:
+        handler (_StreamHandler): The handler for which to retrieve the parent data handler.
+
+        Returns:
+        datahandler: The parent data handler associated with the given handler.
+
+        Raises:
+        ValueError: If the handler type is invalid.
+        """
+        if isinstance(handler, _StreamHandler):
+            return self._handlers['stream'][handler]['datahandler']
+        else:
+            raise ValueError("Error: Invalid handler type")
+        
+    def _avlb_DataHandler(self):
+        """
+        Returns the first active data handler from the list of handlers.
+
+        Returns:
+            The first active data handler, or None if no active handler is found.
+        """
+        for handler in self._handlers['data']:
+            if self._get_status(handler) == 'active':
+                return handler
+        return None
+    
+    def _avlb_StreamHandler(self):
+        """
+        Returns the available stream handler that is currently active and has fewer streams than the maximum allowed.
+
+        Returns:
+            str or None: The name of the available stream handler, or None if no handler is available.
+        """
+        for handler in self._handlers['stream']:
+            if self._get_status(handler) == 'active':
+                if len(self._handlers['stream'][handler]['streams']) < self._max_streams:
+                    return handler
+        return None
+    
+    def _generate_DataHandler(self):
+        """
+        Generates a new DataHandler instance and adds it to the list of handlers.
+
+        Returns:
+            DataHandler: The newly created DataHandler instance.
+
+        Raises:
+            None
+        """
+        if self._connections >= self._max_connections:
+            self._logger.error("Error: Maximum number of connections reached")
+            return False
+
+        self._logger.info("Creating DataHandler")
+
+        index = len(self._handlers['data'])
+        name = 'DataHandler' + str(index)
+        dh_logger = self._logger.getChild(name)
+
+        dh = _DataHandler(demo=self._demo, logger=dh_logger)
+        self._handlers['data'][dh] = {'name': name, 'status': 'active'}
+        self._connections += 1
+
+        return dh
+
+    def _generate_StreamHandler(self):
+        """
+        Generates a new StreamHandler instance.
+
+        Returns:
+            StreamHandler: The newly created StreamHandler instance.
+
+        Raises:
+            None
+        """
+        if self._connections >= self._max_connections:
+            self._logger.error("Error: Maximum number of connections reached")
+            return False
+
+        self._logger.info("Creating StreamHandler")
+
+        index = len(self._handlers['stream'])
+        name = 'StreamHandler' + str(index)
+        sh_logger = self._logger.getChild(name)
+
+        dh = self._get_DataHandler()
+        sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
+        self._handlers['stream'][sh] = {'name': name, 'status': 'active', 'datahandler': dh, 'streams': []}
+        self._handlers['data'][dh]['streamhandler'][sh] = []
+        self._connections += 1
+
+        return sh
+
+    def get_DataHandler(self):
+        """
+        Returns the data handler for the XTB trading system.
+
+        If a data handler is available, it is returned. Otherwise, a new data handler is generated and returned.
+
+        Returns:
+            DataHandler: The data handler for the XTB trading system.
+        """
+        handler=self._avlb_DataHandler()
+        if handler:
+            return handler
+        else:
+            return self._generate_DataHandler()
+
+    def get_StreamHandler(self):
+        """
+        Retrieves the StreamHandler object.
+
+        If a StreamHandler object is available, it is returned.
+        Otherwise, a new StreamHandler object is generated and returned.
+
+        Returns:
+            StreamHandler: The StreamHandler object.
+        """
+        handler=self._avlb_StreamHandler()
+        if handler:
+            return handler
+        else:
+            return self._generate_StreamHandler()

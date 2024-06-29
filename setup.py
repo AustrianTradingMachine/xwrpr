@@ -11,9 +11,10 @@ setup(
     author_email="",
     description="A wrapper for the XTB API",
     long_description=long_description,
-    long_description_content_type='text/markdown',
     url="https://github.com/AustrianTradingMachine/XTB",
-    packages=find_packages(),
+    package_dir={'': 'src'},
+    packages=find_packages(where='src'),
+    license="The MIT License (MIT)",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -29,5 +30,8 @@ setup(
         're',
         'threading',
         'logging',
+        'os',
+        'math',
     ],
+    test_suite='tests',
 )

@@ -2,7 +2,9 @@ import socket
 import ssl
 import time
 import select
-from utils import set_logger
+import os
+import logging
+from XTB.utils import generate_logger
 
 class Client():
     """
@@ -20,7 +22,14 @@ class Client():
         logger: The logger object for logging messages.
     """
     def __init__(self, host: str=None, port: int=None,  encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, logger=None):
-        self._logger=logger or set_logger(__name__)
+        if logger:
+            if not isinstance(logger, logging.Logger):
+                raise ValueError("The logger argument must be an instance of logging.Logger.")
+            
+            self._logger = logger
+        else:
+            self._logger=generate_logger(name='Client', path=os.path.join(os.getcwd(), "logs"))
+        
         self._host=host
         self._port=port
         self._encrypted=encrypted

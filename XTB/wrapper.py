@@ -1,28 +1,27 @@
-from handler import DataHandler, StreamHandler
-from utils import set_logger
+import logging
+import os
+from XTB.handler import HandlerManager
+from XTB.utils import generate_logger
 
-class Wrapper(DataHandler, StreamHandler):
-    def __init__(self, demo: bool=True, name: str=None, logger = None):
-        if name and logger:
-            raise ValueError("You can either provide 'name' or 'logger', but not both.")
-        
-        if name:
-            self._name = name
-            self._logger = set_logger(self._name)
-        elif logger:
-            self._logger = logger
-            self._name = None
-        else:
-            raise ValueError("You must provide either 'name' or 'logger'.")
-
+class Wrapper(HandlerManager):
+    def __init__(self, demo: bool=True, logger=None):
         self._demo=demo
+
+        if logger:
+            if not isinstance(logger, logging.Logger):
+                raise ValueError("The logger argument must be an instance of logging.Logger.")
+            
+            self._logger = logger.getChild('XTB')
+        else:
+            self._logger=generate_logger(name='XTB', path=os.path.join(os.getcwd(), "logs"))
+
         super().__init__(demo=self._demo, logger = self._logger)
 
-    def __del__(self):
-        self.delete()
 
     def getAllSymbols(self):
-        response=self.getData("AllSymbols")
+        dh=self.get_DataHandler()
+
+        response=dh.getData("AllSymbols")
 
         if not response:
             return False
@@ -31,11 +30,15 @@ class Wrapper(DataHandler, StreamHandler):
             print(symbol)
 
     def getVersion(self):
-        response=self.getData("Version")
+        dh=self.get_DataHandler()
+
+        response=dh.getData("Version")
 
         if not response:
             return False
         
-        for symbol in response:
-            print(symbol)
-        
+
+
+
+
+
