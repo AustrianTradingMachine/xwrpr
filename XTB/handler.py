@@ -77,7 +77,7 @@ class _GeneralHandler(Client):
         if stream is not None:
             req_dict['streamSessionId']=stream
         if arguments is not None:
-                req_dict.update(arguments)
+            req_dict.update(arguments)
         if tag is not None:
             req_dict['customTag']=tag
         if pretty is not None:
