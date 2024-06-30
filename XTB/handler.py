@@ -156,7 +156,7 @@ class _GeneralHandler(Client):
                 # but thats not important because this is just the maximal needed interval and
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
-                    response = self._receive_response(command='ping', stream=ssid if not bool(ssid) else None)
+                    response = self._send_receive(command='ping', stream=ssid if not bool(ssid) else None)
                     if not response:
                         return False
                     
@@ -194,13 +194,24 @@ class _GeneralHandler(Client):
 
         Returns:
             None
+            
         """
         self._reconnection_method = method
 
-    def _request_recieve(self, **kwargs):
+    def _send_receive(self, **kwargs):
+        """
+        Send a request and receive a response.
+
+        Args:
+            **kwargs: Additional arguments for the request.
+
+        Returns:
+            bool or dict: The response data if successful, False otherwise.
+
+        """
         retried=False
         while True:
-            if not self._send_request(kwargs):
+            if not self._send_request(**kwargs):
                 self._logger.error("Failed to send request")
 
                 if not retried:
@@ -305,7 +316,7 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("Log in failed")
                 return False
             
-            response = self._receive_response(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}})
+            response = self._send_receive(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}})
             if not response:
                 return False
 
@@ -364,7 +375,7 @@ class _DataHandler(_GeneralHandler):
             RuntimeError: If no active socket is available.
         """
         with self._ping_lock: # waits for the ping check loop to finish
-            response = self._receive_response(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
+            response = self._send_receive(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
             if not response:
                 return False
             

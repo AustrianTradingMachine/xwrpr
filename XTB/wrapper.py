@@ -91,9 +91,3 @@ class Wrapper(HandlerManager):
         utc_time=cet_time.astimezone(self._utc_tz)
 
         return utc_time
-        
-
-
-
-
-
