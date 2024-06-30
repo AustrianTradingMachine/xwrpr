@@ -273,7 +273,7 @@ class _DataHandler(_GeneralHandler):
         self._set_reconnection_method(self._reconnect) 
 
         self._ssid=None
-        self._login()
+        self.login()
 
         self._start_ping()
         
@@ -413,7 +413,7 @@ class _DataHandler(_GeneralHandler):
                 if not self.create():
                     self._logger.error("Error: Creation of socket failed")
                     return False
-                if not self._login():
+                if not self.login():
                     self._logger.error("Error: Could not log in")
                     return False
             
@@ -659,15 +659,15 @@ class _StreamHandler(_GeneralHandler):
             bool: True if the reconnection is successful, False otherwise.
         """
         if self._dh._reconnect_lock.acquire(blocking=False):
-            if not self.check('basic'): 
+            if not self._dh.check('basic'): 
                 self._logger.info("Retry connection")
                 
                 # because of the with statement the db._reconnect function cannot be used directly
-                if not self.create():
+                if not self._dh.create():
                     self._logger.error("Error: Creation of socket failed")
                     self._dh._reconnect_lock.release()
                     return False
-                if not self._login():
+                if not self._dh.login():
                     self._logger.error("Error: Could not log in")
                     self._dh._reconnect_lock.release()
                     return False
