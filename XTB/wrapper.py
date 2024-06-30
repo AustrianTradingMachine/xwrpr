@@ -13,9 +13,9 @@ class Wrapper(HandlerManager):
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
             
-            self._logger = logger.getChild('Wrapper')
+            self._logger = logger.getChild('Wrp')
         else:
-            self._logger=generate_logger(name='Wrapper', path=os.path.join(os.getcwd(), "logs"))
+            self._logger=generate_logger(name='Wrp', path=os.path.join(os.getcwd(), "logs"))
 
         self._utc_tz = pytz.utc
         self._cest_tz = pytz.timezone('Europe/Berlin')

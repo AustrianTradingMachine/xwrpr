@@ -116,35 +116,40 @@ class _GeneralHandler(Client):
 
         return message
     
-    def _start_ping(self):
+    def _start_ping(self, ssid: str=None):
         """
-        Send a ping request to the XTB API.
+        Starts the ping process.
+
+        Args:
+            ssid (str, optional): The SSID to send the ping to. Defaults to None.
 
         Returns:
-            bool: True if the ping was successful, False otherwise.
-
+            bool: True if the ping process was started successfully.
         """
         self._ping['ping'] = True
-        self._ping['thread'] = Thread(target=self._send_ping, daemon=True)
+        self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,))
         self._ping['thread'].start()
         self._logger.info("Ping started")
 
         return True
 
-    def _send_ping(self):
+    def _send_ping(self, ssid: str=None):
         """
         Sends a ping request to the server at regular intervals.
-    
+
+        Args:
+            ssid (str, optional): The stream ID. Defaults to None.
+
         Returns:
-            bool: True if the ping request is successful, False otherwise.
+            bool: True if the ping request was successful, False otherwise.
         """
         next_ping = 0
-        ping_interval = 9.5*60
+        ping_interval = 1
         while self._ping['ping']:
             if next_ping >= ping_interval:
                 retried = False
                 while True: 
-                    response = self._send_request(command='ping')
+                    response = self._send_request(command='ping', stream=ssid if not bool(ssid) else None)
                     if not response:
                         self._logger.error("Ping failed")
                         if not retried:
@@ -153,7 +158,8 @@ class _GeneralHandler(Client):
                             continue
                         return False
                     break
-            time.sleep(self._interval)
+                next_ping = 0
+            time.sleep(self._interval/10)
             next_ping += self._interval
 
     def _stop_ping(self):
