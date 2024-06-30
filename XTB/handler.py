@@ -58,6 +58,9 @@ class _GeneralHandler(Client):
         self._decoder = json.JSONDecoder()
 
         self._ping=dict()
+        self._ping_lock = Lock()
+
+        self._reconnection_method = None
 
         super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, logger=self._logger)
     
@@ -93,7 +96,7 @@ class _GeneralHandler(Client):
                 self._logger.info("Sent message"+str(req_dict))
                 return True
 
-    def _recieve_response(self):
+    def _receive_response(self):
         """
         Receive a response from the XTB API.
 
@@ -127,7 +130,7 @@ class _GeneralHandler(Client):
             bool: True if the ping process was started successfully.
         """
         self._ping['ping'] = True
-        self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,))
+        self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
         self._ping['thread'].start()
         self._logger.info("Ping started")
 
@@ -144,23 +147,28 @@ class _GeneralHandler(Client):
             bool: True if the ping request was successful, False otherwise.
         """
         next_ping = 0
-        ping_interval = 1
+        ping_interval = 60*9.5
+        check_interval=self._interval/10
         while self._ping['ping']:
+            start_time = time.time()
             if next_ping >= ping_interval:
-                retried = False
-                while True: 
-                    response = self._send_request(command='ping', stream=ssid if not bool(ssid) else None)
+                # thanks to th with statement the ping could fail to keep is sheduled interval
+                # but thats not important because this is just the maximal needed interval and
+                # a function that locks the ping_key also initiates a reset to the server
+                with self._ping_lock:
+                    response = self._receive_response(command='ping', stream=ssid if not bool(ssid) else None)
                     if not response:
-                        self._logger.error("Ping failed")
-                        if not retried:
-                            retried = True
-                            self._reconnect()
-                            continue
                         return False
-                    break
-                next_ping = 0
-            time.sleep(self._interval/10)
-            next_ping += self._interval
+                    
+                    if response['status']:
+                        self._logger.info("Ping successfully")
+                    else:
+                        self._logger.error("Ping failed")
+                        return False
+                    
+                    next_ping = 0
+            time.sleep(check_interval)
+            next_ping += time.time() - start_time
 
     def _stop_ping(self):
         """
@@ -176,6 +184,47 @@ class _GeneralHandler(Client):
         self._logger.info("Ping stopped")
 
         return True
+    
+    def _set_reconnection_method(self, method):
+        """
+        Set the reconnection method.
+
+        Args:
+            method (function): The reconnection method to set.
+
+        Returns:
+            None
+        """
+        self._reconnection_method = method
+
+    def _request_recieve(self, **kwargs):
+        retried=False
+        while True:
+            if not self._send_request(kwargs):
+                self._logger.error("Failed to send request")
+
+                if not retried:
+                    retried=True
+                    self._reconnection_method()
+                    continue
+
+                return False
+            
+            response=self._receive_response()
+
+            if not response:
+                self._logger.error("Failed to receive data")
+
+                if not retried:
+                    retried=True
+                    self._reconnection_method()
+                    continue
+
+                return False
+            break
+        
+        return response
+
 
 class _DataHandler(_GeneralHandler):
     """
@@ -208,8 +257,13 @@ class _DataHandler(_GeneralHandler):
 
         super().__init__(host=self._host, port=self._port, userid=self._userid, logger=self._logger)
         
+        # overgives the reconnection method to the parent class
+        # so that the reconnection method can be called from the parent class
+        self._set_reconnection_method(self._reconnect) 
+
         self._ssid=None
         self._login()
+
         self._start_ping()
         
         # to handle connected stream handlers
@@ -246,28 +300,24 @@ class _DataHandler(_GeneralHandler):
             bool: True if the login was successful, False otherwise.
 
         """
-        if not self.open():
-            self._logger.error("Log in failed")
-            return False
-        if not self._send_request(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
-            self._logger.error("Log in failed")
-            return False
-        response=self._recieve_response()
-        if not response:
-            self._logger.error("Log in failed")
-            return False
-        
-        status=response['status']
+        with self._ping_lock: # waits for the ping check loop to finish
+            if not self.open():
+                self._logger.error("Log in failed")
+                return False
+            
+            response = self._receive_response(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}})
+            if not response:
+                return False
 
-        if status:
-            self._logger.info("Log in successfully")
-            self._ssid=response['streamSessionId']
-        else:
-            self._logger.error("Log in failed")
-            self._logger.error(response['errorCode'])
-            self._logger.error(response['errorDescr'])
-                               
-        return status
+            if response['status']:
+                self._logger.info("Log in successfully")
+                self._ssid=response['streamSessionId']
+            else:
+                self._logger.error("Log in failed")
+                self._logger.error(response['errorCode'])
+                self._logger.error(response['errorDescr'])
+                                
+            return response['status']
 
     def _logout(self):
         """
@@ -277,28 +327,27 @@ class _DataHandler(_GeneralHandler):
             bool: True if the logout was successful, False otherwise.
 
         """
-        if not self._send_request(command='logout'):
-            self._logger.error("Log out failed")
-            return False
-        response=self._recieve_response()
-        if not response:
-            self._logger.error("Log out failed")
-            return False
-        
-        status=response['status']
-
-        if status:
-            self._logger.info("Logged out successfully")
-            if not self.close():
-                self._logger.error("Error: Could not close connection")
+        with self._ping_lock: # waits for the ping check loop to finish
+            if not self._send_request(command='logout'):
+                self._logger.error("Log out failed")
                 return False
-            self._ssid=None
-        else:
-            self._logger.error("Logout failed")
-            self._logger.error(response['errorCode'])
-            self._logger.error(response['errorDescr'])
+            response=self._receive_response()
+            if not response:
+                self._logger.error("Log out failed")
+                return False
 
-        return status
+            if response['status']:
+                self._logger.info("Logged out successfully")
+                if not self.close():
+                    self._logger.error("Error: Could not close connection")
+                    return False
+                self._ssid=None
+            else:
+                self._logger.error("Logout failed")
+                self._logger.error(response['errorCode'])
+                self._logger.error(response['errorDescr'])
+
+            return response['status']
 
     def getData(self, command, **kwargs):
         """
@@ -314,43 +363,24 @@ class _DataHandler(_GeneralHandler):
         Raises:
             RuntimeError: If no active socket is available.
         """
-        if not self._ssid:
-            raise RuntimeError("Error: No active Socket")
-        
-        self._stop_ping()
-
-        retried=False
-        while True:
-            if not self._send_request(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None):
-                self._logger.error("Failed to send request")
-                if not retried:
-                    retried=True
-                    self._reconnect()
-                    continue
-                return False
-            response=self._recieve_response()
+        with self._ping_lock: # waits for the ping check loop to finish
+            response = self._receive_response(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
             if not response:
-                self._logger.error("Failed to receive data")
-                if not retried:
-                    retried=True
-                    self._reconnect()
-                    continue
                 return False
-            break
-
-        self._start_ping()
-
-        status=response['status']
-
-        pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
-        if status:
-            self._logger.info(pretty_request +" recieved")
-            return response['returnData']
-        else:
-            self._logger.error("Error: "+pretty_request+" not recieved")
-            self._logger.error(response['errorCode'])
-            self._logger.error(response['errorDescr'])
-            return status
+            
+            pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
+            if response['status']:
+                if not response['returnData']:
+                    self._logger.error("Error: Status true but data not recieved")
+                    return False
+                
+                self._logger.info(pretty_request +" recieved")
+                return response['returnData']
+            else:
+                self._logger.error("Error: "+pretty_request+" not recieved")
+                self._logger.error(response['errorCode'])
+                self._logger.error(response['errorDescr'])
+                return False
         
     def _reconnect(self):
         """
@@ -363,20 +393,24 @@ class _DataHandler(_GeneralHandler):
         Returns:
             bool: True if the reconnection was successful, False otherwise.
         """
+        # The reconnection by a StreamHandler is as good as the reconnection by the Datahandler itself
+        # But the Datahandler has to wait for he reconnection because his functions depend directly on it
         with self._reconnect_lock:
-            self._logger.info("Retry connection")
-            if not self.create():
-                self._logger.error("Error: Creation of socket failed")
-                return False
-            if not self.open():
-                self._logger.error("Error: Could not open connection")
-                return False
-            if not self.login():
-                self._logger.error("Error: Could not log in")
-                return False
+            if not self.check('basic'):
+                self._logger.info("Retry connection")
+                
+                if not self.create():
+                    self._logger.error("Error: Creation of socket failed")
+                    return False
+                if not self._login():
+                    self._logger.error("Error: Could not log in")
+                    return False
             
-            self._logger.info("Reconnection successful")
-            return True
+                self._logger.info("Reconnection successful")
+            else:
+                self._logger.info("Data connection is already active")
+
+        return True
     
     def _register_stream_handler(self, handler):
         """
@@ -554,7 +588,7 @@ class _StreamHandler(_GeneralHandler):
         while self._streams[index]['stream']:
             retried=False
             while True: 
-                response= self._recieve_response()
+                response= self._receive_response()
                 if not response:
                     self._logger.error("Failed to receive data")
                     if not retried:
@@ -613,31 +647,42 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the reconnection is successful, False otherwise.
         """
-        self._logger.info("Retry connection")
-        # Attempt to acquire the lock and reconnect
-        if not self._dh.check('basic'):
-            self._logger.error("Info: Data connection failed.")
-            if self._dh._reconnect_lock.acquire(blocking=False):
-                try:
-                    self._logger.error("Try reconnection")
-                    if not self._dh._reconnect():
-                        self._logger.error("Error: Data reconnection failed")
-                        return False
-                finally:
+        if self._dh._reconnect_lock.acquire(blocking=False):
+            if not self.check('basic'): 
+                self._logger.info("Retry connection")
+                
+                # because of the with statement the db._reconnect function cannot be used directly
+                if not self.create():
+                    self._logger.error("Error: Creation of socket failed")
                     self._dh._reconnect_lock.release()
+                    return False
+                if not self._login():
+                    self._logger.error("Error: Could not log in")
+                    self._dh._reconnect_lock.release()
+                    return False
+            
+                self._logger.info("Reconnection successful")
+            else:
+                self._logger.info("Data connection is already active")
+
+            self._dh._reconnect_lock.release()
         else:
             self._logger.info("Reconnection attempt is already in progress by another stream handler.")
 
         if not self.check('basic'):
-            self._logger.error("Info: Stream connection failed. Try reconnection")
+            self._logger.error("Error: Stream connection failed. Try reconnection")
+            
             if not self.create():
                 self._logger.error("Error: Creation of socket failed")
                 return False
             if not self.open():
                 self._logger.error("Error: Could not open connection")
                 return False
-        
-        self._logger.info("Reconnection successful")
+            
+            self._logger.info("Reconnection successful")
+        else:
+            self._logger.info("Stream connection is already active")
+
         return True
     
     def get_datahandler(self):

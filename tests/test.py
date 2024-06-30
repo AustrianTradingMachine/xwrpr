@@ -10,7 +10,7 @@ print(XTB.API_VERSION)
 
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-time.sleep(5)
+time.sleep(2)
 
 version=XTBData.getVersion()
 
@@ -18,7 +18,7 @@ print('major:', version['major'])
 print('minor:', version['minor'])
 print('patch:', version['patch'])
 
-time.sleep(2)
+time.sleep(5)
 
 th=XTBData.getTradingHours(symbols=['EURUSD'])
 

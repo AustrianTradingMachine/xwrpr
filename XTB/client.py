@@ -154,7 +154,7 @@ class Client():
         """
         if not self.check('basic'):
             self._logger.error("Socket failed. Try to create again")
-            if not self._create():
+            if not self.create():
                 return False
                 
         for _ in range(self._max_fails):
