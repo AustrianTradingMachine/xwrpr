@@ -273,7 +273,7 @@ class _DataHandler(_GeneralHandler):
         self._set_reconnection_method(self._reconnect) 
 
         self._ssid=None
-        self.login()
+        self._login()
 
         self._start_ping()
         
@@ -303,7 +303,7 @@ class _DataHandler(_GeneralHandler):
             self._logger.info("Handler deleted")
             return True
             
-    def login(self):
+    def _login(self):
         """
         Log in to the XTB API.
 
@@ -413,7 +413,7 @@ class _DataHandler(_GeneralHandler):
                 if not self.create():
                     self._logger.error("Error: Creation of socket failed")
                     return False
-                if not self.login():
+                if not self._login():
                     self._logger.error("Error: Could not log in")
                     return False
             
@@ -667,7 +667,7 @@ class _StreamHandler(_GeneralHandler):
                     self._logger.error("Error: Creation of socket failed")
                     self._dh._reconnect_lock.release()
                     return False
-                if not self._dh.login():
+                if not self._dh._login():
                     self._logger.error("Error: Could not log in")
                     self._dh._reconnect_lock.release()
                     return False
