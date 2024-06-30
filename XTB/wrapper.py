@@ -26,20 +26,6 @@ class Wrapper(HandlerManager):
 
         self._logger.info("Wrapper initialized.")
 
-
-    def getCandles(self, symbol: str) -> dict:
-        sh=self.get_StreamHandler()
-        index =sh.streamData()
-
-
-        self._running[request] = True
-        self._thread[request] = Thread(target=self._readStream, args=(request), deamon=True)
-        self._thread[request].start()
-
-    def _getStream(self, request: dict) -> dict:
-        while self._running[request]:
-
-
     def getSymbols(self) ->dict:
         dh=self.get_DataHandler()
         response=dh.getData("AllSymbols")

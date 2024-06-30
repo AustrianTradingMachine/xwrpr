@@ -57,6 +57,8 @@ class _GeneralHandler(Client):
         self._bytes_in=XTB_API_MAX_RECIEVE_DATA
         self._decoder = json.JSONDecoder()
 
+        self._ping=dict()
+
         super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, logger=self._logger)
     
     def _send_request(self,command, stream=None, arguments=None, tag=None, pretty=None):
@@ -113,6 +115,61 @@ class _GeneralHandler(Client):
         self._logger.info("Received message"+str(message)[:100] + ('...' if len(str(message)) > 100 else ''))
 
         return message
+    
+    def _start_ping(self):
+        """
+        Send a ping request to the XTB API.
+
+        Returns:
+            bool: True if the ping was successful, False otherwise.
+
+        """
+        self._ping['ping'] = True
+        self._ping['thread'] = Thread(target=self._send_ping, daemon=True)
+        self._ping['thread'].start()
+        self._logger.info("Ping started")
+
+        return True
+
+    def _send_ping(self):
+        """
+        Sends a ping request to the server at regular intervals.
+    
+        Returns:
+            bool: True if the ping request is successful, False otherwise.
+        """
+        next_ping = 0
+        ping_interval = 9.5*60
+        while self._ping['ping']:
+            if next_ping >= ping_interval:
+                retried = False
+                while True: 
+                    response = self._send_request(command='ping')
+                    if not response:
+                        self._logger.error("Ping failed")
+                        if not retried:
+                            retried = True
+                            self._reconnect()
+                            continue
+                        return False
+                    break
+            time.sleep(self._interval)
+            next_ping += self._interval
+
+    def _stop_ping(self):
+        """
+        Stop the ping request.
+
+        Returns:
+            bool: True if the ping was stopped successfully, False otherwise.
+
+        """
+        self._ping['ping'] = False
+        self._ping['thread'].join()
+
+        self._logger.info("Ping stopped")
+
+        return True
 
 class _DataHandler(_GeneralHandler):
     """
@@ -166,10 +223,12 @@ class _DataHandler(_GeneralHandler):
             if not self._close_stream_handlers():
                 self._logger.error("Error: Could not close stream handlers")
             
+            self._stop_ping()
+
             if not self._logout():
                 self._logger.error("Error: Could not log out")
                 return False
-            
+
             self._logger.info("Handler deleted")
             return True
             
@@ -235,57 +294,6 @@ class _DataHandler(_GeneralHandler):
 
         return status
 
-    def _start_ping(self):
-        """
-        Send a ping request to the XTB API.
-
-        Returns:
-            bool: True if the ping was successful, False otherwise.
-
-        """
-        self._ping['ping'] = True
-        self._ping['thread'] = Thread(target=self._send_ping, args=None, deamon=True)
-        self._ping['thread'].start()
-        self._logger.info("Ping started")
-
-        return True
-
-    def _send_ping(self):
-        """
-        Sends a ping request to the server at regular intervals.
-
-        Returns:
-            bool: True if the ping request is successful, False otherwise.
-        """
-        while self._ping['ping']:
-            retried = False
-            while True: 
-                response = self._send_request(command='ping')
-                if not response:
-                    self._logger.error("Ping failed")
-                    if not retried:
-                        retried = True
-                        self._reconnect()
-                        continue
-                    return False
-                break
-            self._logger.info("Ping sent")
-            time.sleep(9.5 * 60)
-
-    def _stop_ping(self):
-        """
-        Stop the ping request.
-
-        Returns:
-            bool: True if the ping was stopped successfully, False otherwise.
-
-        """
-        self._ping['ping'] = False
-        self._ping['thread'].stop()
-        self._ping['thread'].join()
-
-        return True
-
     def getData(self, command, **kwargs):
         """
         Retrieves data from the XTB API.
@@ -307,7 +315,7 @@ class _DataHandler(_GeneralHandler):
 
         retried=False
         while True:
-            if not self._send_request(command='get'+command,arguments={'arguments': {kwargs}} if bool(kwargs) else None):
+            if not self._send_request(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None):
                 self._logger.error("Failed to send request")
                 if not retried:
                     retried=True
@@ -397,6 +405,10 @@ class _DataHandler(_GeneralHandler):
         Returns:
             bool: True if all stream handlers were closed successfully, False otherwise.
         """
+        if not self._stream_handlers:
+            self._logger.info("No stream handlers to close")
+            return True
+
         for handler in list(self._stream_handlers):
             if not handler.delete():
                 self._logger.error("Error: Could not close stream handler")
@@ -579,7 +591,6 @@ class _StreamHandler(_GeneralHandler):
             return False
         
         self._streams[index]['stream'] = False
-        self._streams[index]['thread'].stop()
         self._streams[index]['thread'].join()
 
         self._logger.info("Stream ended for "+self._streams[index]['request'])
