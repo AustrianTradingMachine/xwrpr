@@ -2,6 +2,7 @@ import json
 import re
 import os
 import logging
+import time
 from math import floor
 from threading import Thread, Lock
 from XTB.client import Client
@@ -17,7 +18,7 @@ XTB_API_PORT_REAL=5112
 XTB_API_PORT_REAL_STREAM=5113
 
 # XTB API connection parameters
-XTB_API_SEND_TIMEOUT=800 #max 1000ms possible
+XTB_API_SEND_TIMEOUT=900 #max 1000ms possible
 XTB_API_SEND_INTERVAL=250 #min 200ms possible
 XTB_API_MAX_CONNECTIONS=50
 XTB_API_MAX_CONNECTION_FAILS=5
@@ -146,6 +147,7 @@ class _DataHandler(_GeneralHandler):
         
         self._ssid=None
         self._login()
+        self._start_ping()
         
         # to handle connected stream handlers
         self._stream_handlers=[]
@@ -182,7 +184,7 @@ class _DataHandler(_GeneralHandler):
         if not self.open():
             self._logger.error("Log in failed")
             return False
-        if not self._send_request(command='login',arguments={arguments: {userId: self._userid, password: account.password}})):
+        if not self._send_request(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
             self._logger.error("Log in failed")
             return False
         response=self._recieve_response()
@@ -233,6 +235,57 @@ class _DataHandler(_GeneralHandler):
 
         return status
 
+    def _start_ping(self):
+        """
+        Send a ping request to the XTB API.
+
+        Returns:
+            bool: True if the ping was successful, False otherwise.
+
+        """
+        self._ping['ping'] = True
+        self._ping['thread'] = Thread(target=self._send_ping, args=None, deamon=True)
+        self._ping['thread'].start()
+        self._logger.info("Ping started")
+
+        return True
+
+    def _send_ping(self):
+        """
+        Sends a ping request to the server at regular intervals.
+
+        Returns:
+            bool: True if the ping request is successful, False otherwise.
+        """
+        while self._ping['ping']:
+            retried = False
+            while True: 
+                response = self._send_request(command='ping')
+                if not response:
+                    self._logger.error("Ping failed")
+                    if not retried:
+                        retried = True
+                        self._reconnect()
+                        continue
+                    return False
+                break
+            self._logger.info("Ping sent")
+            time.sleep(9.5 * 60)
+
+    def _stop_ping(self):
+        """
+        Stop the ping request.
+
+        Returns:
+            bool: True if the ping was stopped successfully, False otherwise.
+
+        """
+        self._ping['ping'] = False
+        self._ping['thread'].stop()
+        self._ping['thread'].join()
+
+        return True
+
     def getData(self, command, **kwargs):
         """
         Retrieves data from the XTB API.
@@ -249,10 +302,12 @@ class _DataHandler(_GeneralHandler):
         """
         if not self._ssid:
             raise RuntimeError("Error: No active Socket")
-              
+        
+        self._stop_ping()
+
         retried=False
         while True:
-            if not self._send_request(command='get'+command,arguments={arguments: {kwargs}} if bool(kwargs) else None):
+            if not self._send_request(command='get'+command,arguments={'arguments': {kwargs}} if bool(kwargs) else None):
                 self._logger.error("Failed to send request")
                 if not retried:
                     retried=True
@@ -268,6 +323,8 @@ class _DataHandler(_GeneralHandler):
                     continue
                 return False
             break
+
+        self._start_ping()
 
         status=response['status']
 
@@ -520,7 +577,10 @@ class _StreamHandler(_GeneralHandler):
         if not self._send_request(command='stop' + command, arguments=arguments,stream=self._ssid):
             self._logger.error("Failed to end stream")
             return False
+        
         self._streams[index]['stream'] = False
+        self._streams[index]['thread'].stop()
+        self._streams[index]['thread'].join()
 
         self._logger.info("Stream ended for "+self._streams[index]['request'])
         return True
@@ -732,7 +792,7 @@ class HandlerManager():
         """
         for handler in self._handlers['stream']:
             if self._get_status(handler) == 'active':
-                if len(self._handlers['stream'][handler]['streams']) < self._max_streams:
+                if handler._streams < self._max_streams:
                     return handler
         return None
     
@@ -785,7 +845,7 @@ class HandlerManager():
 
         dh = self._get_DataHandler()
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
-        self._handlers['stream'][sh] = {'name': name, 'status': 'active', 'datahandler': dh, 'streams': []}
+        self._handlers['stream'][sh] = {'name': name, 'status': 'active', 'datahandler': dh}
         self._handlers['data'][dh]['streamhandler'][sh] = []
         self._connections += 1
 
