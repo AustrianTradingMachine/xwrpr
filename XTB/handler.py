@@ -303,7 +303,7 @@ class _DataHandler(_GeneralHandler):
             self._logger.info("Handler deleted")
             return True
             
-    def _login(self):
+    def login(self):
         """
         Log in to the XTB API.
 
