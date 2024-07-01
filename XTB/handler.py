@@ -36,7 +36,7 @@ class _GeneralHandler(Client):
         userid (str): The user ID for authentication.
         logger: The logger object for logging messages.
     """
-    def __init__(self, host: str=None, port: int=None, userid: str=None, logger=None):
+    def __init__(self, host: str=None, port: int=None, userid: str=None, reconnect=None, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -44,6 +44,12 @@ class _GeneralHandler(Client):
             self._logger = logger
         else:
             self._logger=generate_logger(name='GeneralHandler', path=os.path.join(os.getcwd(), "logs"))
+
+        if not callable(reconnect):
+            self._reconnection_method=lambda: None
+        else:
+            self._reconnection_method=reconnect
+
 
         self._host=host
         self._port=port
@@ -59,8 +65,6 @@ class _GeneralHandler(Client):
 
         self._ping=dict()
         self._ping_lock = Lock()
-
-        self._reconnection_method = None
 
         super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, logger=self._logger)
     
@@ -78,6 +82,8 @@ class _GeneralHandler(Client):
             bool: True if the request was sent successfully, False otherwise.
 
         """
+        self._logger.info("Sending request ...")
+
         req_dict=dict([('command',command)])
 
         if stream is not None:
@@ -90,10 +96,10 @@ class _GeneralHandler(Client):
             req_dict['prettyPrint']=pretty
 
         if not self.send(json.dumps(req_dict)):
-                self._logger.error("Failed to send message")
+                self._logger.error("Failed to send request")
                 return False
         else: 
-                self._logger.info("Sent message"+str(req_dict))
+                self._logger.info("Sent request: "+str(req_dict))
                 return True
 
     def _receive_response(self):
@@ -104,20 +110,22 @@ class _GeneralHandler(Client):
             bool: True if the response was received successfully, False otherwise.
 
         """
-        message=self.receive()
+        self._logger.info("Receiving response ...")
 
-        if not message:
-            self._logger.error("Failed to receive message")
+        response=self.receive()
+
+        if not response:
+            self._logger.error("Failed to receive response")
             return False
         
         try:
-            (message, _) = self._decoder.raw_decode(message)
+            (response, _) = self._decoder.raw_decode(response)
         except json.JSONDecodeError:
             self._logger.error("Error: JSON decode error")
             return False
-        self._logger.info("Received message"+str(message)[:100] + ('...' if len(str(message)) > 100 else ''))
+        self._logger.info("Received response: "+str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
-        return message
+        return response
     
     def _start_ping(self, ssid: str=None):
         """
@@ -129,6 +137,8 @@ class _GeneralHandler(Client):
         Returns:
             bool: True if the ping process was started successfully.
         """
+        self._logger.info("Starting ping ...")
+
         self._ping['ping'] = True
         self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
         self._ping['thread'].start()
@@ -161,7 +171,7 @@ class _GeneralHandler(Client):
                         return False
                     
                     if response['status']:
-                        self._logger.info("Ping successfully")
+                        self._logger.info("Ping")
                     else:
                         self._logger.error("Ping failed")
                         return False
@@ -178,25 +188,14 @@ class _GeneralHandler(Client):
             bool: True if the ping was stopped successfully, False otherwise.
 
         """
+        self._logger.info("Stopping ping ...")
+
         self._ping['ping'] = False
         self._ping['thread'].join()
 
         self._logger.info("Ping stopped")
 
         return True
-    
-    def _set_reconnection_method(self, method):
-        """
-        Set the reconnection method.
-
-        Args:
-            method (function): The reconnection method to set.
-
-        Returns:
-            None
-            
-        """
-        self._reconnection_method = method
 
     def _receive_request(self, **kwargs):
         """
@@ -247,7 +246,7 @@ class _DataHandler(_GeneralHandler):
 
     """
 
-    def __init__(self, demo: bool=True, logger = None):
+    def __init__(self, demo: bool=True, report=None, logger = None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -256,6 +255,11 @@ class _DataHandler(_GeneralHandler):
         else:
             self._logger=generate_logger(name='DataHandler', path=os.path.join(os.getcwd(), "logs"))
         
+        if not callable(report):
+            self._report_method=report
+        else:
+            self._report_method=lambda: None
+
         self._demo=demo
 
         self._host=XTP_API_HOST
@@ -266,8 +270,9 @@ class _DataHandler(_GeneralHandler):
             self._port=XTB_API_PORT_REAL
             self._userid=account.userid_real
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, logger=self._logger)
-        self._set_reconnection_method(self._reconnect)
+        self._logger.info("Creating DataHandler ...")
+
+        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, logger=self._logger)
     
         self._ssid=None
         self._login()
@@ -276,29 +281,37 @@ class _DataHandler(_GeneralHandler):
         self._stream_handlers=[]
         self._reconnect_lock = Lock()
 
-        self._report_method=None
-
         self._logger.info("Data handler created")
         
+    def __del__(self):
+        self.delete()
+    
     def delete(self):
-            """
-            Destructor method for the handler class.
-            Logs out the user if not already logged out.
-            
-            Returns:
-                bool: True if successfully logged out, False otherwise.
-            """
-            if not self._close_stream_handlers():
-                self._logger.error("Error: Could not close stream handlers")
-            
-            self._stop_ping()
+        """
+        Destructor method for the handler class.
+        Logs out the user if not already logged out.
+        
+        Returns:
+            bool: True if successfully logged out, False otherwise.
+        """
+        self._logger.info("Deleting DataHandler ...")
 
+        if not self._close_stream_handlers():
+            self._logger.error("Error: Could not close stream handlers")
+        
+        if self._ping['ping']:
+            self._stop_ping()
+        else:
+            self._logger.info("Ping already stopped")
+
+        if self._ssid:
             if not self._logout():
                 self._logger.error("Error: Could not log out")
-                return False
+        else:
+            self._logger.info("Already logged out")
 
-            self._logger.info("Handler deleted")
-            return True
+        self._logger.info("DataHandler deleted")
+        return True
             
     def _login(self):
         """
@@ -309,6 +322,8 @@ class _DataHandler(_GeneralHandler):
 
         """
         with self._ping_lock: # waits for the ping check loop to finish
+            self._logger.info("Logging in ...")
+
             if not self.open():
                 self._logger.error("Log in failed")
                 return False
@@ -316,6 +331,8 @@ class _DataHandler(_GeneralHandler):
             # request_response nicht mmöglich weil login teil der reconnect routine ist
             if not self._send_request(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
                 self._logger.error("Log in failed")
+                return False
+            
             response=self._receive_response()
             if not response:
                 self._logger.error("Log in failed")
@@ -342,9 +359,14 @@ class _DataHandler(_GeneralHandler):
 
         """
         with self._ping_lock: # waits for the ping check loop to finish
+            self._logger.info("Logging out ...")
+
+            self._report_method(self,'inactive')
+
             if not self._send_request(command='logout'):
                 self._logger.error("Log out failed")
                 return False
+            
             response=self._receive_response()
             if not response:
                 self._logger.error("Log out failed")
@@ -352,16 +374,16 @@ class _DataHandler(_GeneralHandler):
 
             if response['status']:
                 self._logger.info("Logged out successfully")
+
                 if not self.close():
                     self._logger.error("Error: Could not close connection")
                     return False
+                
                 self._ssid=None
             else:
                 self._logger.error("Logout failed")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
-
-            self._report_method(self,'inactive')
 
             return response['status']
 
@@ -380,6 +402,8 @@ class _DataHandler(_GeneralHandler):
             RuntimeError: If no active socket is available.
         """
         with self._ping_lock: # waits for the ping check loop to finish
+            self._logger.info("Getting data ...")
+
             response = self._receive_request(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
             if not response:
                 return False
@@ -412,6 +436,8 @@ class _DataHandler(_GeneralHandler):
         # The reconnection by a StreamHandler is as good as the reconnection by the Datahandler itself
         # But the Datahandler has to wait for he reconnection because his functions depend directly on it
         with self._reconnect_lock:
+            self._logger.info("Reconnecting ...")
+
             if not self.check('basic'):
                 self._logger.info("Retry connection")
                 
@@ -429,19 +455,6 @@ class _DataHandler(_GeneralHandler):
                 self._logger.info("Data connection is already active")
 
         return True
-    
-    def _set_report_method(self, method):
-        """
-        Set thereport method.
-
-        Args:
-            method (function): The report method to set.
-
-        Returns:
-            None
-            
-        """
-        self._report_method = method
     
     def _register_stream_handler(self, handler):
         """
@@ -476,6 +489,8 @@ class _DataHandler(_GeneralHandler):
         Returns:
             bool: True if all stream handlers were closed successfully, False otherwise.
         """
+        self._logger.info("Closing stream handlers ...")
+
         if not self._stream_handlers:
             self._logger.info("No stream handlers to close")
             return True
@@ -514,7 +529,7 @@ class _StreamHandler(_GeneralHandler):
         logger (Logger, optional): The logger object. Defaults to None.
     """
 
-    def __init__(self, dataHandler=None, demo: bool=True, logger = None):
+    def __init__(self, dataHandler=None, demo: bool=True, report=None, logger = None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -522,11 +537,17 @@ class _StreamHandler(_GeneralHandler):
             self._logger = logger
         else:
             self._logger=generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
-        
-        self._dh=dataHandler
-        if not isinstance(self._dh, _DataHandler):
+
+        if not callable(report):
+            self._report_method=report
+        else:
+            self._report_method=lambda: None
+
+        if not isinstance(dataHandler, _DataHandler):
             raise ValueError("Error: DataHandler object required")
-        
+        else:
+            self._dh=dataHandler
+
         self._demo=demo
 
         self._host=XTP_API_HOST
@@ -537,8 +558,9 @@ class _StreamHandler(_GeneralHandler):
             self._port=XTB_API_PORT_REAL_STREAM
             self._userid=account.userid_real
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, logger=self._logger)
-        self._set_reconnection_method(self._reconnect)
+        self._logger.info("Creating StreamHandler ...")
+
+        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, logger=self._logger)
 
         self.open()
         self._start_ping()
@@ -548,9 +570,10 @@ class _StreamHandler(_GeneralHandler):
 
         self._streams=dict()
 
-        self._report_method=None
-
         self._logger.info("Stream handler created")
+
+    def __del__(self):
+        self.delete()
             
     def delete(self):
         """
@@ -562,17 +585,23 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the cleanup operations were successful, False otherwise.
         """
+        self._logger.info("Deleting StreamHandler ...")
+
         for request in self._streams:
-            self._endStream(request)
+            self.endStream(request)
+
+        if self._ping['ping']:
+            self._stop_ping()
+        else:
+            self._logger.info("Ping already stopped")
 
         if not self.close():
             self._logger.error("Error: Could not close connection")
-            return False
             
         self._dh._unregister_stream_handler(self)
-        self._logger.info("Stream handler unregistered")
+        self._logger.info("StreamHandler unregistered")
     
-        self._logger.info("Handler deleted")
+        self._logger.info("StreamHandler deleted")
         return True
         
     def streamData(self, command, **kwargs):
@@ -725,25 +754,16 @@ class _StreamHandler(_GeneralHandler):
 
         return True
     
-    def _set_report_method(self, method):
-        """
-        Set thereport method.
-
-        Args:
-            method (function): The report method to set.
-
-        Returns:
-            None
-            
-        """
-        self._report_method = method
-    
     def get_datahandler(self):
         return self._dh
     
     def set_datahandler(self, dataHandler):
-        raise ValueError("Error: DataHandler cannot be changed")
-    
+        if not isinstance(dataHandler, _DataHandler):
+            raise ValueError("Error: DataHandler object required")
+
+        self._dh = dataHandler
+        self._logger.info("DataHandler changed")
+
     def get_demo(self):
         return self._demo
     
@@ -781,17 +801,21 @@ class HandlerManager():
             self._logger=generate_logger(name='HandlerManager', path=os.path.join(os.getcwd(), "logs"))
 
         self._handlers = {'data': {}, 'stream': {}}
-        self._max_streams=floor(1/(XTB_API_SEND_INTERVAL/1000))
+        self._max_streams=floor(1000/XTB_API_SEND_INTERVAL)
         self._max_connections=XTB_API_MAX_CONNECTIONS
         self._connections=0
 
     def __del__(self):
+        self.delete()
+
+    def delete(self):
             """
             Destructor method that is automatically called when the object is about to be destroyed.
             It deletes all the handlers in the `_handlers['data']` list.
             """
             for handler in self._handlers['data']:
-                self._delete_handler(handler)
+                if self._handlers['data'][handler]['status'] == 'active':
+                    self._delete_handler(handler)
 
     def _delete_handler(self, handler):
         """
@@ -933,18 +957,14 @@ class HandlerManager():
             self._logger.error("Error: Maximum number of connections reached")
             return False
 
-        self._logger.info("Creating DataHandler")
-
         index = len(self._handlers['data'])
         name = 'DH_' + str(index)
         dh_logger = self._logger.getChild(name)
 
-        dh = _DataHandler(demo=self._demo, logger=dh_logger)
-        dh._set_report_method(self._report_status)
-
-        self._handlers['data'][dh] = {'name': name}
-        self._handlers['data'][dh]['streamhandler'] = []
+        self._handlers['data'][dh] = {'name': name, 'status': 'active', 'streamhandler': {}}
         self._connections += 1
+
+        dh = _DataHandler(demo=self._demo, report = self._report_status, logger=dh_logger)
 
         return dh
 
@@ -962,19 +982,16 @@ class HandlerManager():
             self._logger.error("Error: Maximum number of connections reached")
             return False
 
-        self._logger.info("Creating StreamHandler")
-
         index = len(self._handlers['stream'])
         name = 'SH_' + str(index)
         sh_logger = self._logger.getChild(name)
 
         dh = self._get_DataHandler()
-        sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
-        sh._set_report_method(self._report_status)
-
-        self._handlers['stream'][sh] = {'name': name, 'datahandler': dh}
-        self._handlers['data'][dh]['streamhandler'][sh] = []
+        self._handlers['stream'][sh] = {'name': name, 'status': 'active','datahandler': dh}
+        self._handlers['data'][dh]['streamhandler'][sh] = None
         self._connections += 1
+
+        sh = _StreamHandler(dataHandler=dh, demo=self._demo, report = self._report_status, logger=sh_logger)
 
         return sh
 

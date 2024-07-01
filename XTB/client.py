@@ -87,6 +87,8 @@ class Client():
         Returns:
             bool: True if the socket connection is successfully created, False otherwise.
         """
+        self._logger.info("Creating socket ...")
+
         try:
             avl_addresses=socket.getaddrinfo(self._host, self._port, socket.AF_UNSPEC, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         except socket.error as e:
@@ -152,6 +154,8 @@ class Client():
         Returns:
             bool: True if the socket connection is successfully opened, False otherwise.
         """
+        self._logger.info("Opening connection ...")
+
         if not self.check('basic'):
             self._logger.error("Socket failed. Try to create again")
             if not self.create():
@@ -179,6 +183,8 @@ class Client():
         Returns:
             bool: True if the message was sent successfully, False otherwise.
         """
+        self._logger.info("Sending message ...")
+
         msg = msg.encode("utf-8")
         send_msg = 0
         while send_msg < len(msg):
@@ -194,7 +200,7 @@ class Client():
                 self._logger.error("Error sending message: %s" % str(e))
                 return False
             
-            self._logger.info("Sending data packages ...")
+            self._logger.info("sending ...")
             time.sleep(self._interval)
 
         self._logger.info("Message sent")
@@ -213,6 +219,8 @@ class Client():
         Raises:
             Exception: If there is an error receiving the message.
         """
+        self._logger.info("Receiving message ...")
+
         full_msg = ''
         while True:
             msg=''
@@ -227,12 +235,15 @@ class Client():
             if len(msg) <= 0:
                 break
             
-            self._logger.info("Receiving data packages ...")
+            self._logger.info("receiving ...")
             full_msg += msg.decode("utf-8")
             time.sleep(self._interval)
     
         self._logger.info("Message received")
         return full_msg
+    
+    def __del__(self):
+        self.close()
 
     def close(self):
         """
@@ -241,6 +252,8 @@ class Client():
         Returns:
             bool: True if the socket is successfully closed, False otherwise.
         """
+        self._logger.info("Closing connection ...")
+
         if self._socket.fileno() != -1:
             try:
                 self._socket.shutdown(socket.SHUT_RDWR)

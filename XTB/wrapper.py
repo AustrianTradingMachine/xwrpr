@@ -17,6 +17,8 @@ class Wrapper(HandlerManager):
         else:
             self._logger=generate_logger(name='Wrp', path=os.path.join(os.getcwd(), "logs"))
 
+        self._logger.info("Initializing wrapper.")
+
         self._utc_tz = pytz.utc
         self._cest_tz = pytz.timezone('Europe/Berlin')
 
@@ -25,6 +27,15 @@ class Wrapper(HandlerManager):
         self._running=dict()
 
         self._logger.info("Wrapper initialized.")
+
+    def __del__(self):
+        self.delete()
+
+    def delete(self):
+        self._logger.info("Deleting wrapper.")
+        super.delete()
+        self._logger.info("Wrapper deleted.")
+
 
     def getSymbols(self) ->dict:
         dh=self.get_DataHandler()
