@@ -690,7 +690,7 @@ class _StreamHandler(_GeneralHandler):
             response=self._receive_response()
             if not response:
                 self._logger.error("Failed to read stream")
-                self._streams[index]['stream']=False
+                self.endStream(index,True)
                 return False
 
             command=self._streams[index]['command']
@@ -698,7 +698,7 @@ class _StreamHandler(_GeneralHandler):
             if response['status']:
                 if not response['data']:
                     self._logger.error("Status true but data not recieved")
-                    self._streams[index]['stream']=False
+                    self.endStream(index,True)
                     return False
 
                 self._logger.info(pretty_command +" recieved")
@@ -707,10 +707,10 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.error(pretty_command+" not recieved")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
-                self._streams[index]['stream']=False
+                self.endStream(index,True)
                 return False
                 
-    def endStream(self, index: int):
+    def endStream(self, index: int, inThread: bool):
         """
         Stops the stream for the specified request.
 
@@ -726,7 +726,9 @@ class _StreamHandler(_GeneralHandler):
             self._logger.error("Stream already ended")
         else:
             self._streams[index]['stream'] = False
-        self._streams[index]['thread'].join()
+
+        if not inThread:
+            self._streams[index]['thread'].join()
             
         self._ssid = self._dh._ssid
         command=self._streams[index]['command']
