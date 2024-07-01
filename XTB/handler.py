@@ -156,7 +156,7 @@ class _GeneralHandler(Client):
                 # but thats not important because this is just the maximal needed interval and
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
-                    response = self._send_receive(command='ping', stream=ssid if not bool(ssid) else None)
+                    response = self._receive_request(command='ping', stream=ssid if not bool(ssid) else None)
                     if not response:
                         return False
                     
@@ -198,7 +198,7 @@ class _GeneralHandler(Client):
         """
         self._reconnection_method = method
 
-    def _send_receive(self, **kwargs):
+    def _receive_request(self, **kwargs):
         """
         Send a request and receive a response.
 
@@ -267,19 +267,16 @@ class _DataHandler(_GeneralHandler):
             self._userid=account.userid_real
 
         super().__init__(host=self._host, port=self._port, userid=self._userid, logger=self._logger)
-        
-        # overgives the reconnection method to the parent class
-        # so that the reconnection method can be called from the parent class
-        self._set_reconnection_method(self._reconnect) 
-
+        self._set_reconnection_method(self._reconnect)
+    
         self._ssid=None
         self._login()
-
         self._start_ping()
         
-        # to handle connected stream handlers
         self._stream_handlers=[]
         self._reconnect_lock = Lock()
+
+        self._report_method=None
 
         self._logger.info("Data handler created")
         
@@ -316,8 +313,12 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("Log in failed")
                 return False
             
-            response = self._send_receive(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}})
+            # request_response nicht mmöglich weil login teil der reconnect routine ist
+            if not self._send_request(command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
+                self._logger.error("Log in failed")
+            response=self._receive_response()
             if not response:
+                self._logger.error("Log in failed")
                 return False
 
             if response['status']:
@@ -327,6 +328,8 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("Log in failed")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
+
+            self._report_method(self,'active')
                                 
             return response['status']
 
@@ -358,6 +361,8 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
 
+            self._report_method(self,'inactive')
+
             return response['status']
 
     def getData(self, command, **kwargs):
@@ -375,7 +380,7 @@ class _DataHandler(_GeneralHandler):
             RuntimeError: If no active socket is available.
         """
         with self._ping_lock: # waits for the ping check loop to finish
-            response = self._send_receive(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
+            response = self._receive_request(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
             if not response:
                 return False
             
@@ -412,9 +417,11 @@ class _DataHandler(_GeneralHandler):
                 
                 if not self.create():
                     self._logger.error("Error: Creation of socket failed")
+                    self._report_method(self,'failed')
                     return False
                 if not self._login():
                     self._logger.error("Error: Could not log in")
+                    self._report_method(self,'failed')
                     return False
             
                 self._logger.info("Reconnection successful")
@@ -422,6 +429,19 @@ class _DataHandler(_GeneralHandler):
                 self._logger.info("Data connection is already active")
 
         return True
+    
+    def _set_report_method(self, method):
+        """
+        Set thereport method.
+
+        Args:
+            method (function): The report method to set.
+
+        Returns:
+            None
+            
+        """
+        self._report_method = method
     
     def _register_stream_handler(self, handler):
         """
@@ -518,13 +538,17 @@ class _StreamHandler(_GeneralHandler):
             self._userid=account.userid_real
 
         super().__init__(host=self._host, port=self._port, userid=self._userid, logger=self._logger)
+        self._set_reconnection_method(self._reconnect)
 
         self.open()
+        self._start_ping()
         
         self._dh._register_stream_handler(self)
         self._logger.info("Stream handler registered")
 
         self._streams=dict()
+
+        self._report_method=None
 
         self._logger.info("Stream handler created")
             
@@ -661,14 +685,15 @@ class _StreamHandler(_GeneralHandler):
         if self._dh._reconnect_lock.acquire(blocking=False):
             if not self._dh.check('basic'): 
                 self._logger.info("Retry connection")
-                
                 # because of the with statement the db._reconnect function cannot be used directly
                 if not self._dh.create():
                     self._logger.error("Error: Creation of socket failed")
+                    self._dh._report_method(self,'failed')
                     self._dh._reconnect_lock.release()
                     return False
                 if not self._dh._login():
                     self._logger.error("Error: Could not log in")
+                    self._dh._report_method(self,'failed')
                     self._dh._reconnect_lock.release()
                     return False
             
@@ -680,21 +705,38 @@ class _StreamHandler(_GeneralHandler):
         else:
             self._logger.info("Reconnection attempt is already in progress by another stream handler.")
 
-        if not self.check('basic'):
-            self._logger.error("Error: Stream connection failed. Try reconnection")
-            
-            if not self.create():
-                self._logger.error("Error: Creation of socket failed")
-                return False
-            if not self.open():
-                self._logger.error("Error: Could not open connection")
-                return False
-            
-            self._logger.info("Reconnection successful")
-        else:
-            self._logger.info("Stream connection is already active")
+        # Damit alle anderen StreamHandler die den lock haben auch die chance haben sich zu reconnecten
+        with self._dh._reconnect_lock:
+            if not self.check('basic'):
+                self._logger.error("Error: Stream connection failed. Try reconnection")
+                
+                if not self.create():
+                    self._logger.error("Error: Creation of socket failed")
+                    self._report_method(self,'failed')
+                    return False
+                if not self.open():
+                    self._logger.error("Error: Could not open connection")
+                    self._report_method(self,'failed')
+                    return False
+                
+                self._logger.info("Reconnection successful")
+            else:
+                self._logger.info("Stream connection is already active")
 
         return True
+    
+    def _set_report_method(self, method):
+        """
+        Set thereport method.
+
+        Args:
+            method (function): The report method to set.
+
+        Returns:
+            None
+            
+        """
+        self._report_method = method
     
     def get_datahandler(self):
         return self._dh
@@ -805,7 +847,15 @@ class HandlerManager():
             return self._handlers['stream'][handler]['name']
         else:
             raise ValueError("Error: Invalid handler type")
-
+        
+    def _report_status(self, handler, status):
+        if isinstance(handler, _DataHandler):
+            self._handlers['data'][handler]['status']=status
+        elif isinstance(handler, _StreamHandler):
+            self._handlers['stream'][handler]['status']=status
+        else:
+            raise ValueError("Error: Invalid handler type")
+        
     def _get_status(self, handler):
         """
         Get the status of a handler.
@@ -890,7 +940,9 @@ class HandlerManager():
         dh_logger = self._logger.getChild(name)
 
         dh = _DataHandler(demo=self._demo, logger=dh_logger)
-        self._handlers['data'][dh] = {'name': name, 'status': 'active'}
+        dh._set_report_method(self._report_status)
+
+        self._handlers['data'][dh] = {'name': name}
         self._handlers['data'][dh]['streamhandler'] = []
         self._connections += 1
 
@@ -918,7 +970,9 @@ class HandlerManager():
 
         dh = self._get_DataHandler()
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
-        self._handlers['stream'][sh] = {'name': name, 'status': 'active', 'datahandler': dh}
+        sh._set_report_method(self._report_status)
+
+        self._handlers['stream'][sh] = {'name': name, 'datahandler': dh}
         self._handlers['data'][dh]['streamhandler'][sh] = []
         self._connections += 1
 
