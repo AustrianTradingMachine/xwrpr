@@ -733,7 +733,7 @@ class _StreamHandler(_GeneralHandler):
         self._ssid = self._dh._ssid
         command=self._streams[index]['command']
         arguments=self._streams[index]['arguments']
-        if not self._send_request(command='stop' + command, arguments=arguments,stream=self._ssid):
+        if not self._send_request(command='stop' + command, arguments=arguments):
             self._logger.error("Failed to end stream")
         
         self._streams.pop(index)
