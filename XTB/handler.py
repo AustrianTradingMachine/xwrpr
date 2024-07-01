@@ -600,7 +600,7 @@ class _StreamHandler(_GeneralHandler):
         self._start_ping()
         
         self._dh._register_stream_handler(self)
-        self._logger.info("Registered at Datahandler")
+        self._logger.info("Registered at DataHandler")
 
         self._streams=dict()
 
@@ -724,18 +724,16 @@ class _StreamHandler(_GeneralHandler):
 
         if not self._streams[index]['stream']:
             self._logger.error("Stream already ended")
-            return False
-
+        else:
+            self._streams[index]['stream'] = False
+        self._streams[index]['thread'].join()
+            
         self._ssid = self._dh._ssid
-
         command=self._streams[index]['command']
         arguments=self._streams[index]['arguments']
         if not self._send_request(command='stop' + command, arguments=arguments,stream=self._ssid):
             self._logger.error("Failed to end stream")
-            return False
         
-        self._streams[index]['stream'] = False
-        self._streams[index]['thread'].join()
         self._streams.pop(index)
 
         if len(self._streams) == 0:
@@ -805,6 +803,10 @@ class _StreamHandler(_GeneralHandler):
         if not isinstance(dataHandler, _DataHandler):
             raise ValueError("Error: DataHandler object required")
 
+        if len(self._streams) > 0
+            self._logger.error("Cannot change DataHandler. Streams still active")
+            return False
+
         self._dh._unregister_stream_handler(self)
         self._logger.info("Unregistered at DataHandler")
         
@@ -812,7 +814,7 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("DataHandler changed")
 
         self._dh._register_stream_handler(self)
-        self._logger.info("Registered at Datahandler")
+        self._logger.info("Registered at DataHandler")
 
     def get_demo(self):
         return self._demo
