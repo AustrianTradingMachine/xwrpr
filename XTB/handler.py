@@ -309,14 +309,14 @@ class _DataHandler(_GeneralHandler):
         self._stream_handlers=[]
         self._reconnect_lock = Lock()
 
-        self._logger.info("Data handler created")
+        self._logger.info("DataHandler created")
         
     def __del__(self):
         self.delete()
     
     def delete(self):
         """
-        Destructor method for the handler class.
+        Destructor method for the DataHandler class.
         Logs out the user if not already logged out.
         
         Returns:
@@ -325,7 +325,7 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("Deleting DataHandler ...")
 
         if not self._close_stream_handlers():
-            self._logger.error("Could not close stream handlers")
+            self._logger.error("Could not close all StreamHandlers")
         
         if self._ping['ping']:
             self._stop_ping()
@@ -486,55 +486,55 @@ class _DataHandler(_GeneralHandler):
     
     def _register_stream_handler(self, handler):
         """
-        Register a stream handler with the DataHandler.
+        Register a ŚtreamHandler with the DataHandler.
 
         Args:
-            handler (StreamHandler): The stream handler to register.
+            handler (StreamHandler): The StreamHandler to register.
 
         Returns:
             None
         """
         if handler not in self._stream_handlers:
             self._stream_handlers.append(handler)
-            self._logger.info("Stream handler registered")
+            self._logger.info("StreamHandler registered")
         else:
-            self._logger.error("Stream handler already registered")
+            self._logger.error("StreamHandler already registered")
 
     def _unregister_stream_handler(self, handler):
         """
-        Unregister a stream handler from the DataHandler.
+        Unregister a StreamHandler from the DataHandler.
 
         Args:
-            handler (StreamHandler): The stream handler to unregister.
+            handler (StreamHandler): The StreamHandler to unregister.
 
         Returns:
             None
         """
         if handler in self._stream_handlers:
             self._stream_handlers.remove(handler)
-            self._logger.info("Stream handler unregistered")
+            self._logger.info("StreamHandler unregistered")
         else:
-            self._logger.error("Stream handler not found")
+            self._logger.error("StreamHandler not found")
 
     def _close_stream_handlers(self):
         """
-        Close all stream handlers.
+        Close all StreamHandlers.
 
         Returns:
-            bool: True if all stream handlers were closed successfully, False otherwise.
+            bool: True if all StreamHandlers were closed successfully, False otherwise.
         """
-        self._logger.info("Closing stream handlers ...")
+        self._logger.info("Closing StreamHandlers ...")
 
         if not self._stream_handlers:
-            self._logger.info("No stream handlers to close")
+            self._logger.info("No StreamHandlers to close")
             return True
 
         for handler in list(self._stream_handlers):
             if not handler.delete():
-                self._logger.error("Could not close stream handler")
+                self._logger.error("Could not close StreamHandler")
                 return False
         
-        self._logger.info("All stream handlers closed")
+        self._logger.info("All StreamHandlers closed")
         return True
 
     def get_demo(self):
@@ -600,18 +600,18 @@ class _StreamHandler(_GeneralHandler):
         self._start_ping()
         
         self._dh._register_stream_handler(self)
-        self._logger.info("Stream handler registered")
+        self._logger.info("StreamHandler registered")
 
         self._streams=dict()
 
-        self._logger.info("Stream handler created")
+        self._logger.info("StreamHandler created")
 
     def __del__(self):
         self.delete()
             
     def delete(self):
         """
-        Destructor method for the handler class.
+        Destructor method for the StreamHandler class.
 
         This method is automatically called when the object is about to be destroyed.
         It performs the necessary cleanup operations before the object is deleted.
@@ -621,8 +621,8 @@ class _StreamHandler(_GeneralHandler):
         """
         self._logger.info("Deleting StreamHandler ...")
 
-        for request in self._streams:
-            self.endStream(request)
+        for index in list(self._streams):
+            self.endStream(index)
 
         if self._ping['ping']:
             self._stop_ping()
@@ -661,11 +661,12 @@ class _StreamHandler(_GeneralHandler):
 
         self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None)
 
-        index = len(self._streams['stream'])
+        index = len(self._streams)
+        self._streams[index] = dict()
         self._streams[index]['command'] = command
         self._streams[index]['arguments'] = kwargs
         self._streams[index]['stream'] = True
-        self._streams[index]['thread'] = Thread(target=self._readStream, args=(index), deamon=True)
+        self._streams[index]['thread'] = Thread(target=self._readStream, args=(index,), daemon=True)
         self._streams[index]['thread'].start()
         
 
@@ -701,7 +702,6 @@ class _StreamHandler(_GeneralHandler):
                     return False
 
                 self._logger.info(pretty_command +" recieved")
-                print(response['data'])
                 return response['data']
             else:
                 self._logger.error(pretty_command+" not recieved")
@@ -781,7 +781,7 @@ class _StreamHandler(_GeneralHandler):
         # Damit alle anderen StreamHandler die den lock haben auch die chance haben sich zu reconnecten
         with self._dh._reconnect_lock:
             if not self.check('basic'):
-                elf._logger.info("Retry connection")
+                self._logger.info("Retry connection")
                 
                 if not self.create():
                     self._logger.error("Creation of socket failed")
@@ -826,7 +826,7 @@ class _StreamHandler(_GeneralHandler):
 
 class HandlerManager():
     """
-    The HandlerManager class manages the creation and deletion of data and stream handlers for the XTB package.
+    The HandlerManager class manages the creation and deletion of Data- and StreamHandlers for the XTB package.
 
     Args:
         demo (bool, optional): Specifies whether to use the demo mode. Defaults to True.
@@ -882,7 +882,7 @@ class HandlerManager():
                 self._handlers['data'][handler]['status'] = 'inactive'
                 for stream in list(self._handlers['data'][handler]['streamhandler']):
                     self._handlers['stream'][stream]['status'] = 'inactive'
-                    self._handlers['data'][handler]['streamhandler'].remove(stream)
+                    self._handlers['data'][handler]['streamhandler'].pop(stream)
         elif isinstance(handler, _StreamHandler):
             if not handler.delete():
                 self._logger.error("Could not delete StreamHandler")
@@ -946,13 +946,13 @@ class HandlerManager():
         
     def _get_parentHandler(self, handler):
         """
-        Returns the parent data handler for a given handler.
+        Returns the parent DataHandler for a given handler.
 
         Parameters:
-        handler (_StreamHandler): The handler for which to retrieve the parent data handler.
+        handler (_StreamHandler): The handler for which to retrieve the parent DataHandler.
 
         Returns:
-        datahandler: The parent data handler associated with the given handler.
+        datahandler: The parent DataHandler associated with the given handler.
 
         Raises:
         ValueError: If the handler type is invalid.
@@ -964,10 +964,10 @@ class HandlerManager():
         
     def _avlb_DataHandler(self):
         """
-        Returns the first active data handler from the list of handlers.
+        Returns the first active DataHandler from the list of handlers.
 
         Returns:
-            The first active data handler, or None if no active handler is found.
+            The first active DataHandler, or None if no active handler is found.
         """
         for handler in self._handlers['data']:
             if self._get_status(handler) == 'active':
@@ -976,10 +976,10 @@ class HandlerManager():
     
     def _avlb_StreamHandler(self):
         """
-        Returns the available stream handler that is currently active and has fewer streams than the maximum allowed.
+        Returns the available StreamHandler that is currently active and has fewer streams than the maximum allowed.
 
         Returns:
-            str or None: The name of the available stream handler, or None if no handler is available.
+            str or None: The name of the available StreamHandler, or None if no handler is available.
         """
         for handler in self._handlers['stream']:
             if self._get_status(handler) == 'active':
@@ -1030,7 +1030,7 @@ class HandlerManager():
         name = 'SH_' + str(index)
         sh_logger = self._logger.getChild(name)
 
-        dh = self._get_DataHandler()
+        dh = self.get_DataHandler()
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, report = self._report_status, logger=sh_logger)
 
         self._handlers['stream'][sh] = {'name': name, 'status': 'active','datahandler': dh}
@@ -1041,12 +1041,12 @@ class HandlerManager():
 
     def get_DataHandler(self):
         """
-        Returns the data handler for the XTB trading system.
+        Returns the DataHandler for the XTB trading system.
 
-        If a data handler is available, it is returned. Otherwise, a new data handler is generated and returned.
+        If a DataHandler is available, it is returned. Otherwise, a new DataHandler is generated and returned.
 
         Returns:
-            DataHandler: The data handler for the XTB trading system.
+            DataHandler: The DataHandler for the XTB trading system.
         """
         handler=self._avlb_DataHandler()
         if handler:

@@ -22,5 +22,8 @@ print(th)
 
 XTBData.getTickerPrices(symbol='EURUSD', minArrivalTimwe=250, maxLevel=1)
 
+
+time.sleep(5)
+
 XTBData.delete()
 

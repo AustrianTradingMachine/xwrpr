@@ -39,7 +39,8 @@ class Wrapper(HandlerManager):
     def getTickerPrices(self, symbol: str, minArrivalTimwe: int, maxLevel: int) -> dict:
         sh=self.get_StreamHandler()
 
-        sh.streamData("getTickerPrices", symbol=symbol, minArrivalTime=minArrivalTimwe, maxLevel=maxLevel)
+        sh.streamData("TickerPrices", symbol=symbol, minArrivalTime=minArrivalTimwe, maxLevel=maxLevel)
+
 
 
     def getSymbols(self) ->dict:
