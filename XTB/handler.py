@@ -46,11 +46,10 @@ class _GeneralHandler(Client):
             self._logger=generate_logger(name='GeneralHandler', path=os.path.join(os.getcwd(), "logs"))
 
         if not callable(reconnect):
-            self._reconnection_method=lambda: None
-        else:
             self._reconnection_method=reconnect
-
-
+        else:
+            self._reconnection_method=lambda: None
+            
         self._host=host
         self._port=port
         self._userid=userid
@@ -121,7 +120,7 @@ class _GeneralHandler(Client):
         try:
             (response, _) = self._decoder.raw_decode(response)
         except json.JSONDecodeError:
-            self._logger.error("Error: JSON decode error")
+            self._logger.error("JSON decode error")
             return False
         self._logger.info("Received response: "+str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
@@ -208,6 +207,23 @@ class _GeneralHandler(Client):
             bool or dict: The response data if successful, False otherwise.
 
         """
+
+        self._request(**kwargs)
+        response=self._receive()
+        
+        return response
+    
+    def _request(self, **kwargs):
+        """
+        Send a request to the XTB API.
+
+        Args:
+            **kwargs: Additional arguments for the request.
+
+        Returns:
+            bool: True if the request was sent successfully, False otherwise.
+
+        """
         retried=False
         while True:
             if not self._send_request(**kwargs):
@@ -219,9 +235,21 @@ class _GeneralHandler(Client):
                     continue
 
                 return False
-            
-            response=self._receive_response()
+            break
+        
+        return True
+    
+    def _receive(self):
+        """
+        Receive a response from the XTB API.
 
+        Returns:
+            bool or dict: The response data if successful, False otherwise.
+
+        """
+        retried=False
+        while True:
+            response=self._receive_response()
             if not response:
                 self._logger.error("Failed to receive data")
 
@@ -234,7 +262,7 @@ class _GeneralHandler(Client):
             break
         
         return response
-
+    
 
 class _DataHandler(_GeneralHandler):
     """
@@ -255,7 +283,7 @@ class _DataHandler(_GeneralHandler):
         else:
             self._logger=generate_logger(name='DataHandler', path=os.path.join(os.getcwd(), "logs"))
         
-        if not callable(report):
+        if callable(report):
             self._report_method=report
         else:
             self._report_method=lambda: None
@@ -297,18 +325,18 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("Deleting DataHandler ...")
 
         if not self._close_stream_handlers():
-            self._logger.error("Error: Could not close stream handlers")
+            self._logger.error("Could not close stream handlers")
         
         if self._ping['ping']:
             self._stop_ping()
         else:
-            self._logger.info("Ping already stopped")
+            self._logger.error("Ping already stopped")
 
         if self._ssid:
             if not self._logout():
-                self._logger.error("Error: Could not log out")
+                self._logger.error("Could not log out")
         else:
-            self._logger.info("Already logged out")
+            self._logger.error("Already logged out")
 
         self._logger.info("DataHandler deleted")
         return True
@@ -346,7 +374,7 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
 
-            self._report_method(self,'active')
+            #self._report_method(self,'active')
                                 
             return response['status']
 
@@ -361,7 +389,7 @@ class _DataHandler(_GeneralHandler):
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging out ...")
 
-            self._report_method(self,'inactive')
+            #self._report_method(self,'inactive')
 
             if not self._send_request(command='logout'):
                 self._logger.error("Log out failed")
@@ -376,7 +404,7 @@ class _DataHandler(_GeneralHandler):
                 self._logger.info("Logged out successfully")
 
                 if not self.close():
-                    self._logger.error("Error: Could not close connection")
+                    self._logger.error("Could not close connection")
                     return False
                 
                 self._ssid=None
@@ -411,13 +439,13 @@ class _DataHandler(_GeneralHandler):
             pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
             if response['status']:
                 if not response['returnData']:
-                    self._logger.error("Error: Status true but data not recieved")
+                    self._logger.error("Status true but data not recieved")
                     return False
                 
                 self._logger.info(pretty_request +" recieved")
                 return response['returnData']
             else:
-                self._logger.error("Error: "+pretty_request+" not recieved")
+                self._logger.error(pretty_request+" not recieved")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
                 return False
@@ -442,12 +470,12 @@ class _DataHandler(_GeneralHandler):
                 self._logger.info("Retry connection")
                 
                 if not self.create():
-                    self._logger.error("Error: Creation of socket failed")
-                    self._report_method(self,'failed')
+                    self._logger.error("Creation of socket failed")
+                    #self._report_method(self,'failed')
                     return False
                 if not self._login():
-                    self._logger.error("Error: Could not log in")
-                    self._report_method(self,'failed')
+                    self._logger.error("Could not log in")
+                    #self._report_method(self,'failed')
                     return False
             
                 self._logger.info("Reconnection successful")
@@ -466,8 +494,11 @@ class _DataHandler(_GeneralHandler):
         Returns:
             None
         """
-        self._stream_handlers.append(handler)
-        self._logger.info("Stream handler registered")
+        if handler not in self._stream_handlers:
+            self._stream_handlers.append(handler)
+            self._logger.info("Stream handler registered")
+        else:
+            self._logger.error("Stream handler already registered")
 
     def _unregister_stream_handler(self, handler):
         """
@@ -479,8 +510,11 @@ class _DataHandler(_GeneralHandler):
         Returns:
             None
         """
-        self._stream_handlers.remove(handler)
-        self._logger.info("Stream handler unregistered")
+        if handler in self._stream_handlers:
+            self._stream_handlers.remove(handler)
+            self._logger.info("Stream handler unregistered")
+        else:
+            self._logger.error("Stream handler not found")
 
     def _close_stream_handlers(self):
         """
@@ -497,7 +531,7 @@ class _DataHandler(_GeneralHandler):
 
         for handler in list(self._stream_handlers):
             if not handler.delete():
-                self._logger.error("Error: Could not close stream handler")
+                self._logger.error("Could not close stream handler")
                 return False
         
         self._logger.info("All stream handlers closed")
@@ -538,7 +572,7 @@ class _StreamHandler(_GeneralHandler):
         else:
             self._logger=generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
 
-        if not callable(report):
+        if callable(report):
             self._report_method=report
         else:
             self._report_method=lambda: None
@@ -593,10 +627,10 @@ class _StreamHandler(_GeneralHandler):
         if self._ping['ping']:
             self._stop_ping()
         else:
-            self._logger.info("Ping already stopped")
+            self._logger.error("Ping already stopped")
 
         if not self.close():
-            self._logger.error("Error: Could not close connection")
+            self._logger.error("Could not close connection")
             
         self._dh._unregister_stream_handler(self)
         self._logger.info("StreamHandler unregistered")
@@ -616,27 +650,27 @@ class _StreamHandler(_GeneralHandler):
             int: The index of the running stream.
 
         """
+        # gracefully stops ping if active
+        # ping is not needed as long as stream is active
+        if self._ping['ping']:
+            self._stop_ping()
+
+        self._logger.info("Starting stream ...")
+
         self._ssid = self._dh._ssid
 
-        retried = False
-        while True:
-            if not self._send_request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
-                self._logger.error("Failed to send request")
-                if not retried:
-                    retried = True
-                    self._reconnect()
-                    continue
-                return False
-            break
-        
+        self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None)
+
         index = len(self._streams['stream'])
         self._streams[index]['command'] = command
         self._streams[index]['arguments'] = kwargs
         self._streams[index]['stream'] = True
         self._streams[index]['thread'] = Thread(target=self._readStream, args=(index), deamon=True)
         self._streams[index]['thread'].start()
+        
 
         self._logger.info("Stream started for "+command)
+        
         return index
             
     def _readStream(self,index: int):
@@ -650,31 +684,31 @@ class _StreamHandler(_GeneralHandler):
             bool: True if the data was successfully received, False otherwise.
         """
         while self._streams[index]['stream']:
-            retried=False
-            while True: 
-                response= self._receive_response()
-                if not response:
-                    self._logger.error("Failed to receive data")
-                    if not retried:
-                        retried=True
-                        self._reconnect()
-                        continue
-                    return False
-                break
-            
-            status=response['status']
-                
+            self._logger.info("Streaming Data ...")
+
+            response=self._receive_response()
+            if not response:
+                self._logger.error("Failed to read stream")
+                self._streams[index]['stream']=False
+                return False
+
             command=self._streams[index]['command']
             pretty_command = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
-            if status:
+            if response['status']:
+                if not response['data']:
+                    self._logger.error("Status true but data not recieved")
+                    self._streams[index]['stream']=False
+                    return False
+
                 self._logger.info(pretty_command +" recieved")
+                print(response['data'])
                 return response['data']
             else:
-                self._logger.error("Error: "+pretty_command+" not recieved")
+                self._logger.error(pretty_command+" not recieved")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
                 self._streams[index]['stream']=False
-                return status
+                return False
                 
     def endStream(self, index: int):
         """
@@ -686,6 +720,12 @@ class _StreamHandler(_GeneralHandler):
         Returns:
         None
         """
+        self._logger.info("Stopping stream ...")
+
+        if not self._streams[index]['stream']:
+            self._logger.error("Stream already ended")
+            return False
+
         self._ssid = self._dh._ssid
 
         command=self._streams[index]['command']
@@ -696,8 +736,12 @@ class _StreamHandler(_GeneralHandler):
         
         self._streams[index]['stream'] = False
         self._streams[index]['thread'].join()
+        self._streams.pop(index)
 
-        self._logger.info("Stream ended for "+self._streams[index]['request'])
+        if len(self._streams) == 0:
+            self._start_ping()
+
+        self._logger.info("Stream ended for "+command)
         return True
             
     def _reconnect(self):
@@ -713,39 +757,39 @@ class _StreamHandler(_GeneralHandler):
         """
         if self._dh._reconnect_lock.acquire(blocking=False):
             if not self._dh.check('basic'): 
-                self._logger.info("Retry connection")
+                self._logger.info("Retry connection for DataHandler")
                 # because of the with statement the db._reconnect function cannot be used directly
                 if not self._dh.create():
-                    self._logger.error("Error: Creation of socket failed")
-                    self._dh._report_method(self,'failed')
+                    self._logger.error("Creation of socket failed")
+                    #self._dh._report_method(self,'failed')
                     self._dh._reconnect_lock.release()
                     return False
                 if not self._dh._login():
-                    self._logger.error("Error: Could not log in")
-                    self._dh._report_method(self,'failed')
+                    self._logger.error("Could not log in")
+                    #self._dh._report_method(self,'failed')
                     self._dh._reconnect_lock.release()
                     return False
             
-                self._logger.info("Reconnection successful")
+                self._logger.info("Reconnection for DataHandler successful")
             else:
-                self._logger.info("Data connection is already active")
+                self._logger.info("DataHandler connection is already active")
 
             self._dh._reconnect_lock.release()
         else:
-            self._logger.info("Reconnection attempt is already in progress by another stream handler.")
+            self._logger.info("Reconnection attempt for DataHandler is already in progress by another StreamHandler.")
 
         # Damit alle anderen StreamHandler die den lock haben auch die chance haben sich zu reconnecten
         with self._dh._reconnect_lock:
             if not self.check('basic'):
-                self._logger.error("Error: Stream connection failed. Try reconnection")
+                elf._logger.info("Retry connection")
                 
                 if not self.create():
-                    self._logger.error("Error: Creation of socket failed")
-                    self._report_method(self,'failed')
+                    self._logger.error("Creation of socket failed")
+                    #self._report_method(self,'failed')
                     return False
                 if not self.open():
-                    self._logger.error("Error: Could not open connection")
-                    self._report_method(self,'failed')
+                    self._logger.error("Could not open connection")
+                    #self._report_method(self,'failed')
                     return False
                 
                 self._logger.info("Reconnection successful")
@@ -832,7 +876,7 @@ class HandlerManager():
         """
         if isinstance(handler, _DataHandler):
             if not handler.delete():
-                self._logger.error("Error: Could not delete handler")
+                self._logger.error("Could not delete DataHandler")
                 return False
             else:
                 self._handlers['data'][handler]['status'] = 'inactive'
@@ -841,7 +885,7 @@ class HandlerManager():
                     self._handlers['data'][handler]['streamhandler'].remove(stream)
         elif isinstance(handler, _StreamHandler):
             if not handler.delete():
-                self._logger.error("Error: Could not delete handler")
+                self._logger.error("Could not delete StreamHandler")
                 return False
             else:
                 self._handlers['stream'][handler]['status'] = 'inactive'
@@ -961,10 +1005,10 @@ class HandlerManager():
         name = 'DH_' + str(index)
         dh_logger = self._logger.getChild(name)
 
+        dh = _DataHandler(demo=self._demo, report = self._report_status, logger=dh_logger)
+
         self._handlers['data'][dh] = {'name': name, 'status': 'active', 'streamhandler': {}}
         self._connections += 1
-
-        dh = _DataHandler(demo=self._demo, report = self._report_status, logger=dh_logger)
 
         return dh
 
@@ -987,11 +1031,11 @@ class HandlerManager():
         sh_logger = self._logger.getChild(name)
 
         dh = self._get_DataHandler()
+        sh = _StreamHandler(dataHandler=dh, demo=self._demo, report = self._report_status, logger=sh_logger)
+
         self._handlers['stream'][sh] = {'name': name, 'status': 'active','datahandler': dh}
         self._handlers['data'][dh]['streamhandler'][sh] = None
         self._connections += 1
-
-        sh = _StreamHandler(dataHandler=dh, demo=self._demo, report = self._report_status, logger=sh_logger)
 
         return sh
 

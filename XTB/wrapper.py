@@ -17,7 +17,7 @@ class Wrapper(HandlerManager):
         else:
             self._logger=generate_logger(name='Wrp', path=os.path.join(os.getcwd(), "logs"))
 
-        self._logger.info("Initializing wrapper.")
+        self._logger.info("Initializing wrapper")
 
         self._utc_tz = pytz.utc
         self._cest_tz = pytz.timezone('Europe/Berlin')
@@ -26,15 +26,20 @@ class Wrapper(HandlerManager):
 
         self._running=dict()
 
-        self._logger.info("Wrapper initialized.")
+        self._logger.info("Wrapper initialized")
 
     def __del__(self):
         self.delete()
 
     def delete(self):
         self._logger.info("Deleting wrapper.")
-        super.delete()
+        super().delete()
         self._logger.info("Wrapper deleted.")
+
+    def getTickerPrices(self, symbol: str, minArrivalTimwe: int, maxLevel: int) -> dict:
+        sh=self.get_StreamHandler()
+
+        sh.streamData("getTickerPrices", symbol=symbol, minArrivalTime=minArrivalTimwe, maxLevel=maxLevel)
 
 
     def getSymbols(self) ->dict:

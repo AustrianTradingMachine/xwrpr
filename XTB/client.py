@@ -77,7 +77,7 @@ class Client():
             else:
                 raise ValueError("Error: unknown mode value")
         except Exception as e:
-            self._logger.error("Error in check method: %s" % str(e))
+            self._logger.error("In check method: %s" % str(e))
             return False
 
     def create(self):
@@ -166,7 +166,7 @@ class Client():
                 self._socket.settimeout(self._timeout)
                 self._socket.connect((self._sockaddr))
             except socket.error as error_msg:
-                self._logger.error("Socket Error: %s" % error_msg)
+                self._logger.error("Socket error: %s" % error_msg)
                 time.sleep(self._interval)
                 continue
             self._logger.info("Socket connected")
@@ -194,7 +194,7 @@ class Client():
                 if self.check('writable'):
                     send_msg += self._socket.send(msg[send_msg:send_msg + package_size])
                 else:
-                    self._logger.error("Error: connection to socket broken")
+                    self._logger.error("Connection to socket broken")
                     return False
             except Exception as e:
                 self._logger.error("Error sending message: %s" % str(e))
@@ -266,7 +266,7 @@ class Client():
                 self._logger.info("Socket closed")
                 return True
         else:
-            self._logger.info("Error: Socket is already closed")
+            self._logger.error("Socket is already closed")
             return True
         
     def get_timeout(self):

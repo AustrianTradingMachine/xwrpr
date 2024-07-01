@@ -20,6 +20,7 @@ th=XTBData.getTradingHours(symbols=['EURUSD'])
 
 print(th)
 
+XTBData.getTickerPrices(symbol='EURUSD', minArrivalTimwe=250, maxLevel=1)
+
 XTBData.delete()
 
-del XTBData
