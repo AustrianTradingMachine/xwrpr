@@ -600,7 +600,7 @@ class _StreamHandler(_GeneralHandler):
         self._start_ping()
         
         self._dh._register_stream_handler(self)
-        self._logger.info("StreamHandler registered")
+        self._logger.info("Registered at Datahandler")
 
         self._streams=dict()
 
@@ -633,7 +633,7 @@ class _StreamHandler(_GeneralHandler):
             self._logger.error("Could not close connection")
             
         self._dh._unregister_stream_handler(self)
-        self._logger.info("StreamHandler unregistered")
+        self._logger.info("Unregistered at DataHandler")
     
         self._logger.info("StreamHandler deleted")
         return True
@@ -805,8 +805,14 @@ class _StreamHandler(_GeneralHandler):
         if not isinstance(dataHandler, _DataHandler):
             raise ValueError("Error: DataHandler object required")
 
+        self._dh._unregister_stream_handler(self)
+        self._logger.info("Unregistered at DataHandler")
+        
         self._dh = dataHandler
         self._logger.info("DataHandler changed")
+
+        self._dh._register_stream_handler(self)
+        self._logger.info("Registered at Datahandler")
 
     def get_demo(self):
         return self._demo
