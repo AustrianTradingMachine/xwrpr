@@ -730,10 +730,9 @@ class _StreamHandler(_GeneralHandler):
         if not inThread:
             self._streams[index]['thread'].join()
             
-        self._ssid = self._dh._ssid
         command=self._streams[index]['command']
         arguments=self._streams[index]['arguments']
-        if not self._send_request(command='stop' + command, arguments=arguments):
+        if not self._send_request(command='stop' + command, arguments=arguments['symbol'] if arguments['symbol'] else None):
             self._logger.error("Failed to end stream")
         
         self._streams.pop(index)
