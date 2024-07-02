@@ -783,7 +783,7 @@ class _StreamHandler(_GeneralHandler):
         else:
             self._logger.info("Reconnection attempt for DataHandler is already in progress by another StreamHandler.")
 
-        # Damit alle anderen StreamHandler die den lock haben auch die chance haben sich zu reconnecten
+        # to give all StreamHandler, that rely on the same DataHandker, the chance to reconnect
         with self._dh._reconnect_lock:
             if not self.check('basic'):
                 self._logger.info("Retry connection")
