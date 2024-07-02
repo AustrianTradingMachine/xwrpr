@@ -10,15 +10,15 @@ print(XTB.API_VERSION)
 
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-version=XTBData.getVersion()
+#version=XTBData.getVersion()
 
-print('major:', version['major'])
-print('minor:', version['minor'])
-print('patch:', version['patch'])
+#print('major:', version['major'])
+#print('minor:', version['minor'])
+#print('patch:', version['patch'])
 
-th=XTBData.getTradingHours(symbols=['EURUSD'])
+#th=XTBData.getTradingHours(symbols=['EURUSD'])
 
-print(th)
+#print(th)
 
 XTBData.getCandles(symbol='EURUSD')
 
