@@ -667,7 +667,6 @@ class _StreamHandler(_GeneralHandler):
             self._logger.error("Got no StreamSessionId from Server")
             return False
 
-
         # gracefully stops ping if active
         # ping is not needed as long as stream is active
         if self._ping['ping']:
