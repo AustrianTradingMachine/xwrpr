@@ -165,15 +165,21 @@ class _GeneralHandler(Client):
                 # but thats not important because this is just the maximal needed interval and
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
-                    response = self._receive_request(command='ping', stream=ssid if not bool(ssid) else None)
-                    if not response:
-                        return False
-                    
-                    if response['status']:
-                        self._logger.info("Ping")
-                    else:
+                    if not self._request(command='ping', stream=ssid if not bool(ssid) else None)
                         self._logger.error("Ping failed")
                         return False
+
+                    if not ssid:
+                        response = self._receive()
+                        if not response:
+                            self._logger.error("Ping failed")
+                            return False
+                    
+                        if not response['status']:
+                            self._logger.error("Ping failed")
+                            return False
+
+                    self._logger.info("Ping")
                     
                     next_ping = 0
             time.sleep(check_interval)
