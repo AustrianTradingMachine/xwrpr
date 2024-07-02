@@ -691,7 +691,7 @@ class _StreamHandler(_GeneralHandler):
         
         return index
             
-    def _readStream(self,index: int):
+    def _readStream(self,index: int=False):
         """
         Read and process the streamed data for the specified request.
 
