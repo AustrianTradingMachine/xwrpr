@@ -23,7 +23,7 @@ XTB_API_SEND_INTERVAL=250 #min 200ms possible
 XTB_API_MAX_CONNECTIONS=50 #max 50 possible
 XTB_API_MAX_CONNECTION_FAILS=5
 XTB_API_MAX_SEND_DATA=960 # max size of data sent to server at once. 1024 possible
-XTB_API_MAX_RECIEVE_DATA=4096 # max size of data sent to server at once
+XTB_API_MAX_RECIEVE_DATA=4096 # max size of data received from server at once
 
 
 class _GeneralHandler(Client):
