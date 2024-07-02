@@ -712,20 +712,16 @@ class _StreamHandler(_GeneralHandler):
 
             command=self._streams[index]['command']
             pretty_command = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
-            if response['status']:
-                if not response['data']:
-                    self._logger.error("Status true but data not recieved")
-                    self.endStream(index,True)
-                    return False
-                print(response['data'])
-                self._logger.info(pretty_command +" recieved")
-                return response['data']
-            else:
-                self._logger.error(pretty_command+" not recieved")
-                self._logger.error(response['errorCode'])
-                self._logger.error(response['errorDescr'])
+  
+            if not response['data']:
+                self._logger.error("Status true but data not recieved")
                 self.endStream(index,True)
                 return False
+            
+            print(response['data'])
+            self._logger.info(pretty_command +" recieved")
+            return response['data']
+
                 
     def endStream(self, index: int, inThread: bool):
         """
