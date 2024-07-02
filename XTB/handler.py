@@ -358,10 +358,6 @@ class _DataHandler(_GeneralHandler):
             bool: True if the login was successful, False otherwise.
 
         """
-        if not self._ssid:
-            self._logger.error("Got no StreamSessionId from Server")
-            return False
-
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging in ...")
 
@@ -442,6 +438,10 @@ class _DataHandler(_GeneralHandler):
         Raises:
             RuntimeError: If no active socket is available.
         """
+        if not self._ssid:
+            self._logger.error("Got no StreamSessionId from Server")
+            return False
+
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Getting data ...")
 
@@ -749,11 +749,7 @@ class _StreamHandler(_GeneralHandler):
             
         command=self._streams[index]['command']
         arguments=self._streams[index]['arguments']
-        if arguments['symbol']:
-            arguments = arguments['symbol']
-        else:
-            arguments = None
-        if not self._send_request(command='stop' + command, arguments=arguments):
+        if not self._send_request(command='stop' + command, arguments=arguments['symbol'] if 'symbol' in arguments else None):
             self._logger.error("Failed to end stream")
         
         self._streams.pop(index)

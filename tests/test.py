@@ -20,7 +20,7 @@ th=XTBData.getTradingHours(symbols=['EURUSD'])
 
 print(th)
 
-XTBData.getBalance()
+XTBData.getCandles(symbol='EURUSD')
 
 
 time.sleep(5)

@@ -52,6 +52,18 @@ class Wrapper(HandlerManager):
             return False
 
         return response
+    
+    def getCandles(self, symbol) -> dict:
+        sh=self.get_StreamHandler()
+        if not sh:
+            self._logger("Could not provide data")
+            return False
+
+        response=sh.streamData("Candles", symbol=symbol)
+        if not response:
+            return False
+
+        return response
 
     def getSymbols(self) ->dict:
         dh=self.get_DataHandler()
