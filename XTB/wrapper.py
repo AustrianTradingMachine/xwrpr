@@ -41,7 +41,17 @@ class Wrapper(HandlerManager):
 
         sh.streamData("TickerPrices", symbol=symbol, minArrivalTime=minArrivalTimwe, maxLevel=maxLevel)
 
+    def getBalance(self) -> dict:
+        sh=self.get_StreamHandler()
+        if not sh:
+            self._logger("Could not provide data")
+            return False
 
+        response=sh.streamData("Balance")
+        if not response:
+            return False
+
+        return response
 
     def getSymbols(self) ->dict:
         dh=self.get_DataHandler()
@@ -53,6 +63,10 @@ class Wrapper(HandlerManager):
 
     def getVersion(self) -> dict:
         dh=self.get_DataHandler()
+        if not dh:
+            self._logger("Could not provide data")
+            return False
+
         response=dh.getData("Version")
         if not response:
             return False

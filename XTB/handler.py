@@ -3,6 +3,7 @@ import re
 import os
 import logging
 import time
+import configparser
 from math import floor
 from threading import Thread, Lock
 from XTB.client import Client
@@ -10,20 +11,22 @@ from XTB.utils import generate_logger
 from XTB import account
 
 
-# XTB API socket
-XTP_API_HOST='xapi.xtb.com'
-XTB_API_PORT_DEMO=5124
-XTB_API_PORT_DEMO_STREAM=5125
-XTB_API_PORT_REAL=5112
-XTB_API_PORT_REAL_STREAM=5113
+# read api configuration
+config = configparser.ConfigParser()
+config.read('XTB/api.cfg')
 
-# XTB API connection parameters
-XTB_API_SEND_TIMEOUT=900 #max 1000ms possible
-XTB_API_SEND_INTERVAL=250 #min 200ms possible
-XTB_API_MAX_CONNECTIONS=50 #max 50 possible
-XTB_API_MAX_CONNECTION_FAILS=5
-XTB_API_MAX_SEND_DATA=960 # max size of data sent to server at once. 1024 possible
-XTB_API_MAX_RECIEVE_DATA=4096 # max size of data received from server at once
+HOST=config.get('SOCKET','HOST')
+PORT_DEMO=config.getint('SOCKET','PORT_DEMO')
+PORT_DEMO_STREAM=config.getint('SOCKET','PORT_DEMO_STREAM')
+PORT_REAL=config.getint('SOCKET','PORT_REAL')
+PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
+
+SEND_TIMEOUT=config.getint('CONNECTION','SEND_TIMEOUT')
+SEND_INTERVAL=config.getint('CONNECTION','SEND_INTERVAL')
+MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
+MAX_CONNECTION_FAILS=config.getint('CONNECTION','MAX_CONNECTION_FAILS')
+MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
+MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
 
 
 class _GeneralHandler(Client):
@@ -55,11 +58,11 @@ class _GeneralHandler(Client):
         self._userid=userid
 
         self._encrypted=True
-        self._timeout=XTB_API_SEND_TIMEOUT/1000
-        self._interval=XTB_API_SEND_INTERVAL/1000
-        self._max_fails=XTB_API_MAX_CONNECTION_FAILS
-        self._bytes_out=XTB_API_MAX_SEND_DATA
-        self._bytes_in=XTB_API_MAX_RECIEVE_DATA
+        self._timeout=SEND_TIMEOUT/1000
+        self._interval=SEND_INTERVAL/1000
+        self._max_fails=MAX_CONNECTION_FAILS
+        self._bytes_out=MAX_SEND_DATA
+        self._bytes_in=MAX_RECIEVE_DATA
         self._decoder = json.JSONDecoder()
 
         self._ping=dict()
@@ -165,7 +168,7 @@ class _GeneralHandler(Client):
                 # but thats not important because this is just the maximal needed interval and
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
-                    if not self._request(command='ping', stream=ssid if not bool(ssid) else None)
+                    if not self._request(command='ping', stream=ssid if not bool(ssid) else None):
                         self._logger.error("Ping failed")
                         return False
 
@@ -296,12 +299,12 @@ class _DataHandler(_GeneralHandler):
 
         self._demo=demo
 
-        self._host=XTP_API_HOST
+        self._host=HOST
         if self._demo:
-            self._port=XTB_API_PORT_DEMO
+            self._port=PORT_DEMO
             self._userid=account.userid_demo
         else:
-            self._port=XTB_API_PORT_REAL
+            self._port=PORT_REAL
             self._userid=account.userid_real
 
         self._logger.info("Creating DataHandler ...")
@@ -355,6 +358,10 @@ class _DataHandler(_GeneralHandler):
             bool: True if the login was successful, False otherwise.
 
         """
+        if not self._ssid:
+            self._logger.error("Got no StreamSessionId from Server")
+            return False
+
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging in ...")
 
@@ -590,12 +597,12 @@ class _StreamHandler(_GeneralHandler):
 
         self._demo=demo
 
-        self._host=XTP_API_HOST
+        self._host=HOST
         if self._demo:
-            self._port=XTB_API_PORT_DEMO_STREAM
+            self._port=PORT_DEMO_STREAM
             self._userid=account.userid_demo
         else:
-            self._port=XTB_API_PORT_REAL_STREAM
+            self._port=PORT_REAL_STREAM
             self._userid=account.userid_real
 
         self._logger.info("Creating StreamHandler ...")
@@ -656,6 +663,11 @@ class _StreamHandler(_GeneralHandler):
             int: The index of the running stream.
 
         """
+        if not self._dh._ssid:
+            self._logger.error("Got no StreamSessionId from Server")
+            return False
+
+
         # gracefully stops ping if active
         # ping is not needed as long as stream is active
         if self._ping['ping']:
@@ -706,7 +718,7 @@ class _StreamHandler(_GeneralHandler):
                     self._logger.error("Status true but data not recieved")
                     self.endStream(index,True)
                     return False
-
+                print(response['data'])
                 self._logger.info(pretty_command +" recieved")
                 return response['data']
             else:
@@ -738,7 +750,11 @@ class _StreamHandler(_GeneralHandler):
             
         command=self._streams[index]['command']
         arguments=self._streams[index]['arguments']
-        if not self._send_request(command='stop' + command, arguments=arguments['symbol'] if arguments['symbol'] else None):
+        if arguments['symbol']:
+            arguments = arguments['symbol']
+        else:
+            arguments = None
+        if not self._send_request(command='stop' + command, arguments=arguments):
             self._logger.error("Failed to end stream")
         
         self._streams.pop(index)
@@ -810,7 +826,7 @@ class _StreamHandler(_GeneralHandler):
         if not isinstance(dataHandler, _DataHandler):
             raise ValueError("Error: DataHandler object required")
 
-        if len(self._streams) > 0
+        if len(self._streams) > 0:
             self._logger.error("Cannot change DataHandler. Streams still active")
             return False
 
@@ -860,8 +876,8 @@ class HandlerManager():
             self._logger=generate_logger(name='HandlerManager', path=os.path.join(os.getcwd(), "logs"))
 
         self._handlers = {'data': {}, 'stream': {}}
-        self._max_streams=floor(1000/XTB_API_SEND_INTERVAL)
-        self._max_connections=XTB_API_MAX_CONNECTIONS
+        self._max_streams=floor(1000/SEND_INTERVAL)
+        self._max_connections=MAX_CONNECTIONS
         self._connections=0
 
     def __del__(self):
