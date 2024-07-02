@@ -141,6 +141,11 @@ class _GeneralHandler(Client):
         """
         self._logger.info("Starting ping ...")
 
+        # in case ping is already started
+        if 'ping' in self._ping:
+            if self._ping['ping']:
+                self._stop_ping()
+
         self._ping['ping'] = True
         self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
         self._ping['thread'].start()
@@ -492,6 +497,7 @@ class _DataHandler(_GeneralHandler):
                     return False
             
                 self._logger.info("Reconnection successful")
+                self._start_ping()
             else:
                 self._logger.info("Data connection is already active")
 
@@ -691,7 +697,7 @@ class _StreamHandler(_GeneralHandler):
         
         return index
             
-    def _readStream(self,index: int=False):
+    def _readStream(self,index: int):
         """
         Read and process the streamed data for the specified request.
 
@@ -723,7 +729,7 @@ class _StreamHandler(_GeneralHandler):
             return response['data']
 
                 
-    def endStream(self, index: int, inThread: bool):
+    def endStream(self, index: int, inThread: bool=False):
         """
         Stops the stream for the specified request.
 
@@ -745,7 +751,7 @@ class _StreamHandler(_GeneralHandler):
             
         command=self._streams[index]['command']
         arguments=self._streams[index]['arguments']
-        if not self._send_request(command='stop' + command, arguments=arguments['symbol'] if 'symbol' in arguments else None):
+        if not self._send_request(command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
             self._logger.error("Failed to end stream")
         
         self._streams.pop(index)
@@ -783,6 +789,7 @@ class _StreamHandler(_GeneralHandler):
                     return False
             
                 self._logger.info("Reconnection for DataHandler successful")
+                self._dh._start_ping
             else:
                 self._logger.info("DataHandler connection is already active")
 
@@ -805,6 +812,7 @@ class _StreamHandler(_GeneralHandler):
                     return False
                 
                 self._logger.info("Reconnection successful")
+                self._start_ping()
             else:
                 self._logger.info("Stream connection is already active")
 
