@@ -163,8 +163,9 @@ class _GeneralHandler(Client):
         Returns:
             bool: True if the ping request was successful, False otherwise.
         """
-        next_ping = 0
+        # sends ping at first, because all connections must send a message in first second
         ping_interval = 60*9.5
+        next_ping=ping_interval
         check_interval=self._interval/10
         while self._ping['ping']:
             start_time = time.time()
