@@ -439,9 +439,13 @@ class _DataHandler(_GeneralHandler):
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Getting data ...")
 
-            response = self._receive(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
-            response = self._request()
+            if not self._request(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None):
+                self._logger.error("Request for data not possible")
+                return False 
+                
+            response = self._receive()
             if not response:
+                self._logger.error("No data received")
                 return False
             
             pretty_request = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)
@@ -668,7 +672,9 @@ class _StreamHandler(_GeneralHandler):
 
         self._ssid = self._dh._ssid
 
-        self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None)
+        if not self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
+            self._logger.error("Request for stream not possible")
+            return False
 
         index = len(self._streams)
         self._streams[index] = dict()
