@@ -790,7 +790,7 @@ class _StreamHandler(_GeneralHandler):
                     return False
             
                 self._logger.info("Reconnection for DataHandler successful")
-                self._dh._start_ping
+                self._dh._start_ping()
             else:
                 self._logger.info("DataHandler connection is already active")
 
@@ -813,7 +813,7 @@ class _StreamHandler(_GeneralHandler):
                     return False
                 
                 self._logger.info("Reconnection successful")
-                self._start_ping()
+                self._start_ping(self._dh._ssid)
             else:
                 self._logger.info("Stream connection is already active")
 
