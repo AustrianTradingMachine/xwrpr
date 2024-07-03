@@ -177,19 +177,19 @@ class _GeneralHandler(Client):
                 with self._ping_lock:
                     if not self._request(command='ping', stream=ssid if not bool(ssid) else None):
                         self._logger.error("Ping failed")
-                        self._stop_ping(True)
+                        self._stop_ping(inThread=True)
                         return False
 
                     if not ssid:
                         response = self._receive()
                         if not response:
                             self._logger.error("Ping failed")
-                            self._stop_ping(True)
+                            self._stop_ping(inThread=True)
                             return False
                     
                         if not response['status']:
                             self._logger.error("Ping failed")
-                            self._stop_ping(True)
+                            self._stop_ping(inThread=True)
                             return False
 
                     self._logger.info("Ping")
@@ -407,10 +407,10 @@ class _DataHandler(_GeneralHandler):
 
             if response['status']:
                 self._logger.info("Logged out successfully")
-                # no false return function must run through
 
                 if not self.close():
                     self._logger.error("Could not close connection")
+                    # no false return function must run through
                 
                 self._ssid=None
             else:
@@ -707,7 +707,7 @@ class _StreamHandler(_GeneralHandler):
             response=self._receive()
             if not response:
                 self._logger.error("Failed to read stream")
-                self.endStream(index,True)
+                self.endStream(index,inThread=True)
                 return False
 
             command=self._streams[index]['command']
@@ -715,7 +715,7 @@ class _StreamHandler(_GeneralHandler):
   
             if not response['data']:
                 self._logger.error("Status true but data not recieved")
-                self.endStream(index,True)
+                self.endStream(index,inThread=True)
                 return False
             
             print(response['data'])
@@ -901,25 +901,24 @@ class HandlerManager():
             ValueError: If the handler type is invalid.
         """
         if isinstance(handler, _DataHandler):
-            if not handler.delete():
-                self._logger.error("Could not delete DataHandler")
-                return False
-            else:
-                self._handlers['data'][handler]['status'] = 'inactive'
+            handler.delete()
+
+            self._logger.info("Unegister DataHandler")
+            self._handlers['data'][handler]['status'] = 'inactive'
+            self._connections -= 1
+            for stream in list(self._handlers['data'][handler]['streamhandler']):
+                self._logger.info("Unregister StreamHandler from Datahandler")
+                self._handlers['stream'][stream]['status'] = 'inactive'
+                self._handlers['data'][handler]['streamhandler'].pop(stream)
                 self._connections -= 1
-                for stream in list(self._handlers['data'][handler]['streamhandler']):
-                    self._handlers['stream'][stream]['status'] = 'inactive'
-                    self._handlers['data'][handler]['streamhandler'].pop(stream)
-                    self._connections -= 1
         elif isinstance(handler, _StreamHandler):
-            if not handler.delete():
-                self._logger.error("Could not delete StreamHandler")
-                return False
-            else:
-                self._handlers['stream'][handler]['status'] = 'inactive'
-                parent = self._get_parentHandler(handler)
-                self._handlers['data'][parent]['streamhandler'].pop(handler)
-                self._connections -= 1
+            handler.delete():
+
+            self._logger.info("Unregister StreamHandler")
+            self._handlers['stream'][handler]['status'] = 'inactive'
+            parent = self._get_parentHandler(handler)
+            self._handlers['data'][parent]['streamhandler'].pop(handler)
+            self._connections -= 1
         else:
             raise ValueError("Error: Invalid handler type")
         
@@ -1036,6 +1035,7 @@ class HandlerManager():
 
         dh = _DataHandler(demo=self._demo, report = self._report_status, logger=dh_logger)
 
+        self._logger.info("Register DataHandler")
         self._handlers['data'][dh] = {'name': name, 'status': 'active', 'streamhandler': {}}
         self._connections += 1
 
@@ -1062,6 +1062,7 @@ class HandlerManager():
         dh = self.get_DataHandler()
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, report = self._report_status, logger=sh_logger)
 
+        self._logger.info("Register StreamHandler")
         self._handlers['stream'][sh] = {'name': name, 'status': 'active','datahandler': dh}
         self._handlers['data'][dh]['streamhandler'][sh] = None
         self._connections += 1
