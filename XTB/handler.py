@@ -392,7 +392,7 @@ class _DataHandler(_GeneralHandler):
         """
         if not self._ssid:
             self._logger.error("Already logged out")
-            return True
+            # no false return function must run through
         
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging out ...")
