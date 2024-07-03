@@ -206,6 +206,7 @@ class _GeneralHandler(Client):
 
         if not 'ping' in self._ping:
             self._logger.error("Ping never started")
+            return False
             
         if not self._ping['ping']:
             self._logger.error("Ping already stopped")
