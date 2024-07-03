@@ -500,9 +500,9 @@ class _DataHandler(_GeneralHandler):
 
         return True
     
-    def _register_stream_handler(self, handler):
+    def _attach_stream_handler(self, handler):
         """
-        Register a ŚtreamHandler with the DataHandler.
+        Attach a StreamHandler at the DataHandler.
 
         Args:
             handler (StreamHandler): The StreamHandler to register.
@@ -512,13 +512,13 @@ class _DataHandler(_GeneralHandler):
         """
         if handler not in self._stream_handlers:
             self._stream_handlers.append(handler)
-            self._logger.info("StreamHandler registered")
+            self._logger.info("StreamHandler attached")
         else:
-            self._logger.error("StreamHandler already registered")
+            self._logger.error("StreamHandler already attached")
 
-    def _deregister_stream_handler(self, handler):
+    def _detach_stream_handler(self, handler):
         """
-        Deregister a StreamHandler from the DataHandler.
+        Detach a StreamHandler from the DataHandler.
 
         Args:
             handler (StreamHandler): The StreamHandler to unregister.
@@ -528,7 +528,7 @@ class _DataHandler(_GeneralHandler):
         """
         if handler in self._stream_handlers:
             self._stream_handlers.remove(handler)
-            self._logger.info("StreamHandler deregistered")
+            self._logger.info("StreamHandler detached")
         else:
             self._logger.error("StreamHandler not found")
 
@@ -549,7 +549,7 @@ class _DataHandler(_GeneralHandler):
             if not handler.delete():
                 self._logger.error("Could not close StreamHandler")
                 # no false return function must run through
-            self._deregister_stream_handler(handler)
+            self._detach_stream_handler(handler)
         
         return True
 
@@ -614,7 +614,7 @@ class _StreamHandler(_GeneralHandler):
         self.open()
         self._start_ping()
         
-        self._dh._register_stream_handler(self)
+        self._dh._attach_stream_handler(self)
         self._logger.info("Registered at DataHandler")
 
         self._streams=dict()
@@ -644,7 +644,7 @@ class _StreamHandler(_GeneralHandler):
         self.close()
         # no false return function must run through
             
-        self._dh._deregister_stream_handler(self)
+        self._dh._detach_stream_handler(self)
         self._logger.info("Deregistered at DataHandler")
     
         self._logger.info("StreamHandler deleted")
@@ -826,14 +826,14 @@ class _StreamHandler(_GeneralHandler):
             self._logger.error("Cannot change DataHandler. Streams still active")
             return False
 
-        self._dh._deregister_stream_handler(self)
-        self._logger.info("Deregistered at DataHandler")
+        self._dh._detach_stream_handler(self)
+        self._logger.info("Detached from DataHandler")
         
         self._dh = dataHandler
         self._logger.info("DataHandler changed")
 
         self._dh._register_stream_handler(self)
-        self._logger.info("Registered at DataHandler")
+        self._logger.info("Attached at DataHandler")
 
     def get_demo(self):
         return self._demo
