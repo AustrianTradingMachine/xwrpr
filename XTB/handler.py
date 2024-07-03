@@ -37,6 +37,7 @@ class _GeneralHandler(Client):
         host (str): The host address of the XTB API.
         port (int): The port number of the XTB API.
         userid (str): The user ID for authentication.
+        reconnect (cal) : Method of the parent class to reconnect
         logger: The logger object for logging messages.
     """
     def __init__(self, host: str=None, port: int=None, userid: str=None, reconnect=None, logger=None):
@@ -79,6 +80,7 @@ class _GeneralHandler(Client):
             stream (str): The stream session ID.
             arguments (dict): Additional arguments for the command.
             tag (str): A custom tag for the request.
+            pretty (bool): If true JSON output is printed in human-readable format.
 
         Returns:
             bool: True if the request was sent successfully, False otherwise.
@@ -280,6 +282,7 @@ class _DataHandler(_GeneralHandler):
 
     Args:
         demo (bool, optional): Flag indicating whether to use the demo mode. Default is True.
+        report (cal): Methof of the parent class to call in case Datahandler fails.
         logger (object, optional): Logger object for logging messages.
 
     """
@@ -384,7 +387,7 @@ class _DataHandler(_GeneralHandler):
         Log out from the XTB API.
 
         Returns:
-            bool: True
+            bool: True if logout was successfull
 
         """
         if not self._ssid:
@@ -431,9 +434,7 @@ class _DataHandler(_GeneralHandler):
 
         Returns:
             bool or list: The retrieved data if successful, False otherwise.
-
-        Raises:
-            RuntimeError: If no active socket is available.
+            
         """
         if not self._ssid:
             self._logger.error("Got no StreamSessionId from Server")
@@ -505,7 +506,7 @@ class _DataHandler(_GeneralHandler):
         Attach a StreamHandler at the DataHandler.
 
         Args:
-            handler (StreamHandler): The StreamHandler to register.
+            handler (StreamHandler): The StreamHandler to attach.
 
         Returns:
             None
@@ -521,7 +522,7 @@ class _DataHandler(_GeneralHandler):
         Detach a StreamHandler from the DataHandler.
 
         Args:
-            handler (StreamHandler): The StreamHandler to unregister.
+            handler (StreamHandler): The StreamHandler to detach.
 
         Returns:
             None
@@ -576,6 +577,7 @@ class _StreamHandler(_GeneralHandler):
     Args:
         dataHandler (DataHandler): The DataHandler object.
         demo (bool, optional): Flag indicating whether to use demo mode. Defaults to True.
+        report (cal): Methof of the parent class to call in case Streamhandler fails.
         logger (Logger, optional): The logger object. Defaults to None.
     """
     def __init__(self, dataHandler=None, demo: bool=True, report=None, logger = None):
@@ -615,7 +617,7 @@ class _StreamHandler(_GeneralHandler):
         self._start_ping()
         
         self._dh._attach_stream_handler(self)
-        self._logger.info("Registered at DataHandler")
+        self._logger.info("Attached at DataHandler")
 
         self._streams=dict()
 
@@ -632,7 +634,7 @@ class _StreamHandler(_GeneralHandler):
         It performs the necessary cleanup operations before the object is deleted.
 
         Returns:
-            bool: True if the cleanup operations were successful, False otherwise.
+            bool: True if the cleanup operations were successful.
         """
         self._logger.info("Deleting StreamHandler ...")
 
