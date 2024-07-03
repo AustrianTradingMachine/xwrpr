@@ -647,7 +647,7 @@ class _StreamHandler(_GeneralHandler):
         # no false return function must run through
             
         self._dh._detach_stream_handler(self)
-        self._logger.info("Deregistered at DataHandler")
+        self._logger.info("Detached from DataHandler")
     
         self._logger.info("StreamHandler deleted")
         return True
@@ -834,7 +834,7 @@ class _StreamHandler(_GeneralHandler):
         self._dh = dataHandler
         self._logger.info("DataHandler changed")
 
-        self._dh._register_stream_handler(self)
+        self._dh._detach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
 
     def get_demo(self):
@@ -906,18 +906,18 @@ class HandlerManager():
         if isinstance(handler, _DataHandler):
             handler.delete()
 
-            self._logger.info("Unegister DataHandler")
+            self._logger.info("Deegister DataHandler")
             self._handlers['data'][handler]['status'] = 'inactive'
             self._connections -= 1
             for stream in list(self._handlers['data'][handler]['streamhandler']):
-                self._logger.info("Unregister StreamHandler from Datahandler")
+                self._logger.info(Deregister StreamHandler from Datahandler")
                 self._handlers['stream'][stream]['status'] = 'inactive'
                 self._handlers['data'][handler]['streamhandler'].pop(stream)
                 self._connections -= 1
         elif isinstance(handler, _StreamHandler):
             handler.delete():
 
-            self._logger.info("Unregister StreamHandler")
+            self._logger.info("Deregister StreamHandler")
             self._handlers['stream'][handler]['status'] = 'inactive'
             parent = self._get_parentHandler(handler)
             self._handlers['data'][parent]['streamhandler'].pop(handler)
