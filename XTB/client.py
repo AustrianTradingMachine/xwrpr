@@ -260,7 +260,8 @@ class Client():
                 self._logger.info("Connections closed")
             except Exception as e:
                 self._logger.error("Error shutting down socket: %s" % str(e))
-                return False
+                # no return False. method must run trough
+                return True
             finally:
                 self._socket.close()
                 self._logger.info("Socket closed")
