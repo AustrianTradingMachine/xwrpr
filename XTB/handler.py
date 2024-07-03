@@ -745,6 +745,7 @@ class _StreamHandler(_GeneralHandler):
         if not self._streams[index]['stream']:
             self._logger.error("Stream already ended")
         else:
+            # in case loop still runs
             self._streams[index]['stream'] = False
 
         # be sure join is not called in Thread target function
