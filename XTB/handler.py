@@ -742,8 +742,9 @@ class _StreamHandler(_GeneralHandler):
         if not self._streams[index]['stream']:
             self._logger.error("Stream already ended")
         else:
-            self._streams[index]['stream']=False
-            
+            self._streams[index]['stream'] = False
+
+        # be sure join is not called in Thread target function
         if not inThread:
             self._streams[index]['thread'].join()
             
