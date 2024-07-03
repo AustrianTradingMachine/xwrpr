@@ -204,6 +204,9 @@ class _GeneralHandler(Client):
         """
         self._logger.info("Stopping ping ...")
 
+        if not self._ping['ping']:
+            self._logger.error("Ping already stopped")
+
         self._ping['ping'] = False
         self._ping['thread'].join()
 
@@ -340,17 +343,11 @@ class _DataHandler(_GeneralHandler):
         if not self._close_stream_handlers():
             self._logger.error("Could not close all StreamHandlers")
         
-        if self._ping['ping']:
-            self._stop_ping()
-        else:
-            self._logger.error("Ping already stopped")
+        self._stop_ping()
 
-        if self._ssid:
-            if not self._logout():
-                self._logger.error("Could not log out")
-        else:
-            self._logger.error("Already logged out")
-
+        if not self._logout():
+            self._logger.error("Could not log out")
+            
         self._logger.info("DataHandler deleted")
         return True
             
@@ -399,6 +396,10 @@ class _DataHandler(_GeneralHandler):
             bool: True if the logout was successful, False otherwise.
 
         """
+        if not self._ssid:
+            self._logger.error("Already logged out")
+            return True
+        
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging out ...")
 
@@ -641,10 +642,7 @@ class _StreamHandler(_GeneralHandler):
         for index in list(self._streams):
             self.endStream(index)
 
-        if self._ping['ping']:
-            self._stop_ping()
-        else:
-            self._logger.error("Ping already stopped")
+        self._stop_ping()
 
         if not self.close():
             self._logger.error("Could not close connection")
