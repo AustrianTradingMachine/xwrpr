@@ -14,6 +14,7 @@ class Client():
         host (str): The host to connect to.
         port (int): The port to connect to.
         encrypted (bool): Indicates whether the socket connection should be encrypted.
+        blocking (bool): Indicates whether the socket connection should be blocking.
         timeout (float): The timeout value for socket operations.
         interval (float): The interval between socket operations.
         max_fails (int): The maximum number of connection attempts.
@@ -22,7 +23,7 @@ class Client():
         stream (bool): Indicates whether the socket connection is a stream connection.
         logger: The logger object for logging messages.
     """
-    def __init__(self, host: str=None, port: int=None,  encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
+    def __init__(self, host: str=None, port: int=None,  encrypted: bool=False, blocking: bool=True, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -34,6 +35,7 @@ class Client():
         self._host=host
         self._port=port
         self._encrypted=encrypted
+        self._blocking=blocking
         self._timeout=timeout
         self._used_addresses=[]
 
@@ -139,7 +141,7 @@ class Client():
                 self._logger.info("Socket wrapped")
 
             # stops the socket from blocking when receive or send is called
-            self._socket.setblocking(False)
+            self._socket.setblocking(self._blocking)
 
             # safe used address
             self._used_addresses.append(self._sockaddr)
@@ -165,7 +167,7 @@ class Client():
                 
         for _ in range(self._max_fails):
             try:
-                self._socket.settimeout(self._timeout)
+                self._socket.settimeout(None)
                 self._socket.connect((self._sockaddr))
             except socket.error as error_msg:
                 self._logger.error("Socket error: %s" % error_msg)
@@ -273,6 +275,13 @@ class Client():
             self._logger.error("Socket is already closed")
             return True
         
+    def get_blocking(self):
+        return self._blocking
+    
+    def set_blocking(self, blocking):
+        self._blocking = blocking
+        self._socket.setblocking(blocking)
+
     def get_timeout(self):
         return self._timeout
     
@@ -322,7 +331,7 @@ class Client():
     def set_bytes_in(self, bytes_in):
         self._bytes_in = bytes_in
 
-
+    blocking = property(get_blocking, set_blocking, doc='Get/set the blocking value')
     timeout = property(get_timeout, set_timeout, doc='Get/set the socket timeout')
     host = property(get_host, set_host, doc='read only property socket host')
     port = property(get_port, set_port, doc='read only property socket port')

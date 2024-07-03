@@ -21,7 +21,6 @@ PORT_DEMO_STREAM=config.getint('SOCKET','PORT_DEMO_STREAM')
 PORT_REAL=config.getint('SOCKET','PORT_REAL')
 PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
 
-SEND_TIMEOUT=config.getint('CONNECTION','SEND_TIMEOUT')
 SEND_INTERVAL=config.getint('CONNECTION','SEND_INTERVAL')
 MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
 MAX_CONNECTION_FAILS=config.getint('CONNECTION','MAX_CONNECTION_FAILS')
@@ -61,7 +60,6 @@ class _GeneralHandler(Client):
         self._stream = stream
 
         self._encrypted=True
-        self._timeout=SEND_TIMEOUT/1000
         self._interval=SEND_INTERVAL/1000
         self._max_fails=MAX_CONNECTION_FAILS
         self._bytes_out=MAX_SEND_DATA
@@ -71,7 +69,7 @@ class _GeneralHandler(Client):
         self._ping=dict()
         self._ping_lock = Lock()
 
-        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
+        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, blocking=True, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
     
     def _send_request(self,command, stream=None, arguments=None, tag=None, pretty=None):
         """
