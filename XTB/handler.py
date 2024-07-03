@@ -516,9 +516,9 @@ class _DataHandler(_GeneralHandler):
         else:
             self._logger.error("StreamHandler already registered")
 
-    def _unregister_stream_handler(self, handler):
+    def _deregister_stream_handler(self, handler):
         """
-        Unregister a StreamHandler from the DataHandler.
+        Deregister a StreamHandler from the DataHandler.
 
         Args:
             handler (StreamHandler): The StreamHandler to unregister.
@@ -528,7 +528,7 @@ class _DataHandler(_GeneralHandler):
         """
         if handler in self._stream_handlers:
             self._stream_handlers.remove(handler)
-            self._logger.info("StreamHandler unregistered")
+            self._logger.info("StreamHandler deregistered")
         else:
             self._logger.error("StreamHandler not found")
 
@@ -549,6 +549,7 @@ class _DataHandler(_GeneralHandler):
             if not handler.delete():
                 self._logger.error("Could not close StreamHandler")
                 # no false return function must run through
+            self._deregister_stream_handler(handler)
         
         return True
 
@@ -643,8 +644,8 @@ class _StreamHandler(_GeneralHandler):
         self.close()
         # no false return function must run through
             
-        self._dh._unregister_stream_handler(self)
-        self._logger.info("Unregistered at DataHandler")
+        self._dh._deregister_stream_handler(self)
+        self._logger.info("Deregistered at DataHandler")
     
         self._logger.info("StreamHandler deleted")
         return True
@@ -825,8 +826,8 @@ class _StreamHandler(_GeneralHandler):
             self._logger.error("Cannot change DataHandler. Streams still active")
             return False
 
-        self._dh._unregister_stream_handler(self)
-        self._logger.info("Unregistered at DataHandler")
+        self._dh._deregister_stream_handler(self)
+        self._logger.info("Deregistered at DataHandler")
         
         self._dh = dataHandler
         self._logger.info("DataHandler changed")
