@@ -906,11 +906,11 @@ class HandlerManager():
         if isinstance(handler, _DataHandler):
             handler.delete()
 
-            self._logger.info("Deegister DataHandler")
+            self._logger.info("Deregister DataHandler")
             self._handlers['data'][handler]['status'] = 'inactive'
             self._connections -= 1
             for stream in list(self._handlers['data'][handler]['streamhandler']):
-                self._logger.info(Deregister StreamHandler from Datahandler")
+                self._logger.info("Deregister StreamHandler from Datahandler")
                 self._handlers['stream'][stream]['status'] = 'inactive'
                 self._handlers['data'][handler]['streamhandler'].pop(stream)
                 self._connections -= 1
