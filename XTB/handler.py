@@ -222,7 +222,6 @@ class _GeneralHandler(Client):
             bool or dict: The response data if successful, False otherwise.
 
         """
-
         self._request(**kwargs)
         response=self._receive()
         
@@ -288,7 +287,6 @@ class _DataHandler(_GeneralHandler):
         logger (object, optional): Logger object for logging messages.
 
     """
-
     def __init__(self, demo: bool=True, report=None, logger = None):
         if logger:
             if not isinstance(logger, logging.Logger):
@@ -582,7 +580,6 @@ class _StreamHandler(_GeneralHandler):
         demo (bool, optional): Flag indicating whether to use demo mode. Defaults to True.
         logger (Logger, optional): The logger object. Defaults to None.
     """
-
     def __init__(self, dataHandler=None, demo: bool=True, report=None, logger = None):
         if logger:
             if not isinstance(logger, logging.Logger):
@@ -711,7 +708,7 @@ class _StreamHandler(_GeneralHandler):
         while self._streams[index]['stream']:
             self._logger.info("Streaming Data ...")
 
-            response=self._receive_response()
+            response=self._receive()
             if not response:
                 self._logger.error("Failed to read stream")
                 self.endStream(index,True)
@@ -744,8 +741,6 @@ class _StreamHandler(_GeneralHandler):
 
         if not self._streams[index]['stream']:
             self._logger.error("Stream already ended")
-        else:
-            self._streams[index]['stream'] = False
 
         if not inThread:
             self._streams[index]['thread'].join()
