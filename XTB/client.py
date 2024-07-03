@@ -19,9 +19,10 @@ class Client():
         max_fails (int): The maximum number of connection attempts.
         bytes_out (int): The maximum number of bytes to send in each message.
         bytes_in (int): The maximum number of bytes to receive in each message.
+        stream (bool): Indicates whether the socket connection is a stream connection.
         logger: The logger object for logging messages.
     """
-    def __init__(self, host: str=None, port: int=None,  encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, logger=None):
+    def __init__(self, host: str=None, port: int=None,  encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -42,6 +43,7 @@ class Client():
         self._max_fails=max_fails
         self._bytes_out=bytes_out
         self._bytes_in=bytes_in
+        self._stream=stream
 
     def check(self, mode: str=None):
         """
@@ -231,13 +233,15 @@ class Client():
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))
                 return False
-                
-            if len(msg) <= 0:
-                break
             
-            self._logger.info("receiving ...")
-            full_msg += msg.decode("utf-8")
+            if len(msg) > 0:
+                full_msg += msg.decode("utf-8")
             time.sleep(self._interval)
+
+            if self._stream and len(msg) > 0:
+                break
+            elif not self._stream and len(msg) <= 0:
+                break
     
         self._logger.info("Message received")
         return full_msg

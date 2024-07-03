@@ -37,10 +37,11 @@ class _GeneralHandler(Client):
         host (str): The host address of the XTB API.
         port (int): The port number of the XTB API.
         userid (str): The user ID for authentication.
-        reconnect (cal) : Method of the parent class to reconnect
+        reconnect (callable): The reconnection method to call in case of a connection failure.
+        stream (bool): Flag indicating whether to use the streaming API.
         logger: The logger object for logging messages.
     """
-    def __init__(self, host: str=None, port: int=None, userid: str=None, reconnect=None, logger=None):
+    def __init__(self, host: str=None, port: int=None, userid: str=None, reconnect=None, stream: bool = False, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -57,6 +58,7 @@ class _GeneralHandler(Client):
         self._host=host
         self._port=port
         self._userid=userid
+        self._stream = stream
 
         self._encrypted=True
         self._timeout=SEND_TIMEOUT/1000
@@ -69,7 +71,7 @@ class _GeneralHandler(Client):
         self._ping=dict()
         self._ping_lock = Lock()
 
-        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, logger=self._logger)
+        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=self._timeout, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
     
     def _send_request(self,command, stream=None, arguments=None, tag=None, pretty=None):
         """
@@ -285,7 +287,7 @@ class _DataHandler(_GeneralHandler):
 
     Args:
         demo (bool, optional): Flag indicating whether to use the demo mode. Default is True.
-        report (cal): Methof of the parent class to call in case Datahandler fails.
+        report (callable): Method of the parent class to call in case DataHandler fails.
         logger (object, optional): Logger object for logging messages.
 
     """
@@ -315,7 +317,7 @@ class _DataHandler(_GeneralHandler):
 
         self._logger.info("Creating DataHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, stream = False, logger=self._logger)
     
         self._ssid=None
         self._login()
@@ -575,7 +577,7 @@ class _StreamHandler(_GeneralHandler):
     Args:
         dataHandler (DataHandler): The DataHandler object.
         demo (bool, optional): Flag indicating whether to use demo mode. Defaults to True.
-        report (cal): Methof of the parent class to call in case Streamhandler fails.
+        report (callable): Method of the parent class to call in case StreamHandler fails.
         logger (Logger, optional): The logger object. Defaults to None.
     """
     def __init__(self, dataHandler=None, demo: bool=True, report=None, logger = None):
@@ -611,7 +613,7 @@ class _StreamHandler(_GeneralHandler):
 
         self._logger.info("Creating StreamHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, stream = True, logger=self._logger)
 
         self.open()
         self._start_ping(ssid = self._dh._ssid)
