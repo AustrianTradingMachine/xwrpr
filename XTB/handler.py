@@ -906,9 +906,11 @@ class HandlerManager():
                 return False
             else:
                 self._handlers['data'][handler]['status'] = 'inactive'
+                self._connections -= 1
                 for stream in list(self._handlers['data'][handler]['streamhandler']):
                     self._handlers['stream'][stream]['status'] = 'inactive'
                     self._handlers['data'][handler]['streamhandler'].pop(stream)
+                    self._connections -= 1
         elif isinstance(handler, _StreamHandler):
             if not handler.delete():
                 self._logger.error("Could not delete StreamHandler")
@@ -916,7 +918,8 @@ class HandlerManager():
             else:
                 self._handlers['stream'][handler]['status'] = 'inactive'
                 parent = self._get_parentHandler(handler)
-                self._handlers['data'][parent]['streamhandler'].remove(handler)
+                self._handlers['data'][parent]['streamhandler'].pop(handler)
+                self._connections -= 1
         else:
             raise ValueError("Error: Invalid handler type")
         
