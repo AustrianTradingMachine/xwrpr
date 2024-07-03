@@ -142,6 +142,7 @@ class _GeneralHandler(Client):
         self._logger.info("Starting ping ...")
 
         # in case ping is already started
+        # but failed
         if 'ping' in self._ping:
             if self._ping['ping']:
                 self._stop_ping()
