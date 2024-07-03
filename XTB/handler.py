@@ -218,23 +218,7 @@ class _GeneralHandler(Client):
         self._logger.info("Ping stopped")
 
         return True
-
-    def _receive_request(self, **kwargs):
-        """
-        Send a request and receive a response.
-
-        Args:
-            **kwargs: Additional arguments for the request.
-
-        Returns:
-            bool or dict: The response data if successful, False otherwise.
-
-        """
-        self._request(**kwargs)
-        response=self._receive()
-        
-        return response
-    
+ 
     def _request(self, **kwargs):
         """
         Send a request to the XTB API.
@@ -455,7 +439,8 @@ class _DataHandler(_GeneralHandler):
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Getting data ...")
 
-            response = self._receive_request(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
+            response = self._receive(command='get'+command,arguments={'arguments': kwargs} if bool(kwargs) else None)
+            response = self._request()
             if not response:
                 return False
             
