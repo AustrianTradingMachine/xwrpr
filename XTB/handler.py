@@ -177,16 +177,19 @@ class _GeneralHandler(Client):
                 with self._ping_lock:
                     if not self._request(command='ping', stream=ssid if not bool(ssid) else None):
                         self._logger.error("Ping failed")
+                        self._stop_ping(True)
                         return False
 
                     if not ssid:
                         response = self._receive()
                         if not response:
                             self._logger.error("Ping failed")
+                            self._stop_ping(True)
                             return False
                     
                         if not response['status']:
                             self._logger.error("Ping failed")
+                            self._stop_ping(True)
                             return False
 
                     self._logger.info("Ping")
@@ -195,7 +198,7 @@ class _GeneralHandler(Client):
             time.sleep(check_interval)
             next_ping += time.time() - start_time
 
-    def _stop_ping(self):
+    def _stop_ping(self, inThread: bool=False):
         """
         Stop the ping request.
 
@@ -213,7 +216,8 @@ class _GeneralHandler(Client):
             self._logger.error("Ping already stopped")
 
         self._ping['ping'] = False
-        self._ping['thread'].join()
+        if not inThread:
+            self._ping['thread'].join()
 
         self._logger.info("Ping stopped")
 
@@ -329,13 +333,11 @@ class _DataHandler(_GeneralHandler):
         """
         self._logger.info("Deleting DataHandler ...")
 
-        if not self._close_stream_handlers():
-            self._logger.error("Could not close all StreamHandlers")
+        self._close_stream_handlers():
         
         self._stop_ping()
 
-        if not self._logout():
-            self._logger.error("Could not log out")
+        self._logout()
             
         self._logger.info("DataHandler deleted")
         return True
@@ -382,7 +384,7 @@ class _DataHandler(_GeneralHandler):
         Log out from the XTB API.
 
         Returns:
-            bool: True if the logout was successful, False otherwise.
+            bool: True
 
         """
         if not self._ssid:
@@ -396,27 +398,28 @@ class _DataHandler(_GeneralHandler):
 
             if not self._send_request(command='logout'):
                 self._logger.error("Log out failed")
-                return False
+                # no false return function must run through
             
             response=self._receive_response()
             if not response:
                 self._logger.error("Log out failed")
-                return False
+                # no false return function must run through
 
             if response['status']:
                 self._logger.info("Logged out successfully")
+                # no false return function must run through
 
                 if not self.close():
                     self._logger.error("Could not close connection")
-                    return False
                 
                 self._ssid=None
             else:
                 self._logger.error("Logout failed")
                 self._logger.error(response['errorCode'])
                 self._logger.error(response['errorDescr'])
+                # no false return function must run through
 
-            return response['status']
+            return True
 
     def getData(self, command, **kwargs):
         """
@@ -545,9 +548,8 @@ class _DataHandler(_GeneralHandler):
         for handler in list(self._stream_handlers):
             if not handler.delete():
                 self._logger.error("Could not close StreamHandler")
-                return False
+                # no false return function must run through
         
-        self._logger.info("All StreamHandlers closed")
         return True
 
     def get_demo(self):
@@ -638,8 +640,8 @@ class _StreamHandler(_GeneralHandler):
 
         self._stop_ping()
 
-        if not self.close():
-            self._logger.error("Could not close connection")
+        self.close()
+        # no false return function must run through
             
         self._dh._unregister_stream_handler(self)
         self._logger.info("Unregistered at DataHandler")
