@@ -204,6 +204,9 @@ class _GeneralHandler(Client):
         """
         self._logger.info("Stopping ping ...")
 
+        if not 'ping' in self._ping:
+            self._logger.error("Ping never started")
+            
         if not self._ping['ping']:
             self._logger.error("Ping already stopped")
 
