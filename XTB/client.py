@@ -104,7 +104,6 @@ class Client():
 
         tried_addresses = []
         while len(tried_addresses) < len(avl_addresses):
-            
             # Always trie adresses first that did not fail
             if len(self._used_addresses)+len(tried_addresses) < len(avl_addresses):
                 for address in avl_addresses:
