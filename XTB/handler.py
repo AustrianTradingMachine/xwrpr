@@ -309,6 +309,7 @@ class _DataHandler(_GeneralHandler):
 
         super().__init__(host=self._host, port=self._port, userid=self._userid, stream = False, logger=self._logger)
         self._set_reconnect_method(self._reconnect)
+        self._status=None
     
         self._ssid=None
         self._login()
@@ -379,7 +380,7 @@ class _DataHandler(_GeneralHandler):
             self._logger.info("Log in successfully")
             self._ssid=response['streamSessionId']
 
-            #self._report_method(self,'active')
+            self._status='active'
                                 
             return True
 
@@ -397,8 +398,6 @@ class _DataHandler(_GeneralHandler):
         
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging out ...")
-
-            #self._report_method(self,'inactive')
 
             # retry False because login is undesirable
             if not self._request(retry=False, command='logout'):
@@ -418,6 +417,8 @@ class _DataHandler(_GeneralHandler):
                  # no false return function must run through
                 
             self._ssid=None
+
+            self._status='inactive'
 
             return True
 
@@ -474,6 +475,8 @@ class _DataHandler(_GeneralHandler):
         with self._reconnect_lock:
             self._logger.info("Reconnecting ...")
 
+            self._status='inactive'
+
             if not self.check('basic'):
                 self._logger.info("Retry connection")
                 
@@ -485,7 +488,8 @@ class _DataHandler(_GeneralHandler):
                     self._logger.error("Could not log in")
                     #self._report_method(self,'failed')
                     return False
-            
+
+                self._status='active'
                 self._logger.info("Reconnection successful")
                 self._start_ping()
             else:
