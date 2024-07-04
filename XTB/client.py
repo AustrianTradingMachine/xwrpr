@@ -100,7 +100,7 @@ class Client():
             return False
         self._logger.info(str(len(avl_addresses))+" addresses found")
         
-        while len(self._used_addresses) = < len(avl_addresses):
+        while len(self._used_addresses) =< len(avl_addresses):
             # Always trie adresses first that did not fail
             for i in range(len(avl_addresses)):
                 address=avl_addresses[i]
