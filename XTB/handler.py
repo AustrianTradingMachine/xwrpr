@@ -482,11 +482,9 @@ class _DataHandler(_GeneralHandler):
                 
                 if not self.create():
                     self._logger.error("Creation of socket failed")
-                    #self._report_method(self,'failed')
                     return False
                 if not self._login():
                     self._logger.error("Could not log in")
-                    #self._report_method(self,'failed')
                     return False
 
                 self._status='active'
@@ -496,7 +494,31 @@ class _DataHandler(_GeneralHandler):
                 self._logger.info("Data connection is already active")
 
         return True
-    
+
+    def _get_status(self)
+        """
+        Returns dtatus of DataHandler.
+
+        Args:
+            None
+
+        Returns:
+            Status (str)
+        """
+        return self._status
+
+    def _get_StreamHandler
+        """
+        Returns list of StreamHandler.
+
+        Args:
+            None
+
+        Returns:
+            Streams (list) 
+        """
+        return self._stream_handlers
+
     def _attach_stream_handler(self, handler):
         """
         Attach a StreamHandler at the DataHandler.
@@ -607,6 +629,7 @@ class _StreamHandler(_GeneralHandler):
         self._set_reconnect_method(self._reconnect)
 
         self.open()
+        self._status=None
         # stream must be initialized right after connection is opened
         self._streams=dict()
         self.streamData('KeepAlive')
@@ -643,7 +666,8 @@ class _StreamHandler(_GeneralHandler):
         self._stop_ping()
 
         self.close()
-        # no false return function must run through
+        self._status='inactive'
+        # no false function must run through
             
         self._dh._detach_stream_handler(self)
         self._logger.info("Detached from DataHandler")
@@ -773,18 +797,19 @@ class _StreamHandler(_GeneralHandler):
         if self._dh._reconnect_lock.acquire(blocking=False):
             if not self._dh.check('basic'): 
                 self._logger.info("Retry connection for DataHandler")
+                self._status='inactive'
+                
                 # because of the with statement the db._reconnect function cannot be used directly
                 if not self._dh.create():
                     self._logger.error("Creation of socket failed")
-                    #self._dh._report_method(self,'failed')
                     self._dh._reconnect_lock.release()
                     return False
                 if not self._dh._login():
                     self._logger.error("Could not log in")
-                    #self._dh._report_method(self,'failed')
                     self._dh._reconnect_lock.release()
                     return False
-            
+
+                self._status='active'
                 self._logger.info("Reconnection for DataHandler successful")
                 self._dh._start_ping()
             else:
@@ -798,16 +823,16 @@ class _StreamHandler(_GeneralHandler):
         with self._dh._reconnect_lock:
             if not self.check('basic'):
                 self._logger.info("Retry connection")
+                self._status='inactive'
                 
                 if not self.create():
                     self._logger.error("Creation of socket failed")
-                    #self._report_method(self,'failed')
                     return False
                 if not self.open():
                     self._logger.error("Could not open connection")
-                    #self._report_method(self,'failed')
                     return False
-                
+
+                self._status='active'
                 self._logger.info("Reconnection successful")
                 self._start_ping(ssid = self._dh._ssid)
             else:
@@ -834,6 +859,18 @@ class _StreamHandler(_GeneralHandler):
 
         self._dh._detach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
+
+    def _get_status(self)
+        """
+        Returns dtatus of StreamHandler.
+
+        Args:
+            None
+
+        Returns:
+            Status (str)
+        """
+        return self._status
 
     def get_demo(self):
         return self._demo
@@ -891,7 +928,7 @@ class HandlerManager():
                 return True
         
             for handler in self._handlers['data']:
-                if self._handlers['data'][handler]['status'] == 'active':
+                if handler._get_status == 'active':
                     self._delete_handler(handler)
 
             self._deleted=True
@@ -906,30 +943,15 @@ class HandlerManager():
         Returns:
             bool: True if the handler is successfully deleted, False otherwise.
 
-        Raises:
-            ValueError: If the handler type is invalid.
         """
         if isinstance(handler, _DataHandler):
             handler.delete()
-
-            self._logger.info("Deregister DataHandler")
-            self._handlers['data'][handler]['status'] = 'inactive'
             self._connections -= 1
-            for stream in list(self._handlers['data'][handler]['streamhandler']):
-                self._logger.info("Deregister StreamHandler from Datahandler")
-                self._handlers['stream'][stream]['status'] = 'inactive'
-                self._handlers['data'][handler]['streamhandler'].pop(stream)
+            for stream in list(handler._get_StreamHandler):
                 self._connections -= 1
         elif isinstance(handler, _StreamHandler):
             handler.delete()
-
-            self._logger.info("Deregister StreamHandler")
-            self._handlers['stream'][handler]['status'] = 'inactive'
-            parent = self._get_parentHandler(handler)
-            self._handlers['data'][parent]['streamhandler'].pop(handler)
             self._connections -= 1
-        else:
-            raise ValueError("Error: Invalid handler type")
         
         return True
 
@@ -943,61 +965,8 @@ class HandlerManager():
         Returns:
         - The name of the handler.
 
-        Raises:
-        - ValueError: If the handler type is invalid.
         """
-        if isinstance(handler, _DataHandler):
-            return self._handlers['data'][handler]['name']
-        elif isinstance(handler, _StreamHandler):
-            return self._handlers['stream'][handler]['name']
-        else:
-            raise ValueError("Error: Invalid handler type")
-        
-    def _report_status(self, handler, status):
-        if isinstance(handler, _DataHandler):
-            self._handlers['data'][handler]['status']=status
-        elif isinstance(handler, _StreamHandler):
-            self._handlers['stream'][handler]['status']=status
-        else:
-            raise ValueError("Error: Invalid handler type")
-        
-    def _get_status(self, handler):
-        """
-        Get the status of a handler.
-
-        Parameters:
-        - handler: The handler object whose status is to be retrieved.
-
-        Returns:
-        - The status of the handler.
-
-        Raises:
-        - ValueError: If an invalid handler type is provided.
-        """
-        if isinstance(handler, _DataHandler):
-            return self._handlers['data'][handler]['status']
-        elif isinstance(handler, _StreamHandler):
-            return self._handlers['stream'][handler]['status']
-        else:
-            raise ValueError("Error: Invalid handler type")
-        
-    def _get_parentHandler(self, handler):
-        """
-        Returns the parent DataHandler for a given handler.
-
-        Parameters:
-        handler (_StreamHandler): The handler for which to retrieve the parent DataHandler.
-
-        Returns:
-        datahandler: The parent DataHandler associated with the given handler.
-
-        Raises:
-        ValueError: If the handler type is invalid.
-        """
-        if isinstance(handler, _StreamHandler):
-            return self._handlers['stream'][handler]['datahandler']
-        else:
-            raise ValueError("Error: Invalid handler type")
+        return self._handlers['data'][handler]['name']
         
     def _avlb_DataHandler(self):
         """
@@ -1031,8 +1000,6 @@ class HandlerManager():
         Returns:
             DataHandler: The newly created DataHandler instance.
 
-        Raises:
-            None
         """
         if self._connections >= self._max_connections:
             self._logger.error("Error: Maximum number of connections reached")
@@ -1045,7 +1012,7 @@ class HandlerManager():
         dh = _DataHandler(demo=self._demo, logger=dh_logger)
 
         self._logger.info("Register DataHandler")
-        self._handlers['data'][dh] = {'name': name, 'status': 'active', 'streamhandler': {}}
+        self._handlers['data'][dh] = {'name': name}
         self._connections += 1
 
         return dh
@@ -1057,8 +1024,6 @@ class HandlerManager():
         Returns:
             StreamHandler: The newly created StreamHandler instance.
 
-        Raises:
-            None
         """
         if self._connections >= self._max_connections:
             self._logger.error("Error: Maximum number of connections reached")
@@ -1072,8 +1037,7 @@ class HandlerManager():
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
 
         self._logger.info("Register StreamHandler")
-        self._handlers['stream'][sh] = {'name': name, 'status': 'active','datahandler': dh}
-        self._handlers['data'][dh]['streamhandler'][sh] = None
+        self._handlers['stream'][sh] = {'name': name}
         self._connections += 1
 
         return sh
