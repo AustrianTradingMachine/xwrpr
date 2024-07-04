@@ -102,10 +102,8 @@ class Client():
         
         while len(self._used_addresses) =< len(avl_addresses):
             # Always trie adresses first that did not fail
-            for i in range(len(avl_addresses)):
-                address=avl_addresses[i]
+            for address in avl_addresses:
                 if address[4] not in self._used_addresses:
-                    address=avl_addresses[i]
                     break
 
             # Extract the tuple
