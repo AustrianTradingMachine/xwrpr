@@ -106,13 +106,13 @@ class Client():
         while len(tried_addresses) < len(avl_addresses):
             
             # Always trie adresses first that did not fail
-            if len(self._used_addresses)+len(tried_addresses) < len(avl_addresses)
+            if len(self._used_addresses)+len(tried_addresses) < len(avl_addresses):
                 for address in avl_addresses:
                     if address[4] not in tried_addresses and address[4] not in self._used_addresses:
                         tried_addresses.append(address)
                         break
             else:
-                for address in avl_addresses
+                for address in avl_addresses:
                     if address[4] not in tried_ addresses:
                         tried_addresses.append(address)
                         break
