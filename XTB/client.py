@@ -104,10 +104,11 @@ class Client():
             # Always trie adresses first that did not fail
             for address in avl_addresses:
                 if address[4] not in self._used_addresses:
+                    chsn_address = address
                     break
 
             # Extract the tuple
-            self._family, self._socktype, self._proto, self._cname, self._sockaddr = address
+            self._family, self._socktype, self._proto, self._cname, self._sockaddr = chsn_address
             if self._family == socket.AF_INET: # For IPv4
                 self._ip_address, self._port = self._sockaddr
             elif self._family == socket.AF_INET6: # For IPv6
