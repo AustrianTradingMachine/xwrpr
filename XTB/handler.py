@@ -507,7 +507,7 @@ class _DataHandler(_GeneralHandler):
         """
         return self._status
 
-    def _get_StreamHandler
+    def _get_StreamHandler(self)
         """
         Returns list of StreamHandler.
 
