@@ -240,11 +240,7 @@ class Client():
         while True:
             msg=''
             try:
-                # Check socket for readability
-                if not self._stream:
-                    if self.check('readable'):
-                        msg = self._socket.recv(self._bytes_in)
-                else:
+                if self.check('readable'):
                     msg = self._socket.recv(self._bytes_in)
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))
