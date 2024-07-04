@@ -310,16 +310,16 @@ class _DataHandler(_GeneralHandler):
         super().__init__(host=self._host, port=self._port, userid=self._userid, stream = False, logger=self._logger)
         self._set_reconnect_method(self._reconnect)
         self._status=None
+        self._deleted = False
     
         self._ssid=None
         self._login()
+        
         # starts ping to keep connection open
         self._start_ping()
         
         self._stream_handlers=[]
         self._reconnect_lock = Lock()
-
-        self._deleted = False
 
         self._logger.info("DataHandler created")
         
@@ -497,7 +497,7 @@ class _DataHandler(_GeneralHandler):
 
     def _get_status(self):
         """
-        Returns dtatus of DataHandler.
+        Returns status of DataHandler.
 
         Args:
             None
@@ -621,18 +621,18 @@ class _StreamHandler(_GeneralHandler):
             self._port=PORT_REAL_STREAM
             self._userid=account.userid_real
 
-        self._deleted = False
-
         self._logger.info("Creating StreamHandler ...")
 
         super().__init__(host=self._host, port=self._port, userid=self._userid, stream = True, logger=self._logger)
         self._set_reconnect_method(self._reconnect)
+        self._status='active'
+        self._deleted = False
 
         self.open()
-        self._status='active'
         # stream must be initialized right after connection is opened
         self._streams=dict()
         self.streamData('KeepAlive')
+        
         # start ping to keep connection open
         #self._start_ping(ssid = self._dh._ssid)
         
@@ -746,7 +746,6 @@ class _StreamHandler(_GeneralHandler):
             pretty_command = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
             self._logger.info(pretty_command +" recieved")
             #return response['data']
-
                 
     def endStream(self, index: int, inThread: bool=False):
         """
@@ -863,7 +862,7 @@ class _StreamHandler(_GeneralHandler):
 
     def _get_status(self):
         """
-        Returns dtatus of StreamHandler.
+        Returns status of StreamHandler.
 
         Args:
             None
