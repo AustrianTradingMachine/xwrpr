@@ -178,7 +178,7 @@ class Client():
                 
         for _ in range(self._max_fails):
             try:
-                self._socket.settimeout(None)
+                self._socket.settimeout(self._timeout)
                 self._socket.connect((self._sockaddr))
             except socket.error as error_msg:
                 self._logger.error("Socket error: %s" % error_msg)

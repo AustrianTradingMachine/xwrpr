@@ -41,6 +41,18 @@ class Wrapper(HandlerManager):
 
         sh.streamData("TickerPrices", symbol=symbol, minArrivalTime=minArrivalTimwe, maxLevel=maxLevel)
 
+    def getKeepAlive(self) -> dict:
+        sh=self.get_StreamHandler()
+        if not sh:
+            self._logger("Could not provide data")
+            return False
+
+        response=sh.streamData("KeepAlive")
+        if not response:
+            return False
+
+        return response
+
     def getBalance(self) -> dict:
         sh=self.get_StreamHandler()
         if not sh:

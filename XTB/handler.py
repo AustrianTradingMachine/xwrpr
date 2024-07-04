@@ -36,11 +36,10 @@ class _GeneralHandler(Client):
         host (str): The host address of the XTB API.
         port (int): The port number of the XTB API.
         userid (str): The user ID for authentication.
-        reconnect (callable): The reconnection method to call in case of a connection failure.
         stream (bool): Flag indicating whether to use the streaming API.
         logger: The logger object for logging messages.
     """
-    def __init__(self, host: str=None, port: int=None, userid: str=None, reconnect=None, stream: bool = False, logger=None):
+    def __init__(self, host: str=None, port: int=None, userid: str=None, stream: bool = False, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -49,11 +48,6 @@ class _GeneralHandler(Client):
         else:
             self._logger=generate_logger(name='GeneralHandler', path=os.path.join(os.getcwd(), "logs"))
 
-        if not callable(reconnect):
-            self._reconnection_method=reconnect
-        else:
-            self._reconnection_method=lambda: None
-            
         self._host=host
         self._port=port
         self._userid=userid
@@ -232,8 +226,8 @@ class _GeneralHandler(Client):
                 self._logger.error("Failed to send request")
 
                 if retry:
+                    self._call_reconnect()
                     retry=False
-                    self._reconnection_method()
                     continue
 
                 return False
@@ -255,8 +249,8 @@ class _GeneralHandler(Client):
                 self._logger.error("Failed to receive data")
 
                 if retry:
+                    self._call_reconnect()
                     retry=False
-                    self._reconnection_method()
                     continue
 
                 return False
@@ -274,6 +268,13 @@ class _GeneralHandler(Client):
                 return False
 
         return response
+    
+    def _set_reconnect_method(self, callback):
+        if callable(callback):
+            self._call_reconnect=callback
+        else:
+            self._logger.error("Reconnection method not callable")
+            return False
     
 
 class _DataHandler(_GeneralHandler):
@@ -312,7 +313,8 @@ class _DataHandler(_GeneralHandler):
 
         self._logger.info("Creating DataHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, stream = False, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, userid=self._userid, stream = False, logger=self._logger)
+        self._set_reconnect_method(self._reconnect)
     
         self._ssid=None
         self._login()
@@ -608,7 +610,8 @@ class _StreamHandler(_GeneralHandler):
 
         self._logger.info("Creating StreamHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, reconnect=self._reconnect, stream = True, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, userid=self._userid, stream = True, logger=self._logger)
+        self._set_reconnect_method(self._reconnect)
 
         self.open()
         self._start_ping(ssid = self._dh._ssid)
@@ -671,31 +674,27 @@ class _StreamHandler(_GeneralHandler):
             self._logger.error("Got no StreamSessionId from Server")
             return False
 
-        # gracefully stops ping if active
-        # ping is not needed as long as stream is active
-        if self._ping['ping']:
-            self._stop_ping()
+        with self._ping_lock: # waits for the ping check loop to finish
+            self._logger.info("Starting stream ...")
 
-        self._logger.info("Starting stream ...")
+            self._ssid = self._dh._ssid
 
-        self._ssid = self._dh._ssid
+            if not self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
+                self._logger.error("Request for stream not possible")
+                return False
 
-        if not self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
-            self._logger.error("Request for stream not possible")
-            return False
+            index = len(self._streams)
+            self._streams[index] = dict()
+            self._streams[index]['command'] = command
+            self._streams[index]['arguments'] = kwargs
+            self._streams[index]['stream'] = True
+            self._streams[index]['thread'] = Thread(target=self._readStream, args=(index,), daemon=True)
+            self._streams[index]['thread'].start()
+            
 
-        index = len(self._streams)
-        self._streams[index] = dict()
-        self._streams[index]['command'] = command
-        self._streams[index]['arguments'] = kwargs
-        self._streams[index]['stream'] = True
-        self._streams[index]['thread'] = Thread(target=self._readStream, args=(index,), daemon=True)
-        self._streams[index]['thread'].start()
-        
-
-        self._logger.info("Stream started for "+command)
-        
-        return index
+            self._logger.info("Stream started for "+command)
+            
+            return index
             
     def _readStream(self,index: int):
         """

@@ -1,8 +1,7 @@
 from config import XTB, generate_logger
 import time
 
-DEMO=True
-
+DEMO=False
 logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTB/Logger')
 
 #print(XTB.WRAPPER_VERSION)
@@ -22,6 +21,10 @@ th=XTBData.getTradingHours(symbols=['EURUSD'])
 print(th)
 
 XTBData.getCandles(symbol='EURUSD')
+
+XTBData.getTickerPrices(symbol='NVDA.US', minArrivalTimwe=500, maxLevel=2)
+
+XTBData.getKeepAlive()
 
 
 time.sleep(60*4)
