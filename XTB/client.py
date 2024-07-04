@@ -14,7 +14,6 @@ class Client():
         host (str): The host to connect to.
         port (int): The port to connect to.
         encrypted (bool): Indicates whether the socket connection should be encrypted.
-        blocking (bool): Indicates whether the socket connection should be blocking.
         timeout (float): The timeout value for socket operations.
         interval (float): The interval between socket operations.
         max_fails (int): The maximum number of connection attempts.
@@ -23,7 +22,7 @@ class Client():
         stream (bool): Indicates whether the socket connection is a stream connection.
         logger: The logger object for logging messages.
     """
-    def __init__(self, host: str=None, port: int=None,  encrypted: bool=False, blocking: bool=True, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
+    def __init__(self, host: str=None, port: int=None, encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -37,6 +36,12 @@ class Client():
         self._encrypted=encrypted
         self._blocking=blocking
         self._timeout=timeout
+        
+        if timeout:
+            self._blocking=False
+        else:
+            self._blocking=True
+            
         self._used_addresses=[]
 
         self.create()
@@ -283,19 +288,17 @@ class Client():
             self._logger.error("Socket is already closed")
             return True
         
-    def get_blocking(self):
-        return self._blocking
-    
-    def set_blocking(self, blocking):
-        self._blocking = blocking
-        self._socket.setblocking(blocking)
-
     def get_timeout(self):
         return self._timeout
     
     def set_timeout(self, timeout):
         self._timeout = timeout
         self._socket.settimeout(timeout)
+        
+        if timeout:
+            self._blocking=False
+        else:
+            self._blocking=True
         
     def get_host(self):
         return self._host
@@ -339,7 +342,6 @@ class Client():
     def set_bytes_in(self, bytes_in):
         self._bytes_in = bytes_in
 
-    blocking = property(get_blocking, set_blocking, doc='Get/set the blocking value')
     timeout = property(get_timeout, set_timeout, doc='Get/set the socket timeout')
     host = property(get_host, set_host, doc='read only property socket host')
     port = property(get_port, set_port, doc='read only property socket port')
