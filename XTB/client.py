@@ -100,11 +100,8 @@ class Client():
             return False
         self._logger.info(str(len(avl_addresses))+" addresses found")
         
-        for _  in range(len(avl_addresses)):
+        while len(self._used_addresses) = < range(len(avl_addresses)):
             # Always trie adresses first that did not fail
-            if len(self._used_addresses) >= len(avl_addresses):
-                self._used_addresses=[]
-
             for i in range(len(avl_addresses)):
                 address=avl_addresses[i]
                 if address[4] not in self._used_addresses:
@@ -147,7 +144,9 @@ class Client():
             self._used_addresses.append(self._sockaddr)
 
             return True
-                
+
+        self._used_addresses=[]
+        
         self._logger.error("All attempts to create socket failed")
         return False
     
