@@ -69,7 +69,7 @@ class _GeneralHandler(Client):
         self._ping=dict()
         self._ping_lock = Lock()
 
-        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, blocking=True, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
+        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
     
     def _send_request(self,command, stream=None, arguments=None, tag=None, pretty=None):
         """
