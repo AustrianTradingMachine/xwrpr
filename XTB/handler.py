@@ -495,7 +495,7 @@ class _DataHandler(_GeneralHandler):
 
         return True
 
-    def _get_status(self)
+    def _get_status(self):
         """
         Returns dtatus of DataHandler.
 
@@ -507,7 +507,7 @@ class _DataHandler(_GeneralHandler):
         """
         return self._status
 
-    def _get_StreamHandler(self)
+    def _get_StreamHandler(self):
         """
         Returns list of StreamHandler.
 
@@ -861,7 +861,7 @@ class _StreamHandler(_GeneralHandler):
         self._dh._detach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
 
-    def _get_status(self)
+    def _get_status(self):
         """
         Returns dtatus of StreamHandler.
 
