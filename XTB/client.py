@@ -34,7 +34,6 @@ class Client():
         self._host=host
         self._port=port
         self._encrypted=encrypted
-        self._blocking=blocking
         self._timeout=timeout
         
         if timeout:
@@ -117,7 +116,7 @@ class Client():
                         break
             else:
                 for address in avl_addresses:
-                    if address[4] not in tried_ addresses:
+                    if address[4] not in tried_addresses:
                         tried_addresses.append(address)
                         break
                         

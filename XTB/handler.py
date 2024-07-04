@@ -893,8 +893,8 @@ class HandlerManager():
             """
 
             if self._deleted:
-            self._logger.error("HandlerManager already deleted")
-            return True
+                self._logger.error("HandlerManager already deleted")
+                return True
         
             for handler in self._handlers['data']:
                 if self._handlers['data'][handler]['status'] == 'active':
