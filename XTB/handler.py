@@ -629,7 +629,7 @@ class _StreamHandler(_GeneralHandler):
         self._set_reconnect_method(self._reconnect)
 
         self.open()
-        self._status=None
+        self._status='active'
         # stream must be initialized right after connection is opened
         self._streams=dict()
         self.streamData('KeepAlive')
@@ -666,8 +666,9 @@ class _StreamHandler(_GeneralHandler):
         self._stop_ping()
 
         self.close()
-        self._status='inactive'
         # no false function must run through
+
+        self._status='inactive'
             
         self._dh._detach_stream_handler(self)
         self._logger.info("Detached from DataHandler")
