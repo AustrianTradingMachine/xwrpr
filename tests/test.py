@@ -12,19 +12,20 @@ XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
 version=XTBData.getVersion()
 
-print('major:', version['major'])
-print('minor:', version['minor'])
-print('patch:', version['patch'])
-
 th=XTBData.getTradingHours(symbols=['EURUSD'])
 
 print(th)
 
-XTBData.getCandles(symbol='EURUSD')
+#XTBData.getCandles(symbol='BITCOIN')
 
-XTBData.getTickerPrices(symbol='NVDA.US', minArrivalTimwe=500, maxLevel=2)
+XTBData.getTrades()
 
-XTBData.getKeepAlive()
+XTBData.getTickerPrices(symbol='EURJPY')
+XTBData.getTickerPrices(symbol='EURUSD')
+
+XTBData.getProfits()
+
+#XTBData.getKeepAlive()
 
 
 time.sleep(60*4)

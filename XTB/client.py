@@ -178,7 +178,8 @@ class Client():
                 
         for _ in range(self._max_fails):
             try:
-                self._socket.settimeout(self._timeout)
+                if self._timeout:
+                    self._socket.settimeout(self._timeout)
                 self._socket.connect((self._sockaddr))
             except socket.error as error_msg:
                 self._logger.error("Socket error: %s" % error_msg)
@@ -215,7 +216,6 @@ class Client():
                 self._logger.error("Error sending message: %s" % str(e))
                 return False
             
-            self._logger.info("sending ...")
             time.sleep(self._interval)
 
         self._logger.info("Message sent")
@@ -241,7 +241,10 @@ class Client():
             msg=''
             try:
                 # Check socket for readability
-                if self.check('readable'):
+                if not self._stream:
+                    if self.check('readable'):
+                        msg = self._socket.recv(self._bytes_in)
+                else:
                     msg = self._socket.recv(self._bytes_in)
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))
@@ -249,12 +252,13 @@ class Client():
             
             if len(msg) > 0:
                 full_msg += msg.decode("utf-8")
-            time.sleep(self._interval)
 
             if self._stream and len(msg) > 0:
                 break
             elif not self._stream and len(msg) <= 0:
                 break
+
+            time.sleep(self._interval)
     
         self._logger.info("Message received")
         return full_msg

@@ -83,10 +83,10 @@ class _GeneralHandler(Client):
 
         req_dict=dict([('command',command)])
 
-        if stream is not None:
-            req_dict['streamSessionId']=stream
         if arguments is not None:
             req_dict.update(arguments)
+        if stream is not None:
+            req_dict['streamSessionId']=stream
         if tag is not None:
             req_dict['customTag']=tag
 
@@ -283,11 +283,10 @@ class _DataHandler(_GeneralHandler):
 
     Args:
         demo (bool, optional): Flag indicating whether to use the demo mode. Default is True.
-        report (callable): Method of the parent class to call in case DataHandler fails.
         logger (object, optional): Logger object for logging messages.
 
     """
-    def __init__(self, demo: bool=True, report=None, logger = None):
+    def __init__(self, demo: bool=True, logger = None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -295,11 +294,6 @@ class _DataHandler(_GeneralHandler):
             self._logger = logger
         else:
             self._logger=generate_logger(name='DataHandler', path=os.path.join(os.getcwd(), "logs"))
-        
-        if callable(report):
-            self._report_method=report
-        else:
-            self._report_method=lambda: None
 
         self._demo=demo
 
@@ -574,10 +568,9 @@ class _StreamHandler(_GeneralHandler):
     Args:
         dataHandler (DataHandler): The DataHandler object.
         demo (bool, optional): Flag indicating whether to use demo mode. Defaults to True.
-        report (callable): Method of the parent class to call in case StreamHandler fails.
         logger (Logger, optional): The logger object. Defaults to None.
     """
-    def __init__(self, dataHandler=None, demo: bool=True, report=None, logger = None):
+    def __init__(self, dataHandler=None, demo: bool=True, logger = None):
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -585,11 +578,6 @@ class _StreamHandler(_GeneralHandler):
             self._logger = logger
         else:
             self._logger=generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
-
-        if callable(report):
-            self._report_method=report
-        else:
-            self._report_method=lambda: None
 
         if not isinstance(dataHandler, _DataHandler):
             raise ValueError("Error: DataHandler object required")
@@ -1025,7 +1013,7 @@ class HandlerManager():
         """
         for handler in self._handlers['stream']:
             if self._get_status(handler) == 'active':
-                if handler._streams < self._max_streams:
+                if len(handler._streams) < self._max_streams:
                     return handler
         return None
     
@@ -1047,7 +1035,7 @@ class HandlerManager():
         name = 'DH_' + str(index)
         dh_logger = self._logger.getChild(name)
 
-        dh = _DataHandler(demo=self._demo, report = self._report_status, logger=dh_logger)
+        dh = _DataHandler(demo=self._demo, logger=dh_logger)
 
         self._logger.info("Register DataHandler")
         self._handlers['data'][dh] = {'name': name, 'status': 'active', 'streamhandler': {}}
@@ -1074,7 +1062,7 @@ class HandlerManager():
         sh_logger = self._logger.getChild(name)
 
         dh = self.get_DataHandler()
-        sh = _StreamHandler(dataHandler=dh, demo=self._demo, report = self._report_status, logger=sh_logger)
+        sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
 
         self._logger.info("Register StreamHandler")
         self._handlers['stream'][sh] = {'name': name, 'status': 'active','datahandler': dh}

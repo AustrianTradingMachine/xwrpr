@@ -36,10 +36,10 @@ class Wrapper(HandlerManager):
         super().delete()
         self._logger.info("Wrapper deleted.")
 
-    def getTickerPrices(self, symbol: str, minArrivalTimwe: int, maxLevel: int) -> dict:
+    def getTickerPrices(self, symbol: str) -> dict:
         sh=self.get_StreamHandler()
 
-        sh.streamData("TickerPrices", symbol=symbol, minArrivalTime=minArrivalTimwe, maxLevel=maxLevel)
+        sh.streamData("TickerPrices", symbol=symbol)
 
     def getKeepAlive(self) -> dict:
         sh=self.get_StreamHandler()
@@ -52,6 +52,27 @@ class Wrapper(HandlerManager):
             return False
 
         return response
+    
+    def getTrades(self) -> dict:
+        sh=self.get_StreamHandler()
+        if not sh:
+            self._logger("Could not provide data")
+            return False
+
+        response=sh.streamData("Trades")
+        if not response:
+            return False
+        
+    def getProfits(self) -> dict:
+        sh=self.get_StreamHandler()
+        if not sh:
+            self._logger("Could not provide data")
+            return False
+
+        response=sh.streamData("Profits")
+        if not response:
+            return False
+        
 
     def getBalance(self) -> dict:
         sh=self.get_StreamHandler()
