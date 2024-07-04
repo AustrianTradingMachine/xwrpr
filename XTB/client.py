@@ -276,7 +276,7 @@ class Client():
                 # no false return function must run through
             finally:
                 self._socket.close()
-                self._used_addresses.pop()
+                self._used_addresses.pop() #stable sockets are relieved
                 self._logger.info("Socket closed")
                 return True
         else:
