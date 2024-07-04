@@ -157,9 +157,9 @@ class _GeneralHandler(Client):
         Returns:
             bool: True if the ping request was successful, False otherwise.
         """
-        # sends ping at first, because all connections must send a message in first second
-        ping_interval = 60*9.5
-        next_ping=ping_interval
+        # sends ping all 10 minutes
+        ping_interval = 60*9.9
+        next_ping=0
         check_interval=self._interval/10
         while self._ping['ping']:
             start_time = time.time()
@@ -312,6 +312,7 @@ class _DataHandler(_GeneralHandler):
     
         self._ssid=None
         self._login()
+        # starts ping to keep connection open
         self._start_ping()
         
         self._stream_handlers=[]
@@ -602,12 +603,14 @@ class _StreamHandler(_GeneralHandler):
         self._set_reconnect_method(self._reconnect)
 
         self.open()
-        self._start_ping(ssid = self._dh._ssid)
+        # stream must be initialized right after connection is opened
+        self._streams=dict()
+        self.streamData('KeepAlive')
+        # start ping to keep connection open
+        #self._start_ping(ssid = self._dh._ssid)
         
         self._dh._attach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
-
-        self._streams=dict()
 
         self._logger.info("StreamHandler created")
 

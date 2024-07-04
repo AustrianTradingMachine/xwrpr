@@ -16,14 +16,14 @@ th=XTBData.getTradingHours(symbols=['EURUSD'])
 
 print(th)
 
-#XTBData.getCandles(symbol='BITCOIN')
+XTBData.getCandles(symbol='BITCOIN')
 
-XTBData.getTrades()
+#XTBData.getTrades()
 
-XTBData.getTickerPrices(symbol='EURJPY')
-XTBData.getTickerPrices(symbol='EURUSD')
+#TBData.getTickerPrices(symbol='EURJPY')
+#XTBData.getTickerPrices(symbol='EURUSD')
 
-XTBData.getProfits()
+#XTBData.getProfits()
 
 #XTBData.getKeepAlive()
 
