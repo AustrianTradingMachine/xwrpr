@@ -96,17 +96,19 @@ class Client():
         try:
             avl_addresses=socket.getaddrinfo(self._host, self._port, socket.AF_UNSPEC, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         except socket.error as e:
-            self._logger.error("Failed to query socket info")
+            self._logger.error("Failed to query socket info: %s", e)
             return False
-        self._logger.info(str(len(avl_addresses))+" addresses found")
+
+        self._logger.info(f"{len(avl_addresses)} addresses found")
+
 
         tried_addresses = []
-        while len(tried_addresses) <= len(avl_addresses):
+        while len(tried_addresses) < len(avl_addresses):
             
             # Always trie adresses first that did not fail
-            if len(self._used_addresses)+len(tried_addresses) <= len(avl_addresses)
+            if len(self._used_addresses)+len(tried_addresses) < len(avl_addresses)
                 for address in avl_addresses:
-                    if address[4] not in tried_addresses and not in self._used_addresses:
+                    if address[4] not in tried_addresses and address[4] not in self._used_addresses:
                         tried_addresses.append(address)
                         break
             else:
