@@ -884,6 +884,7 @@ class HandlerManager():
         self._max_streams=floor(1000/SEND_INTERVAL)
         self._max_connections=MAX_CONNECTIONS
         self._connections=0
+        self._deleted=False
 
     def __del__(self):
         self.delete()
@@ -893,9 +894,16 @@ class HandlerManager():
             Destructor method that is automatically called when the object is about to be destroyed.
             It deletes all the handlers in the `_handlers['data']` list.
             """
+
+            if self._deleted:
+            self._logger.error("HandlerManager already deleted")
+            return True
+        
             for handler in self._handlers['data']:
                 if self._handlers['data'][handler]['status'] == 'active':
                     self._delete_handler(handler)
+
+            self._deleted=True
 
     def _delete_handler(self, handler):
         """
