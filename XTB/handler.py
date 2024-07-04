@@ -976,7 +976,7 @@ class HandlerManager():
             The first active DataHandler, or None if no active handler is found.
         """
         for handler in self._handlers['data']:
-            if self._get_status(handler) == 'active':
+            if self._get_status() == 'active':
                 return handler
         return None
     
@@ -988,7 +988,7 @@ class HandlerManager():
             str or None: The name of the available StreamHandler, or None if no handler is available.
         """
         for handler in self._handlers['stream']:
-            if self._get_status(handler) == 'active':
+            if self._get_status() == 'active':
                 if len(handler._streams) < self._max_streams:
                     return handler
         return None
