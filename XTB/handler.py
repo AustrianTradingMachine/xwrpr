@@ -71,7 +71,7 @@ class _GeneralHandler(Client):
 
         super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
     
-    def _send_request(self,command, stream=None, arguments=None, tag=None, pretty=None):
+    def _send_request(self,command, stream=None, arguments=None, tag=None):
         """
         Send a request to the XTB API.
 
@@ -80,7 +80,6 @@ class _GeneralHandler(Client):
             stream (str): The stream session ID.
             arguments (dict): Additional arguments for the command.
             tag (str): A custom tag for the request.
-            pretty (bool): If true JSON output is printed in human-readable format.
 
         Returns:
             bool: True if the request was sent successfully, False otherwise.
@@ -96,8 +95,6 @@ class _GeneralHandler(Client):
             req_dict.update(arguments)
         if tag is not None:
             req_dict['customTag']=tag
-        if pretty is not None:
-            req_dict['prettyPrint']=pretty
 
         if not self.send(json.dumps(req_dict)):
                 self._logger.error("Failed to send request")
