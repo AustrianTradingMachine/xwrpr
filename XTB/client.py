@@ -99,16 +99,24 @@ class Client():
             self._logger.error("Failed to query socket info")
             return False
         self._logger.info(str(len(avl_addresses))+" addresses found")
-        
-        while len(self._used_addresses) <= len(avl_addresses):
-            # Always trie adresses first that did not fail
-            for address in avl_addresses:
-                if address[4] not in self._used_addresses:
-                    chsn_address = address
-                    break
 
+        tried_addresses = []
+        while len(tried_addresses) <= len(avl_addresses):
+            
+            # Always trie adresses first that did not fail
+            if len(self._used_addresses)+len(tried_addresses) <= len(avl_addresses)
+                for address in avl_addresses:
+                    if address[4] not in tried_addresses and not in self._used_addresses:
+                        tried_addresses.append(address)
+                        break
+            else:
+                for address in avl_addresses
+                    if address[4] not in tried_ addresses:
+                        tried_addresses.append(address)
+                        break
+                        
             # Extract the tuple
-            self._family, self._socktype, self._proto, self._cname, self._sockaddr = chsn_address
+            self._family, self._socktype, self._proto, self._cname, self._sockaddr = tried_addresses[-1]
             if self._family == socket.AF_INET: # For IPv4
                 self._ip_address, self._port = self._sockaddr
             elif self._family == socket.AF_INET6: # For IPv6
