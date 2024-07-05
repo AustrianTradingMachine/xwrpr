@@ -952,12 +952,13 @@ class HandlerManager():
 
         """
         if isinstance(handler, _DataHandler):
-            handler.delete()
-            self._logger.info("Deregister DataHandler "+self._handlers['data'][handler]['name'])
-            self._connections -= 1
             for _ in list(handler.get_StreamHandler()):
                 self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
                 self._connections -= 1
+            
+            handler.delete()
+            self._logger.info("Deregister DataHandler "+self._handlers['data'][handler]['name'])
+            self._connections -= 1
         elif isinstance(handler, _StreamHandler):
             handler.delete()
             self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
