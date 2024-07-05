@@ -60,10 +60,12 @@ class _GeneralHandler(Client):
         self._bytes_in=MAX_RECIEVE_DATA
         self._decoder = json.JSONDecoder()
 
+        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
+
+        self._call_reconnect=None
+        
         self._ping=dict()
         self._ping_lock = Lock()
-
-        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
     
     def _send_request(self,command, stream=None, arguments=None, tag=None):
         """
@@ -121,95 +123,14 @@ class _GeneralHandler(Client):
         self._logger.info("Received response: "+str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
         return response
-    
-    def _start_ping(self, ssid: str=None):
-        """
-        Starts the ping process.
 
-        Args:
-            ssid (str, optional): The SSID to send the ping to. Defaults to None.
-
-        Returns:
-            bool: True if the ping process was started successfully.
-        """
-        self._logger.info("Starting ping ...")
-
-        # in case ping is already started
-        # but failed
-        if 'ping' in self._ping:
-            if self._ping['ping']:
-                self._stop_ping()
-
-        self._ping['ping'] = True
-        self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
-        self._ping['thread'].start()
-        self._logger.info("Ping started")
-
-        return True
-
-    def _send_ping(self, ssid: str=None):
-        """
-        Sends a ping request to the server at regular intervals.
-
-        Args:
-            ssid (str, optional): The stream ID. Defaults to None.
-
-        Returns:
-            bool: True if the ping request was successful, False otherwise.
-        """
-        # sends ping all 10 minutes
-        ping_interval = 60*9.9
-        next_ping=0
-        check_interval=self._interval/10
-        while self._ping['ping']:
-            start_time = time.time()
-            if next_ping >= ping_interval:
-                # thanks to th with statement the ping could fail to keep is sheduled interval
-                # but thats not important because this is just the maximal needed interval and
-                # a function that locks the ping_key also initiates a reset to the server
-                with self._ping_lock:
-                    if not self._request(command='ping', stream=ssid if not bool(ssid) else None):
-                        self._logger.error("Ping failed")
-                        self._stop_ping(inThread=True)
-                        return False
-
-                    if not ssid:
-                        if not self._receive(data = True):
-                            self._logger.error("Ping failed")
-                            self._stop_ping(inThread=True)
-                            return False
-
-                    self._logger.info("Ping")
-                    
-                    next_ping = 0
-            time.sleep(check_interval)
-            next_ping += time.time() - start_time
-
-    def _stop_ping(self, inThread: bool=False):
-        """
-        Stop the ping request.
-
-        Returns:
-            bool: True if the ping was stopped successfully, False otherwise.
-
-        """
-        self._logger.info("Stopping ping ...")
-
-        if not 'ping' in self._ping:
-            self._logger.error("Ping never started")
+    def _set_reconnect_method(self, callback):
+        if callable(callback):
+            self._call_reconnect=callback
+        else:
+            self._logger.error("Reconnection method not callable")
             return False
             
-        if not self._ping['ping']:
-            self._logger.error("Ping already stopped")
-
-        self._ping['ping'] = False
-        if not inThread:
-            self._ping['thread'].join()
-
-        self._logger.info("Ping stopped")
-
-        return True
- 
     def _request(self, retry: bool=True, **kwargs):
         """
         Send a request to the XTB API.
@@ -269,13 +190,94 @@ class _GeneralHandler(Client):
 
         return response
     
-    def _set_reconnect_method(self, callback):
-        if callable(callback):
-            self._call_reconnect=callback
-        else:
-            self._logger.error("Reconnection method not callable")
+    def _start_ping(self, ssid: str=None):
+        """
+        Starts the ping process.
+
+        Args:
+            ssid (str, optional): The SSID to send the ping to. Defaults to None.
+
+        Returns:
+            bool: True if the ping process was started successfully.
+        """
+        self._logger.info("Starting ping ...")
+
+        # in case ping is already started
+        # but failed
+        if 'ping' in self._ping:
+            if self._ping['ping']:
+                self._stop_ping()
+
+        self._ping['ping'] = True
+        self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
+        self._ping['thread'].start()
+        self._logger.info("Ping started")
+
+        return True
+
+    def _send_ping(self, ssid: str=None):
+        """
+        Sends a ping request to the server at regular intervals.
+
+        Args:
+            ssid (str, optional): The stream ID. Defaults to None.
+
+        Returns:
+            bool: True if the ping request was successful, False otherwise.
+        """
+        # sends ping all 10 minutes
+        ping_interval = 60*9.9
+        next_ping=0
+        check_interval=self._interval/10
+        while self._ping['ping']:
+            start_time = time.time()
+            if next_ping >= ping_interval:
+                # thanks to th with statement the ping could fail to keep is sheduled interval
+                # but thats not important because this is just the maximal needed interval and
+                # a function that locks the ping_key also initiates a reset to the server
+                with self._ping_lock:
+                    if not self._request(command='ping', retry=True, stream=ssid if not bool(ssid) else None):
+                        self._logger.error("Ping failed")
+                        self._stop_ping(inThread=True)
+                        return False
+
+                    if not ssid:
+                        if not self._receive(data = True, retry=True):
+                            self._logger.error("Ping failed")
+                            self._stop_ping(inThread=True)
+                            return False
+
+                    self._logger.info("Ping")
+                    
+                    next_ping = 0
+            time.sleep(check_interval)
+            next_ping += time.time() - start_time
+
+    def _stop_ping(self, inThread: bool=False):
+        """
+        Stop the ping request.
+
+        Returns:
+            bool: True if the ping was stopped successfully, False otherwise.
+
+        """
+        self._logger.info("Stopping ping ...")
+
+        if not 'ping' in self._ping:
+            self._logger.error("Ping never started")
             return False
-    
+            
+        if not self._ping['ping']:
+            self._logger.error("Ping already stopped")
+
+        self._ping['ping'] = False
+        if not inThread:
+            self._ping['thread'].join()
+
+        self._logger.info("Ping stopped")
+
+        return True
+
 
 class _DataHandler(_GeneralHandler):
     """
@@ -341,14 +343,12 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("Deleting DataHandler ...")
 
         self._close_stream_handlers()
-        
         self._stop_ping()
-
         self._logout()
-
         self._deleted = True
             
         self._logger.info("DataHandler deleted")
+        
         return True
             
     def _login(self):
@@ -417,7 +417,6 @@ class _DataHandler(_GeneralHandler):
                  # no false return function must run through
                 
             self._ssid=None
-
             self._status='inactive'
 
             return True
@@ -664,10 +663,7 @@ class _StreamHandler(_GeneralHandler):
             self.endStream(index)
 
         self._stop_ping()
-
         self.close()
-        # no false function must run through
-
         self._status='inactive'
             
         self._dh._detach_stream_handler(self)
