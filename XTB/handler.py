@@ -217,6 +217,8 @@ class _GeneralHandler(Client):
             if self._ping['ping']:
                 self._stop_ping()
 
+        print(ssid)
+
         self._ping['ping'] = True
         self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
         self._ping['thread'].start()
@@ -552,7 +554,7 @@ class _DataHandler(_GeneralHandler):
             if not handler.delete():
                 self._logger.error("Could not close StreamHandler")
                 # no false return function must run through
-                # detachin is only executed by StreamHandler itself
+                # detaching is only executed by StreamHandler itself
         
         return True
     
@@ -935,7 +937,7 @@ class HandlerManager():
                 return True
         
             for handler in self._handlers['data']:
-                if handler.get_status == 'active':
+                if handler.get_status() == 'active':
                     self._delete_handler(handler)
 
             self._deleted=True
@@ -953,11 +955,14 @@ class HandlerManager():
         """
         if isinstance(handler, _DataHandler):
             handler.delete()
+            self._logger.info("Deregister DataHandler "+self._handlers['data'][handler]['name'])
             self._connections -= 1
-            for _ in list(handler.get_StreamHandler):
+            for _ in list(handler.get_StreamHandler()):
+                self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
                 self._connections -= 1
         elif isinstance(handler, _StreamHandler):
             handler.delete()
+            self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
             self._connections -= 1
         
         return True

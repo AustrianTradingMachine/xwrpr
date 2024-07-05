@@ -28,7 +28,7 @@ XTBData.getCandles(symbol='BITCOIN')
 #XTBData.getKeepAlive()
 
 
-time.sleep(60*4)
+time.sleep(60*2)
 
 XTBData.delete()
 
