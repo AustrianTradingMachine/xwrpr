@@ -217,10 +217,9 @@ class _GeneralHandler(Client):
             if self._ping['ping']:
                 self._stop_ping()
 
-        print(ssid)
 
         self._ping['ping'] = True
-        self._ping['thread'] = Thread(target=self._send_ping, args=(ssid if bool(ssid) else None,), daemon=True)
+        self._ping['thread'] = Thread(target=self._send_ping, args=((ssid,) if bool(ssid) else ()), daemon=True)
         self._ping['thread'].start()
         self._logger.info("Ping started")
 
@@ -670,9 +669,8 @@ class _StreamHandler(_GeneralHandler):
 
         self._logger.info("Deleting StreamHandler ...")
 
-        for index in list(self._streams):
-            self.endStream(index)
 
+        self.endStream(inThread=False)
         self._stop_ping()
         self.close()
         self._status='inactive'
@@ -778,7 +776,7 @@ class _StreamHandler(_GeneralHandler):
         if not inThread:
             self._streams['thread'].join()
         
-        for index in self._streams['tasks']:
+        for index in list(self._streams['tasks']):
             command=self._streams['tasks'][index]['command']
             arguments=self._streams['tasks'][index]['arguments']
             # retry False because reconnection undesirable
@@ -786,8 +784,8 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.error("Failed to end stream")
             
             self._streams['tasks'].pop(index)
+            self._logger.info("Stream ended for "+command)
 
-        self._logger.info("Stream ended for "+command)
         return True
             
     def _reconnect(self):

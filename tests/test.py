@@ -10,13 +10,13 @@ logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTB/Logger')
 
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-version=XTBData.getVersion()
+#version=XTBData.getVersion()
 
-th=XTBData.getTradingHours(symbols=['EURUSD'])
+#th=XTBData.getTradingHours(symbols=['EURUSD'])
 
-print(th)
+#print(th)
 
-XTBData.getCandles(symbol='BITCOIN')
+XTBData.getCandles(symbol='EURUSD')
 
 #XTBData.getTrades()
 
