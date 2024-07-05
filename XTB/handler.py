@@ -648,40 +648,7 @@ class _DataHandler(_GeneralHandler):
 
 
 class _StreamHandler(_GeneralHandler):
-    """
-    Class for handling streaming data from XTB API.
-
-    Methods:
-        __init__: Initializes the StreamHandler object.
-        __del__: Destructor method for the StreamHandler object.
-        delete: Destructor method for the StreamHandler object.
-        streamData: Streams data for a given request.
-        _readStream: Reads and processes the streamed data for the specified request.
-        endStream: Stops the stream for the specified request.
-        _reconnect: Reconnects the data and stream connections.
-        get_status: Returns the status of the StreamHandler.
-        get_datahandler: Returns the DataHandler object.
-        set_datahandler: Sets the DataHandler object.
-        get_demo: Returns the demo mode.
-        set_demo: Sets the demo mode.
-        get_logger: Returns the logger.
-        set_logger: Sets the logger.
-
-    """
     def __init__(self, dataHandler=None, demo: bool=True, logger=None):
-        """
-        Initialize the StreamHandler object.
-
-        Args:
-            dataHandler (_DataHandler): The data handler object.
-            demo (bool, optional): Flag indicating whether to use the demo stream or real stream. Defaults to True.
-            logger (logging.Logger, optional): The logger object. Defaults to None.
-
-        Raises:
-            ValueError: If logger argument is provided but is not an instance of logging.Logger.
-            ValueError: If dataHandler object is not provided or is not an instance of _DataHandler.
-
-        """
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -729,15 +696,6 @@ class _StreamHandler(_GeneralHandler):
         self.delete()
             
     def delete(self):
-        """
-        Destructor method for the StreamHandler class.
-
-        This method is automatically called when the object is about to be destroyed.
-        It performs the necessary cleanup operations before the object is deleted.
-
-        Returns:
-            bool: True if the cleanup operations were successful.
-        """
         if self._deleted:
             self._logger.error("StreamHandler already deleted")
             return True
@@ -745,7 +703,7 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("Deleting StreamHandler ...")
 
 
-        self.endStream(inThread=False)
+        self._stop_stream(inThread=False)
         self._stop_ping()
         self.close()
         self._status='inactive'
@@ -759,17 +717,6 @@ class _StreamHandler(_GeneralHandler):
         return True
         
     def streamData(self, command, **kwargs):
-        """
-        Stream data for a given request.
-
-        Args:
-            command (str): The request to be sent.
-            **kwargs: Additional arguments for the request.
-
-        Returns:
-            int: The index of the running stream.
-
-        """
         if not self._dh._ssid:
             self._logger.error("Got no StreamSessionId from Server")
             return False
@@ -790,7 +737,7 @@ class _StreamHandler(_GeneralHandler):
 
             if not 'stream' in self._streams:
                 self._streams['stream'] = True
-                self._streams['thread'] = Thread(target=self._readStream, daemon=True)
+                self._streams['thread'] = Thread(target=self._reveive_stream, daemon=True)
                 self._streams['thread'].start()
             
 
@@ -798,28 +745,19 @@ class _StreamHandler(_GeneralHandler):
             
             return True
             
-    def _readStream(self):
-        """
-        Read and process the streamed data for the specified request.
-
-        Args:
-            index (int): The index to read data for.
-
-        Returns:
-            bool: True if the data was successfully received, False otherwise.
-        """
+    def _reveive_stream(self):
         while self._streams['stream']:
             self._logger.info("Streaming Data ...")
 
             response=self._receive(retry=True, data=False)
             if not response:
                 self._logger.error("Failed to read stream")
-                self.endStream(inThread=True)
+                self._stop_stream(inThread=True)
                 return False
             
             if not response['data']:
                 self._logger.error("No data recieved")
-                self.endStream(inThread=True)
+                self._stop_stream(inThread=True)
                 return False
             
             print(response['data'])
@@ -829,16 +767,7 @@ class _StreamHandler(_GeneralHandler):
             #self._logger.info(pretty_command +" recieved")
             #return response['data']
                 
-    def endStream(self, inThread: bool=False):
-        """
-        Stops the stream for the specified request.
-
-        Parameters:
-         None
-
-        Returns:
-        None
-        """
+    def _stop_stream(self, inThread: bool=False):
         self._logger.info("Stopping stream ...")
 
         if not self._streams['stream']:
@@ -864,16 +793,6 @@ class _StreamHandler(_GeneralHandler):
         return True
             
     def _reconnect(self):
-        """
-        Reconnects the data and stream connections.
-
-        This method attempts to acquire a lock and then reconnects the data and stream connections.
-        If the data connection fails, it tries to reconnect. If the stream connection fails, it creates
-        a new socket and opens the connection.
-
-        Returns:
-            bool: True if the reconnection is successful, False otherwise.
-        """
         if self._dh._reconnect_lock.acquire(blocking=False):
             if not self._dh.check('basic'): 
                 self._logger.info("Retry connection for DataHandler")
