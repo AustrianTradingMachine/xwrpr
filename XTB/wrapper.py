@@ -37,12 +37,12 @@ class Wrapper(HandlerManager):
         self._logger.info("Wrapper deleted.")
 
     def getTickerPrices(self, symbol: str) -> dict:
-        sh=self.get_StreamHandler()
+        sh=self.provide_StreamHandler()
 
         sh.streamData("TickerPrices", symbol=symbol)
 
     def getKeepAlive(self) -> dict:
-        sh=self.get_StreamHandler()
+        sh=self.provide_StreamHandler()
         if not sh:
             self._logger("Could not provide data")
             return False
@@ -54,7 +54,7 @@ class Wrapper(HandlerManager):
         return response
     
     def getTrades(self) -> dict:
-        sh=self.get_StreamHandler()
+        sh=self.provide_StreamHandler()
         if not sh:
             self._logger("Could not provide data")
             return False
@@ -64,7 +64,7 @@ class Wrapper(HandlerManager):
             return False
         
     def getProfits(self) -> dict:
-        sh=self.get_StreamHandler()
+        sh=self.provide_StreamHandler()
         if not sh:
             self._logger("Could not provide data")
             return False
@@ -75,7 +75,7 @@ class Wrapper(HandlerManager):
         
 
     def getBalance(self) -> dict:
-        sh=self.get_StreamHandler()
+        sh=self.provide_StreamHandler()
         if not sh:
             self._logger("Could not provide data")
             return False
@@ -87,7 +87,7 @@ class Wrapper(HandlerManager):
         return response
     
     def getCandles(self, symbol) -> dict:
-        sh=self.get_StreamHandler()
+        sh=self.provide_StreamHandler()
         if not sh:
             self._logger("Could not provide data")
             return False
@@ -99,7 +99,7 @@ class Wrapper(HandlerManager):
         return response
 
     def getSymbols(self) ->dict:
-        dh=self.get_DataHandler()
+        dh=self.provide_DataHandler()
         response=dh.getData("AllSymbols")
         if not response:
             return False
@@ -107,7 +107,7 @@ class Wrapper(HandlerManager):
         return response
 
     def getVersion(self) -> dict:
-        dh=self.get_DataHandler()
+        dh=self.provide_DataHandler()
         if not dh:
             self._logger("Could not provide data")
             return False
@@ -122,7 +122,7 @@ class Wrapper(HandlerManager):
         return {'major': major, 'minor': minor, 'patch': patch}
     
     def getTradingHours(self, symbols: list) -> dict:
-        dh=self.get_DataHandler()
+        dh=self.provide_DataHandler()
         response=dh.getData("TradingHours", symbols=symbols)
         if not response:
             return False

@@ -638,7 +638,7 @@ class _StreamHandler(_GeneralHandler):
 
         self.open()
         # stream must be initialized right after connection is opened
-        self._streams=dict()
+        self._streams={'tasks': {}}
         self.streamData('KeepAlive')
         
         # start ping to keep connection open
@@ -707,21 +707,23 @@ class _StreamHandler(_GeneralHandler):
             if not self._request(retry= True, command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
                 self._logger.error("Request for stream not possible")
                 return False
+            
+            index = len(self._streams['tasks'])
+            self._streams['tasks'][index]=dict()
+            self._streams['tasks'][index]['command'] = command
+            self._streams['tasks'][index]['arguments'] = kwargs
 
-            index = len(self._streams)
-            self._streams[index] = dict()
-            self._streams[index]['command'] = command
-            self._streams[index]['arguments'] = kwargs
-            self._streams[index]['stream'] = True
-            self._streams[index]['thread'] = Thread(target=self._readStream, args=(index,), daemon=True)
-            self._streams[index]['thread'].start()
+            if not 'stream' in self._streams:
+                self._streams['stream'] = True
+                self._streams['thread'] = Thread(target=self._readStream, daemon=True)
+                self._streams['thread'].start()
             
 
             self._logger.info("Stream started for "+command)
             
-            return index
+            return True
             
-    def _readStream(self,index: int):
+    def _readStream(self):
         """
         Read and process the streamed data for the specified request.
 
@@ -731,59 +733,57 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the data was successfully received, False otherwise.
         """
-        while self._streams[index]['stream']:
+        while self._streams['stream']:
             self._logger.info("Streaming Data ...")
 
             response=self._receive(retry=True, data=False)
             if not response:
                 self._logger.error("Failed to read stream")
-                self.endStream(index,inThread=True)
+                self.endStream(inThread=True)
                 return False
             
             if not response['data']:
                 self._logger.error("No data recieved")
-                self.endStream(index,inThread=True)
+                self.endStream(inThread=True)
                 return False
             
             print(response['data'])
 
-            command=self._streams[index]['command']
-            pretty_command = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
-            self._logger.info(pretty_command +" recieved")
+            #command=self._streams[index]['command']
+            #pretty_command = re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
+            #self._logger.info(pretty_command +" recieved")
             #return response['data']
                 
-    def endStream(self, index: int, inThread: bool=False):
+    def endStream(self, inThread: bool=False):
         """
         Stops the stream for the specified request.
 
         Parameters:
-        - index (int): The index to stop the stream for.
+         None
 
         Returns:
         None
         """
         self._logger.info("Stopping stream ...")
 
-        if not self._streams[index]['stream']:
+        if not self._streams['stream']:
             self._logger.error("Stream already ended")
         else:
             # in case loop still runs
-            self._streams[index]['stream'] = False
+            self._streams['stream'] = False
 
         # be sure join is not called in Thread target function
         if not inThread:
-            self._streams[index]['thread'].join()
-            
-        command=self._streams[index]['command']
-        arguments=self._streams[index]['arguments']
-        # retry False because reconnection undesirable
-        if not self._request(retry = False, command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
-            self._logger.error("Failed to end stream")
+            self._streams['thread'].join()
         
-        self._streams.pop(index)
-
-        if len(self._streams) == 0:
-            self._start_ping(ssid = self._dh._ssid)
+        for index in self._streams['tasks']:
+            command=self._streams['tasks'][index]['command']
+            arguments=self._streams['tasks'][index]['arguments']
+            # retry False because reconnection undesirable
+            if not self._request(retry = False, command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
+                self._logger.error("Failed to end stream")
+            
+            self._streams['tasks'].pop(index)
 
         self._logger.info("Stream ended for "+command)
         return True
@@ -996,7 +996,7 @@ class HandlerManager():
         """
         for handler in self._handlers['stream']:
             if handler.get_status() == 'active':
-                if len(handler._streams) < self._max_streams:
+                if len(handler._streams['tasks']) < self._max_streams:
                     return handler
         return None
     
@@ -1040,7 +1040,7 @@ class HandlerManager():
         name = 'SH_' + str(index)
         sh_logger = self._logger.getChild(name)
 
-        dh = self.get_DataHandler()
+        dh = self.provide_DataHandler()
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
 
         self._logger.info("Register StreamHandler")
@@ -1049,7 +1049,7 @@ class HandlerManager():
 
         return sh
 
-    def get_DataHandler(self):
+    def provide_DataHandler(self):
         """
         Returns the DataHandler for the XTB trading system.
 
@@ -1064,7 +1064,7 @@ class HandlerManager():
         else:
             return self._generate_DataHandler()
 
-    def get_StreamHandler(self):
+    def provide_StreamHandler(self):
         """
         Retrieves the StreamHandler object.
 
