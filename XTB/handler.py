@@ -912,8 +912,18 @@ class _StreamHandler(_GeneralHandler):
             if not self._request(retry=False, command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
                 self._logger.error("Failed to end stream")
 
+        if not self._stream_tasks[index]['task']:
+            self._logger.error("Stream task already ended")
+        else:
+            # in case loop still runs
+            self._stream_tasks[index]['task'] = False
+
+        # be sure join is not called in Thread target function
+        if not inThread:
+            self._stream_tasks['thread'].join()
+
         self._stream_tasks.pop(index)
-        self._logger.info("Stream ended for " + command)
+        self._logger.info("Stream task ended for " + command)
                 
     def _stop_stream(self, inThread: bool):
         """
