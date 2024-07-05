@@ -12,7 +12,7 @@ XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
 #version=XTBData.getVersion()
 
-#th=XTBData.getTradingHours(symbols=['EURUSD'])
+th=XTBData.getTradingHours(symbols=['EURUSD'])
 
 #print(th)
 
