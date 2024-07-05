@@ -41,6 +41,7 @@ class _GeneralHandler(Client):
         _request: Sends a request and handles retries.
         _receive: Receives a response and handles retries.
         _start_ping: Starts the ping process.
+        _restart_ping: Restarts the ping process.
         _send_ping: Sends ping requests to the server.
         _stop_ping: Stops the ping process.
 
@@ -231,17 +232,30 @@ class _GeneralHandler(Client):
         """
         self._logger.info("Starting ping ...")
 
+        self._ping['ping'] = True
+        self._ping['thread'] = Thread(target=self._send_ping, args=((ssid,) if bool(ssid) else ()), daemon=True)
+        self._ping['thread'].start()
+        self._logger.info("Ping started")
+
+        return True
+
+    def _restart_ping(self, ssid: str=None):
+        """
+        Restarts the ping process.
+
+        Args:
+            ssid (str, optional): The stream session ID. Defaults to None.
+
+        Returns:
+            bool: True if the ping process was restarted successfully, False otherwise.
+        """
         # in case ping is already started
         # but failed
         if 'ping' in self._ping:
             if self._ping['ping']:
                 self._stop_ping(inThread=False)
 
-
-        self._ping['ping'] = True
-        self._ping['thread'] = Thread(target=self._send_ping, args=((ssid,) if bool(ssid) else ()), daemon=True)
-        self._ping['thread'].start()
-        self._logger.info("Ping started")
+        self._start_ping(ssid=ssid)
 
         return True
 
@@ -550,7 +564,7 @@ class _DataHandler(_GeneralHandler):
 
                 self._status = 'active'
                 self._logger.info("Reconnection successful")
-                self._start_ping()
+                self._restart_ping()
             else:
                 self._logger.info("Data connection is already active")
 
@@ -840,7 +854,7 @@ class _StreamHandler(_GeneralHandler):
 
         return True
 
-    def _reveive_stream(self):
+    def _receive_stream(self):
         """
         Receive and process streaming data.
 
@@ -859,12 +873,12 @@ class _StreamHandler(_GeneralHandler):
 
             if not response:
                 self._logger.error("Failed to read stream")
-                self._stop_stream(inThread=True)
+                self._stop_stream(inThread=True, keep=False)
                 return False
             
             if not response['data']:
                 self._logger.error("No data recieved")
-                self._stop_stream(inThread=True)
+                self._stop_stream(inThread=True, keep=False)
                 return False
             
             print(response['data'])
@@ -897,7 +911,7 @@ class _StreamHandler(_GeneralHandler):
             df.append(data)
             lock.release()
 
-    def _stop_task(self, index: int):
+    def _stop_task(self, index: int, keep: bool):
         """
         Stops the specified stream task at the given index.
 
@@ -924,10 +938,12 @@ class _StreamHandler(_GeneralHandler):
         if not inThread:
             self._stream_tasks['thread'].join()
 
-        self._stream_tasks.pop(index)
+        if not keep:
+            self._stream_tasks.pop(index)
+        
         self._logger.info("Stream task ended for " + command)
                 
-    def _stop_stream(self, inThread: bool):
+    def _stop_stream(self, inThread: bool, keep: bool):
         """
         Stops the stream.
 
@@ -950,18 +966,16 @@ class _StreamHandler(_GeneralHandler):
             self._stream['thread'].join()
 
         for index in list(self._stream_tasks):
-            self._stop_task(index)
+            self._stop_task(index=index, keep=keep)
 
         return True
 
     def _restart_streams(self):
-        self._stop_stream(inThread=False)
-        
         for index in list(self._stream_tasks):
-            command=self._stream_tasks['command']
-            df=self._stream_tasks['df']
-            lock=self._stream_tasks['lock']
-            kwargs=self._stream_tasks['kwargs']
+            command=self._stream_tasks[index]['command']
+            df=self._stream_tasks[index]['df']
+            lock=self._stream_tasks[index]['lock']
+            kwargs=self._stream_tasks[index]['kwargs']
             self._streamData(command=command, df=df, lock=lock, kwargs)
               
     def _reconnect(self):
@@ -988,7 +1002,7 @@ class _StreamHandler(_GeneralHandler):
 
                 self._status='active'
                 self._logger.info("Reconnection for DataHandler successful")
-                self._dh._start_ping()
+                self._dh._restart_ping()
             else:
                 self._logger.info("DataHandler connection is already active")
 
@@ -1012,7 +1026,7 @@ class _StreamHandler(_GeneralHandler):
                 self._status='active'
                 self._logger.info("Reconnection successful")
                 self.streamData('KeepAlive')
-                self._start_ping(ssid = self._dh._ssid)
+                self._restart_ping(ssid = self._dh._ssid)
             else:
                 self._logger.info("Stream connection is already active")
 
@@ -1040,10 +1054,8 @@ class _StreamHandler(_GeneralHandler):
             return self._dh
     
     def set_datahandler(self, handler: _DataHandler):
-        if len(self._stream_tasks) > 0:
-            self._logger.error("Cannot change DataHandler. Streams still active")
-            return False
-
+        self._stop_stream(inThread=False, keep=True)
+        
         self._dh._detach_stream_handler(self)
         self._logger.info("Detached from DataHandler")
         
@@ -1053,7 +1065,8 @@ class _StreamHandler(_GeneralHandler):
         self._dh._detach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
 
-    
+        self._restart_streams()
+
     def get_demo(self):
         return self._demo
     
