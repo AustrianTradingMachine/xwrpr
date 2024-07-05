@@ -825,37 +825,19 @@ class _StreamHandler(_GeneralHandler):
 
             if command == 'KeepAlive':
                 return True
-            
-            self._start_task(command=command, df=df, lock=lock, **kwargs)
+
+            index = len(self._stream_tasks)
+            self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
+            self._stream_tasks[index]['task'] = True
+            self._stream_tasks[index]['df'] = df
+            self._stream_tasks[index]['lock'] = lock
+            self._stream_tasks[index]['thread'] = Thread(target=self._exchange_stream, args=(index, df, lock,), daemon=True)
+            self._stream_tasks[index]['queue'] = Queue()
+
+            self._logger.info("Stream started for " + command)
 
             return Thread(target=self._stop_task, args=(index,), daemon=True)
     
-    def _start_task(self, command: str, df: pd.DataFrame, lock: Lock, **kwargs):
-        """
-        Starts a new streaming task.
-
-        Args:
-            command (str): The command for the streaming task.
-            df (pd.DataFrame): The DataFrame to be used in the streaming task.
-            lock (Lock): The lock object to synchronize access to shared resources.
-            **kwargs: Additional keyword arguments for the streaming task.
-
-        Returns:
-            bool: True if the streaming task was successfully started.
-
-        """
-        index = len(self._stream_tasks)
-        self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
-        self._stream_tasks[index]['task'] = True
-        self._stream_tasks[index]['df'] = df
-        self._stream_tasks[index]['lock'] = lock
-        self._stream_tasks[index]['thread'] = Thread(target=self._exchange_stream, args=(index, df, lock,), daemon=True)
-        self._stream_tasks[index]['queue'] = Queue()
-
-        self._logger.info("Stream started for " + command)
-
-        return True
-
     def _receive_stream(self):
         """
         Receive and process streaming data.
