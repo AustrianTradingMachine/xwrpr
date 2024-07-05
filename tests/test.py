@@ -16,6 +16,8 @@ th=XTBData.getTradingHours(symbols=['EURUSD'])
 
 #print(th)
 
+time.sleep(5)
+
 XTBData.getCandles(symbol='EURUSD')
 
 #XTBData.getTrades()

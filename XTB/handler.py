@@ -235,7 +235,7 @@ class _GeneralHandler(Client):
         # but failed
         if 'ping' in self._ping:
             if self._ping['ping']:
-                self._stop_ping()
+                self._stop_ping(inThread=False)
 
 
         self._ping['ping'] = True
@@ -266,7 +266,7 @@ class _GeneralHandler(Client):
                 # but thats not important because this is just the maximal needed interval and
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
-                    if not self._request(command='ping', retry=True, stream=ssid):
+                    if not self._request(command='ping', retry=True, ssid=ssid):
                         self._logger.error("Ping failed")
                         self._stop_ping(inThread=True)
                         return False
@@ -408,7 +408,7 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("Deleting DataHandler ...")
 
         self._close_stream_handlers()
-        self._stop_ping()
+        self._stop_ping(inThread=False)
         self._logout()
         self._deleted = True
             
@@ -651,7 +651,43 @@ class _DataHandler(_GeneralHandler):
 
 
 class _StreamHandler(_GeneralHandler):
+    """
+    Handles streaming data from XTB API.
+
+    Args:
+        dataHandler (_DataHandler): The data handler object.
+        demo (bool): Flag indicating whether to use the demo mode.
+        logger (logging.Logger, optional): The logger object. Defaults to None.
+
+    Methods:
+        __init__(self, dataHandler: _DataHandler, demo: bool, logger=None): Initializes the stream handler.
+        __del__(self): Destructor method.
+        delete(self): Deletes the stream handler.
+        streamData(self, command: str, df: pd.DataFrame=None, lock: Lock=None, **kwargs): Starts streaming data.
+        _start_task(self, command: str, df: pd.DataFrame, lock: Lock, **kwargs): Starts a stream task.
+        _reveive_stream(self): Receives the stream data.
+        _exchange_stream(self, index: int, df: pd.DataFrame, lock: Lock): Exchanges the stream data.
+        _stop_task(self, index: int): Stops a stream task.
+        _stop_stream(self, inThread: bool): Stops the stream.
+        _reconnect(self): Reconnects the stream handler.
+        get_status(self): Returns the status of the stream handler.
+        get_datahandler(self): Returns the data handler object.
+        set_datahandler(self, handler: _DataHandler): Sets the data handler object.
+        get_demo(self): Returns the demo mode.
+        set_demo(self, demo): Sets the demo mode.
+        get_logger(self): Returns the logger object.
+        set_logger(self, logger): Sets the logger object.
+    """
+
     def __init__(self, dataHandler: _DataHandler, demo: bool, logger=None):
+        """
+        Initializes the stream handler.
+
+        Args:
+            dataHandler (_DataHandler): The data handler object.
+            demo (bool): Flag indicating whether to use the demo mode.
+            logger (logging.Logger, optional): The logger object. Defaults to None.
+        """
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -683,6 +719,7 @@ class _StreamHandler(_GeneralHandler):
         self._deleted = False
 
         self.open()
+        
         # stream must be initialized right after connection is opened
         self._stream=dict()
         self._stream_tasks = dict()
@@ -697,18 +734,38 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("StreamHandler created")
 
     def __del__(self):
+        """
+        Destructor method for the Handler class.
+
+        This method is automatically called when the object is about to be destroyed.
+        It performs cleanup operations, such as deleting any resources associated with the object.
+
+        """
         self.delete()
             
     def delete(self):
+        """
+        Deletes the StreamHandler.
+
+        If the StreamHandler has already been deleted, an error message is logged and the method returns True.
+        Otherwise, the StreamHandler is deleted by performing the following steps:
+        1. Stops the stream and ping processes.
+        2. Closes the StreamHandler.
+        3. Sets the status of the StreamHandler to 'inactive'.
+        4. Detaches the StreamHandler from the DataHandler.
+        5. Marks the StreamHandler as deleted.
+
+        Returns:
+            bool: True if the StreamHandler is successfully deleted, False otherwise.
+        """
         if self._deleted:
             self._logger.error("StreamHandler already deleted")
             return True
 
         self._logger.info("Deleting StreamHandler ...")
 
-
         self._stop_stream(inThread=False)
-        self._stop_ping()
+        self._stop_ping(inThread=False)
         self.close()
         self._status='inactive'
             
@@ -721,6 +778,18 @@ class _StreamHandler(_GeneralHandler):
         return True
         
     def streamData(self, command: str, df: pd.DataFrame=None, lock: Lock=None,**kwargs):
+        """
+        Starts streaming data from the server.
+
+        Args:
+            command (str): The command to be sent to the server.
+            df (pd.DataFrame, optional): The DataFrame to be used for streaming data. Defaults to None.
+            lock (Lock, optional): The lock object to synchronize access to shared resources. Defaults to None.
+            **kwargs: Additional keyword arguments to be passed to the server.
+
+        Returns:
+            bool: True if the streaming started successfully, False otherwise.
+        """
         if not self._dh._ssid:
             self._logger.error("Got no StreamSessionId from Server")
             return False
@@ -730,7 +799,7 @@ class _StreamHandler(_GeneralHandler):
 
             self._ssid = self._dh._ssid
 
-            if not self._request(retry= True, command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
+            if not self._request(retry= True, command='get'+command, ssid=self._ssid, arguments=kwargs if bool(kwargs) else None):
                 self._logger.error("Request for stream not possible")
                 return False
             
@@ -740,21 +809,46 @@ class _StreamHandler(_GeneralHandler):
                 self._stream['thread'].start()
                 self._logger.info("Stream started")
             
-            if df:
+            if command != 'KeepAlive':
                 self._start_task(command=command, df=df, lock=lock, **kwargs)
 
             return True
         
     def _start_task(self, command: str, df: pd.DataFrame, lock: Lock, **kwargs):
-        index = len(self._stream_tasks)
-        self._stream_tasks[index]={'command': command, 'arguments': kwargs}
-        self._stream_tasks[index]['task']=True
-        self._stream_tasks[index]['thread']=Thread(target=self._exchange_stream, args=(index,df,lock,),deamon=True)
-        self._stream_tasks[index]['queue']=Queue()
+        """
+        Starts a new streaming task.
 
-        self._logger.info("Stream started for "+command)
+        Args:
+            command (str): The command for the streaming task.
+            df (pd.DataFrame): The DataFrame to be used in the streaming task.
+            lock (Lock): The lock object to synchronize access to shared resources.
+            **kwargs: Additional keyword arguments for the streaming task.
+
+        Returns:
+            bool: True if the streaming task was successfully started.
+
+        """
+        index = len(self._stream_tasks)
+        self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
+        self._stream_tasks[index]['task'] = True
+        self._stream_tasks[index]['thread'] = Thread(target=self._exchange_stream, args=(index, df, lock,), daemon=True)
+        self._stream_tasks[index]['queue'] = Queue()
+
+        self._logger.info("Stream started for " + command)
+
+        return True
 
     def _reveive_stream(self):
+        """
+        Receive and process streaming data.
+
+        This method continuously receives data from the stream and processes it.
+        It checks for any errors in the received data and stops the stream if necessary.
+        It also filters the received data based on the configured stream tasks.
+
+        Returns:
+            bool: True if the stream is successfully processed, False otherwise.
+        """
         while self._stream['stream']:
             self._logger.info("Streaming Data ...")
 
@@ -773,35 +867,64 @@ class _StreamHandler(_GeneralHandler):
             
             print(response['data'])
 
-            for task in self._stream_tasks:
-                if task['command'] != response['command']:
+            for index in self._stream_tasks:
+                if self._stream_tasks[index]['command'] != response['command']:
                     continue
 
                 if 'symbol' in response['data']:
-                    if set(task['symbol']) != set(response['data']['symbol']):
+                    if set(self._stream_tasks[index]['arguments']['symbol']) != set(response['data']['symbol']):
                         continue
 
-                task['queue'].put(response['data'])
+                self._stream_tasks[index]['queue'].put(response['data'])
 
-    def _exchange_stream(self,index: int, df: pd.DataFrame, lock: Lock):
+    def _exchange_stream(self, index: int, df: pd.DataFrame, lock: Lock):
+        """
+        Stream data from the exchange and append it to the given DataFrame.
+
+        Parameters:
+            index (int): The index of the stream task.
+            df (pd.DataFrame): The DataFrame to append the data to.
+            lock (Lock): The lock object to synchronize access to the DataFrame.
+
+        Returns:
+            None
+        """
         while self._stream_tasks[index]['task']:
-            data=self._stream_tasks[index]['queue'].get()
+            data = self._stream_tasks[index]['queue'].get()
             lock.acquire()
             df.append(data)
             lock.release()
 
     def _stop_task(self, index: int):
-        command=self._stream_tasks[index]['command']
-        arguments=self._stream_tasks[index]['arguments']
+        """
+        Stops the specified stream task at the given index.
+
+        Args:
+            index (int): The index of the stream task to stop.
+
+        Returns:
+            None
+        """
+        command = self._stream_tasks[index]['command']
+        arguments = self._stream_tasks[index]['arguments']
 
         with self._ping_lock:
-            if not self._request(retry = False, command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
+            if not self._request(retry=False, command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
                 self._logger.error("Failed to end stream")
-            
+
         self._stream_tasks.pop(index)
-        self._logger.info("Stream ended for "+command)
+        self._logger.info("Stream ended for " + command)
                 
     def _stop_stream(self, inThread: bool):
+        """
+        Stops the stream.
+
+        Args:
+            inThread (bool): Indicates whether the method is called from a separate thread.
+
+        Returns:
+            bool: True if the stream was successfully stopped, False otherwise.
+        """
         self._logger.info("Stopping stream ...")
 
         if not self._stream['stream']:
@@ -813,13 +936,19 @@ class _StreamHandler(_GeneralHandler):
         # be sure join is not called in Thread target function
         if not inThread:
             self._stream['thread'].join()
-        
-        for index in list(self._streams['tasks']):
+
+        for index in list(self._stream_tasks):
             self._stop_task(index)
 
         return True
             
     def _reconnect(self):
+        """
+        Reconnects the DataHandler and StreamHandler if the connection is inactive or lost.
+
+        Returns:
+            bool: True if reconnection is successful, False otherwise.
+        """
         if self._dh._reconnect_lock.acquire(blocking=False):
             if not self._dh.check('basic'): 
                 self._logger.info("Retry connection for DataHandler")
@@ -880,10 +1009,16 @@ class _StreamHandler(_GeneralHandler):
         return self._status
 
     def get_datahandler(self):
-        return self._dh
+            """
+            Returns the data handler associated with this object.
+
+            Returns:
+                DataHandler: The data handler object.
+            """
+            return self._dh
     
     def set_datahandler(self, handler: _DataHandler):
-        if len(self._streams) > 0:
+        if len(self._stream_tasks) > 0:
             self._logger.error("Cannot change DataHandler. Streams still active")
             return False
 
@@ -1021,7 +1156,7 @@ class HandlerManager():
         """
         for handler in self._handlers['stream']:
             if handler.get_status() == 'active':
-                if len(handler._streams['tasks']) < self._max_streams:
+                if len(handler._stream_tasks) < self._max_streams:
                     return handler
         return None
     
