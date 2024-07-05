@@ -2,26 +2,19 @@ import logging
 import os
 
 
-def generate_logger(stream_level: str = None, file_level: str = None, name: str = None, path: str = None):
+def generate_logger(name: str, stream_level: str = None, file_level: str = None, path: str = None):
     """
-    Sets up and returns a logger object with the specified configurations.
+    Generate a logger with the specified name and configuration.
 
     Args:
+        name (str): The name of the logger.
         stream_level (str, optional): The log level for the console output. Defaults to None.
         file_level (str, optional): The log level for the file output. Defaults to None.
-        name (str, optional): The name of the logger. Required.
         path (str, optional): The path to the directory where the log file will be saved. Defaults to None.
 
     Returns:
-        logger (logging.Logger): The configured logger object.
-
-    Raises:
-        ValueError: If the name argument is not provided.
-        ValueError: If the specified directory path cannot be created.
+        logging.Logger: The configured logger instance.
     """
-    if name is None:
-        raise ValueError("Please provide a name for the logger.")
-
     logger = logging.getLogger(name)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger.setLevel(logging.DEBUG)
@@ -47,17 +40,17 @@ def generate_logger(stream_level: str = None, file_level: str = None, name: str 
 
 def _validate_level(level: str = None, default: str = "debug"):
     """
-    Validates the log level.
+    Validates the logging level and returns the corresponding logging level constant.
 
     Args:
-        level (str, optional): The log level to validate. Defaults to None.
-        default (str, optional): The default log level. Defaults to "debug".
-
-    Raises:
-        ValueError: If the provided log level is invalid.
+        level (str, optional): The desired logging level. Defaults to None.
+        default (str, optional): The default logging level. Defaults to "debug".
 
     Returns:
-        int: The validated log level.
+        int: The logging level constant.
+
+    Raises:
+        ValueError: If the provided level or default level is invalid.
     """
     levels = {
         "debug": logging.DEBUG,
@@ -69,9 +62,11 @@ def _validate_level(level: str = None, default: str = "debug"):
 
     if level is not None:
         if level.lower() not in levels:
-            raise ValueError(f"Invalid log level: {level}")
+            raise ValueError(f"Invalid logger level: {level}")
         level = levels[level.lower()]
     else:
+        if default.lower() not in levels:
+            raise ValueError(f"Invalid default level: {default}")
         level = levels[default.lower()]
 
     return level

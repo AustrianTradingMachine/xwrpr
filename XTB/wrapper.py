@@ -1,5 +1,7 @@
 import logging
 import os
+import pandas as pd
+from threading import Lock
 import datetime
 import pytz
 from XTB.handler import HandlerManager
@@ -41,17 +43,6 @@ class Wrapper(HandlerManager):
 
         sh.streamData("TickerPrices", symbol=symbol)
 
-    def getKeepAlive(self) -> dict:
-        sh=self.provide_StreamHandler()
-        if not sh:
-            self._logger("Could not provide data")
-            return False
-
-        response=sh.streamData("KeepAlive")
-        if not response:
-            return False
-
-        return response
     
     def getTrades(self) -> dict:
         sh=self.provide_StreamHandler()
@@ -92,11 +83,12 @@ class Wrapper(HandlerManager):
             self._logger("Could not provide data")
             return False
 
-        response=sh.streamData("Candles", symbol=symbol)
-        if not response:
-            return False
+        df=pd.DataFrame()
+        lock=Lock()
+        
+        sh.streamData(command = "Candles", symbol=symbol, df=df, lock=lock)
 
-        return response
+        return df, lock
 
     def getSymbols(self) ->dict:
         dh=self.provide_DataHandler()

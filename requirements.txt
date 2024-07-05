@@ -1,15 +1,4 @@
 requests
 
-socket
-ssl
-time
-select
-json
-re
-threading
-logging
-os
-math
-atetime
 pytz
-configparser
+pandas

@@ -19,21 +19,24 @@ class Client():
         close() -> bool: Closes the connection and releases the socket.
     """
 
-    def __init__(self, host: str=None, port: int=None, encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
+    def __init__(self, host: str, port: int, encrypted: bool, timeout: float, stream: bool, interval: float=0.5, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, logger=None):
         """
         Initializes a new instance of the Client class.
 
         Args:
-            host (str, optional): The host address. Defaults to None.
-            port (int, optional): The port number. Defaults to None.
-            encrypted (bool, optional): Indicates if the connection should be encrypted. Defaults to False.
-            timeout (float, optional): The timeout value in seconds. Defaults to None.
-            interval (float, optional): The interval value in seconds. Defaults to None.
-            max_fails (int, optional): The maximum number of failed attempts. Defaults to 10.
-            bytes_out (int, optional): The number of bytes to send. Defaults to 1024.
-            bytes_in (int, optional): The number of bytes to receive. Defaults to 1024.
-            stream (bool, optional): Indicates if the connection should be a stream. Defaults to False.
-            logger (Logger, optional): The logger instance. Defaults to None.
+            host (str): The host address to connect to.
+            port (int): The port number to connect to.
+            encrypted (bool): Indicates whether the connection should be encrypted.
+            timeout (float): The timeout value for the connection.
+            stream (bool): Indicates whether to use a streaming connection.
+            interval (float, optional): The interval between requests in seconds. Defaults to 0.5.
+            max_fails (int, optional): The maximum number of consecutive failed requests before giving up. Defaults to 10.
+            bytes_out (int, optional): The maximum number of bytes to send in each request. Defaults to 1024.
+            bytes_in (int, optional): The maximum number of bytes to receive in each response. Defaults to 1024.
+            logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
+
+        Raises:
+            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
         if logger:
             if not isinstance(logger, logging.Logger):
@@ -41,34 +44,34 @@ class Client():
             
             self._logger = logger
         else:
-            self._logger=generate_logger(name='Client', path=os.path.join(os.getcwd(), "logs"))
+            self._logger = generate_logger(name='Client', path=os.path.join(os.getcwd(), "logs"))
         
-        self._host=host
-        self._port=port
-        self._encrypted=encrypted
-        self._timeout=timeout
+        self._host = host
+        self._port = port
+        self._encrypted = encrypted
+        self._timeout = timeout
         
         if timeout:
-            self._blocking=False
+            self._blocking = False
         else:
-            self._blocking=True
+            self._blocking = True
             
-        self._used_addresses=[]
+        self._used_addresses = []
 
         self.create()
 
-        self._interval=interval
-        self._max_fails=max_fails
-        self._bytes_out=bytes_out
-        self._bytes_in=bytes_in
-        self._stream=stream
+        self._interval = interval
+        self._max_fails = max_fails
+        self._bytes_out = bytes_out
+        self._bytes_in = bytes_in
+        self._stream = stream
 
-    def check(self, mode: str=None):
+    def check(self, mode: str):
         """
         Check the socket for readability, writability, or errors.
 
         Args:
-            mode (str): The mode to check. Can be one of 'basic', 'readable', or 'writable'.
+            mode (str): The mode to check. Valid values are 'basic', 'readable', or 'writable'.
 
         Returns:
             bool: True if the socket is in the desired state, False otherwise.
@@ -182,7 +185,7 @@ class Client():
         """
         self._logger.info("Opening connection ...")
 
-        if not self.check('basic'):
+        if not self.check(mode='basic'):
             self._logger.error("Socket failed. Try to create again")
             if not self.create():
                 return False
@@ -218,7 +221,7 @@ class Client():
             package_size = min(self._bytes_out, len(msg) - send_msg)
             try:
                 # Check socket for writability
-                if self.check('writable'):
+                if self.check(mode='writable'):
                     send_msg += self._socket.send(msg[send_msg:send_msg + package_size])
                 else:
                     self._logger.error("Connection to socket broken")
@@ -248,7 +251,7 @@ class Client():
         while True:
             msg=''
             try:
-                if self.check('readable'):
+                if self.check(mode='readable'):
                     msg = self._socket.recv(self._bytes_in)
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))
