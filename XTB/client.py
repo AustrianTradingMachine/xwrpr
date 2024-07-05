@@ -105,7 +105,6 @@ class Client():
 
         self._logger.info(f"{len(avl_addresses)} addresses found")
 
-
         tried_addresses = []
         while len(tried_addresses) < len(avl_addresses):
             # Always trie adresses first that did not fail
