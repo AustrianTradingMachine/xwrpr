@@ -125,11 +125,20 @@ class _GeneralHandler(Client):
         return response
 
     def _set_reconnect_method(self, callback):
-        if callable(callback):
-            self._call_reconnect=callback
-        else:
-            self._logger.error("Reconnection method not callable")
-            return False
+            """
+            Sets the reconnect method for the handler.
+
+            Parameters:
+            - callback: A callable object representing the reconnect method.
+
+            Returns:
+            - bool: True if the reconnect method is successfully set, False otherwise.
+            """
+            if callable(callback):
+                self._call_reconnect = callback
+            else:
+                self._logger.error("Reconnection method not callable")
+                return False
             
     def _request(self, retry: bool=True, **kwargs):
         """
@@ -494,30 +503,6 @@ class _DataHandler(_GeneralHandler):
 
         return True
 
-    def _get_status(self):
-        """
-        Returns status of DataHandler.
-
-        Args:
-            None
-
-        Returns:
-            Status (str)
-        """
-        return self._status
-
-    def _get_StreamHandler(self):
-        """
-        Returns list of StreamHandler.
-
-        Args:
-            None
-
-        Returns:
-            Streams (list) 
-        """
-        return self._stream_handlers
-
     def _attach_stream_handler(self, handler):
         """
         Attach a StreamHandler at the DataHandler.
@@ -570,6 +555,30 @@ class _DataHandler(_GeneralHandler):
                 # detachin is only executed by StreamHandler itself
         
         return True
+    
+    def get_status(self):
+        """
+        Returns status of DataHandler.
+
+        Args:
+            None
+
+        Returns:
+            Status (str)
+        """
+        return self._status
+
+    def get_StreamHandler(self):
+        """
+        Returns list of StreamHandler.
+
+        Args:
+            None
+
+        Returns:
+            Streams (list) 
+        """
+        return self._stream_handlers
 
     def get_demo(self):
         return self._demo
@@ -633,7 +642,7 @@ class _StreamHandler(_GeneralHandler):
         self.streamData('KeepAlive')
         
         # start ping to keep connection open
-        #self._start_ping(ssid = self._dh._ssid)
+        self._start_ping(ssid = self._dh._ssid)
         
         self._dh._attach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
@@ -695,7 +704,7 @@ class _StreamHandler(_GeneralHandler):
 
             self._ssid = self._dh._ssid
 
-            if not self._request(command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
+            if not self._request(retry= True, command='get'+command, stream=self._ssid, arguments=kwargs if bool(kwargs) else None):
                 self._logger.error("Request for stream not possible")
                 return False
 
@@ -725,7 +734,7 @@ class _StreamHandler(_GeneralHandler):
         while self._streams[index]['stream']:
             self._logger.info("Streaming Data ...")
 
-            response=self._receive()
+            response=self._receive(retry=True, data=False)
             if not response:
                 self._logger.error("Failed to read stream")
                 self.endStream(index,inThread=True)
@@ -830,12 +839,25 @@ class _StreamHandler(_GeneralHandler):
 
                 self._status='active'
                 self._logger.info("Reconnection successful")
+                self.streamData('KeepAlive')
                 self._start_ping(ssid = self._dh._ssid)
             else:
                 self._logger.info("Stream connection is already active")
 
         return True
     
+    def get_status(self):
+        """
+        Returns status of StreamHandler.
+
+        Args:
+            None
+
+        Returns:
+            Status (str)
+        """
+        return self._status
+
     def get_datahandler(self):
         return self._dh
     
@@ -856,18 +878,7 @@ class _StreamHandler(_GeneralHandler):
         self._dh._detach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
 
-    def _get_status(self):
-        """
-        Returns status of StreamHandler.
-
-        Args:
-            None
-
-        Returns:
-            Status (str)
-        """
-        return self._status
-
+    
     def get_demo(self):
         return self._demo
     
@@ -924,7 +935,7 @@ class HandlerManager():
                 return True
         
             for handler in self._handlers['data']:
-                if handler._get_status == 'active':
+                if handler.get_status == 'active':
                     self._delete_handler(handler)
 
             self._deleted=True
@@ -943,7 +954,7 @@ class HandlerManager():
         if isinstance(handler, _DataHandler):
             handler.delete()
             self._connections -= 1
-            for stream in list(handler._get_StreamHandler):
+            for _ in list(handler.get_StreamHandler):
                 self._connections -= 1
         elif isinstance(handler, _StreamHandler):
             handler.delete()
@@ -972,7 +983,7 @@ class HandlerManager():
             The first active DataHandler, or None if no active handler is found.
         """
         for handler in self._handlers['data']:
-            if self._get_status() == 'active':
+            if handler.get_status() == 'active':
                 return handler
         return None
     
@@ -984,7 +995,7 @@ class HandlerManager():
             str or None: The name of the available StreamHandler, or None if no handler is available.
         """
         for handler in self._handlers['stream']:
-            if self._get_status() == 'active':
+            if handler.get_status() == 'active':
                 if len(handler._streams) < self._max_streams:
                     return handler
         return None
