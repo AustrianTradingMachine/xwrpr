@@ -822,12 +822,14 @@ class _StreamHandler(_GeneralHandler):
                 self._stream['thread'] = Thread(target=self._reveive_stream, daemon=True)
                 self._stream['thread'].start()
                 self._logger.info("Stream started")
-            
-            if command != 'KeepAlive':
-                self._start_task(command=command, df=df, lock=lock, **kwargs)
 
-            return True
-        
+            if command == 'KeepAlive':
+                return True
+            
+            self._start_task(command=command, df=df, lock=lock, **kwargs)
+
+            return Thread(target=self._stop_task, args=(index,), daemon=True)
+    
     def _start_task(self, command: str, df: pd.DataFrame, lock: Lock, **kwargs):
         """
         Starts a new streaming task.
