@@ -8,20 +8,22 @@ from XTB.utils import generate_logger
 
 class Client():
     """
-    Represents a client that can create and manage a socket connection.
+    A class representing a client for socket communication.
 
-    Attributes:
-        host (str): The host to connect to.
-        port (int): The port to connect to.
-        encrypted (bool): Indicates whether the socket connection should be encrypted.
+    Args:
+        host (str): The host address to connect to.
+        port (int): The port number to connect to.
+        encrypted (bool): Whether to use SSL encryption for the socket connection.
         timeout (float): The timeout value for socket operations.
         interval (float): The interval between socket operations.
         max_fails (int): The maximum number of connection attempts.
         bytes_out (int): The maximum number of bytes to send in each message.
         bytes_in (int): The maximum number of bytes to receive in each message.
-        stream (bool): Indicates whether the socket connection is a stream connection.
-        logger: The logger object for logging messages.
+        stream (bool): Whether to receive messages as a stream or not.
+        logger: The logger object to use for logging.
+
     """
+
     def __init__(self, host: str=None, port: int=None, encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
         if logger:
             if not isinstance(logger, logging.Logger):
@@ -56,10 +58,10 @@ class Client():
         Check the socket for readability, writability, or errors.
 
         Args:
-            mode (str): The mode to check for. Can be one of 'basic', 'readable', or 'writable'.
+            mode (str): The mode to check. Can be one of 'basic', 'readable', or 'writable'.
 
         Returns:
-            bool: True if the socket is in the desired mode, False otherwise.
+            bool: True if the socket is in the desired state, False otherwise.
 
         Raises:
             ValueError: If an unknown mode value is provided.
@@ -90,7 +92,7 @@ class Client():
 
     def create(self):
         """
-        Creates a socket connection to the specified host and port.
+        Creates a socket connection.
 
         Returns:
             bool: True if the socket connection is successfully created, False otherwise.
@@ -160,13 +162,13 @@ class Client():
         
         self._logger.error("All attempts to create socket failed")
         return False
-    
+
     def open(self):
         """
-        Opens a socket connection.
+        Opens a connection to the server.
 
         Returns:
-            bool: True if the socket connection is successfully opened, False otherwise.
+            bool: True if the connection is successfully opened, False otherwise.
         """
         self._logger.info("Opening connection ...")
 
@@ -222,13 +224,10 @@ class Client():
 
     def receive(self):
         """
-        Receive messages from the socket.
-
-        This method continuously receives messages from the socket until there are no more messages to receive.
-        It returns the concatenated message received.
+        Receives a message from the socket.
 
         Returns:
-            str: The concatenated message received from the socket.
+            str: The received message.
 
         Raises:
             Exception: If there is an error receiving the message.
@@ -257,16 +256,16 @@ class Client():
     
         self._logger.info("Message received")
         return full_msg
-    
+
     def __del__(self):
         self.close()
 
     def close(self):
         """
-        Closes the socket connection.
+        Closes the connection and releases the socket.
 
         Returns:
-            bool: True if the socket is successfully closed, False otherwise.
+            bool: True if the connection was successfully closed, False otherwise.
         """
         self._logger.info("Closing connection ...")
 
@@ -286,23 +285,11 @@ class Client():
             self._logger.error("Socket is already closed")
             return True
         
-    def get_timeout(self):
-        return self._timeout
-    
-    def set_timeout(self, timeout):
-        self._timeout = timeout
-        self._socket.settimeout(timeout)
-        
-        if timeout:
-            self._blocking=False
-        else:
-            self._blocking=True
-        
     def get_host(self):
         return self._host
     
     def set_host(self, host):
-        raise AttributeError("Cannot set read-only attribute 'address'")
+        raise AttributeError("Cannot set read-only attribute 'host'")
     
     def get_port(self):
         return self._port
@@ -315,6 +302,18 @@ class Client():
 
     def set_encrypted(self, encrypted):
         raise AttributeError("Cannot set read-only attribute 'encrypted'")
+    
+    def get_timeout(self):
+        return self._timeout
+    
+    def set_timeout(self, timeout):
+        self._timeout = timeout
+        self._socket.settimeout(timeout)
+        
+        if timeout:
+            self._blocking=False
+        else:
+            self._blocking=True
 
     def get_interval(self):
         return self._interval
@@ -340,10 +339,11 @@ class Client():
     def set_bytes_in(self, bytes_in):
         self._bytes_in = bytes_in
 
-    timeout = property(get_timeout, set_timeout, doc='Get/set the socket timeout')
+    
     host = property(get_host, set_host, doc='read only property socket host')
     port = property(get_port, set_port, doc='read only property socket port')
     encrypted = property(get_encrypted, set_encrypted, doc='read only property socket encryption')
+    timeout = property(get_timeout, set_timeout, doc='Get/set the socket timeout')
     interval = property(get_interval, set_interval, doc='Get/set the interval value')
     max_fails = property(get_max_fails, set_max_fails, doc='Get/set the max fails value')
     bytes_out = property(get_bytes_out, set_bytes_out, doc='Get/set the bytes out value')
