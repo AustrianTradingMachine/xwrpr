@@ -30,16 +30,33 @@ MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
 
 class _GeneralHandler(Client):
     """
-    A class that handles general requests and responses to the XTB API.
+    This class represents a general handler for XTB API requests.
 
-    Args:
-        host (str): The host address of the XTB API.
-        port (int): The port number of the XTB API.
-        userid (str): The user ID for authentication.
-        stream (bool): Flag indicating whether to use the streaming API.
-        logger: The logger object for logging messages.
+    Methods:
+        _send_request: Sends a request to the server.
+        _receive_response: Receives a response from the server.
+        _set_reconnect_method: Sets the callback function for reconnection.
+        _request: Sends a request and handles retries.
+        _receive: Receives a response and handles retries.
+        _start_ping: Starts the ping process.
+        _send_ping: Sends ping requests to the server.
+        _stop_ping: Stops the ping process.
+
     """
     def __init__(self, host: str=None, port: int=None, userid: str=None, stream: bool = False, logger=None):
+        """
+        Initializes the Handler object.
+
+        Args:
+            host (str): The host address to connect to. Defaults to None.
+            port (int): The port number to connect to. Defaults to None.
+            userid (str): The user ID for authentication. Defaults to None.
+            stream (bool): Flag indicating whether to use streaming mode. Defaults to False.
+            logger (logging.Logger): The logger object to use for logging. Defaults to None.
+
+        Raises:
+            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
+        """
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -69,17 +86,16 @@ class _GeneralHandler(Client):
     
     def _send_request(self,command, stream=None, arguments=None, tag=None):
         """
-        Send a request to the XTB API.
+        Sends a request to the server.
 
         Args:
             command (str): The command to send.
-            stream (str): The stream session ID.
-            arguments (dict): Additional arguments for the command.
-            tag (str): A custom tag for the request.
+            stream (str, optional): The stream session ID. Defaults to None.
+            arguments (dict, optional): Additional arguments for the request. Defaults to None.
+            tag (str, optional): The custom tag for the request. Defaults to None.
 
         Returns:
             bool: True if the request was sent successfully, False otherwise.
-
         """
         self._logger.info("Sending request ...")
 
@@ -101,11 +117,10 @@ class _GeneralHandler(Client):
 
     def _receive_response(self):
         """
-        Receive a response from the XTB API.
+        Receives a response from the server.
 
         Returns:
             bool: True if the response was received successfully, False otherwise.
-
         """
         self._logger.info("Receiving response ...")
 
@@ -125,31 +140,31 @@ class _GeneralHandler(Client):
         return response
 
     def _set_reconnect_method(self, callback):
-            """
-            Sets the reconnect method for the handler.
+        """
+        Sets the callback function for reconnection.
 
-            Parameters:
-            - callback: A callable object representing the reconnect method.
+        Args:
+            callback (callable): The callback function for reconnection.
 
-            Returns:
-            - bool: True if the reconnect method is successfully set, False otherwise.
-            """
-            if callable(callback):
-                self._call_reconnect = callback
-            else:
-                self._logger.error("Reconnection method not callable")
-                return False
+        Returns:
+            bool: True if the callback function was set successfully, False otherwise.
+        """
+        if callable(callback):
+            self._call_reconnect = callback
+        else:
+            self._logger.error("Reconnection method not callable")
+            return False
             
     def _request(self, retry: bool=True, **kwargs):
         """
-        Send a request to the XTB API.
+        Sends a request and handles retries.
 
         Args:
-            **kwargs: Additional arguments for the request.
+            retry (bool, optional): Whether to retry sending the request. Defaults to True.
+            **kwargs: Additional keyword arguments for the request.
 
         Returns:
             bool: True if the request was sent successfully, False otherwise.
-
         """
         while True:
             if not self._send_request(**kwargs):
@@ -167,11 +182,14 @@ class _GeneralHandler(Client):
     
     def _receive(self, retry:bool = True,data: bool=False):
         """
-        Receive a response from the XTB API.
+        Receives a response and handles retries.
+
+        Args:
+            retry (bool, optional): Whether to retry receiving the response. Defaults to True.
+            data (bool, optional): Whether the response contains data. Defaults to False.
 
         Returns:
-            bool or dict: The response data if successful, False otherwise.
-
+            bool: True if the response was received successfully, False otherwise.
         """
         while True:
             response=self._receive_response()
@@ -204,10 +222,10 @@ class _GeneralHandler(Client):
         Starts the ping process.
 
         Args:
-            ssid (str, optional): The SSID to send the ping to. Defaults to None.
+            ssid (str, optional): The stream session ID. Defaults to None.
 
         Returns:
-            bool: True if the ping process was started successfully.
+            bool: True if the ping process was started successfully, False otherwise.
         """
         self._logger.info("Starting ping ...")
 
@@ -227,13 +245,13 @@ class _GeneralHandler(Client):
 
     def _send_ping(self, ssid: str=None):
         """
-        Sends a ping request to the server at regular intervals.
+        Sends ping requests to the server.
 
         Args:
-            ssid (str, optional): The stream ID. Defaults to None.
+            ssid (str, optional): The stream session ID. Defaults to None.
 
         Returns:
-            bool: True if the ping request was successful, False otherwise.
+            bool: True if the ping requests were sent successfully, False otherwise.
         """
         # sends ping all 10 minutes
         ping_interval = 60*9.9
@@ -246,7 +264,7 @@ class _GeneralHandler(Client):
                 # but thats not important because this is just the maximal needed interval and
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
-                    if not self._request(command='ping', retry=True, stream=ssid if not bool(ssid) else None):
+                    if not self._request(command='ping', retry=True, stream=ssid):
                         self._logger.error("Ping failed")
                         self._stop_ping(inThread=True)
                         return False
@@ -265,11 +283,13 @@ class _GeneralHandler(Client):
 
     def _stop_ping(self, inThread: bool=False):
         """
-        Stop the ping request.
+        Stops the ping process.
+
+        Args:
+            inThread (bool, optional): Whether the function is called from the ping thread. Defaults to False.
 
         Returns:
-            bool: True if the ping was stopped successfully, False otherwise.
-
+            bool: True if the ping process was stopped successfully, False otherwise.
         """
         self._logger.info("Stopping ping ...")
 
@@ -291,14 +311,39 @@ class _GeneralHandler(Client):
 
 class _DataHandler(_GeneralHandler):
     """
-    DataHandler class for retrieving data from the XTB API.
+    The `_DataHandler` class handles data-related operations for the XTB trading platform.
 
-    Args:
-        demo (bool, optional): Flag indicating whether to use the demo mode. Default is True.
-        logger (object, optional): Logger object for logging messages.
+    Methods:
+        __init__: Initializes the DataHandler object.
+        __del__: Destructor method for the DataHandler object.
+        delete: Deletes the DataHandler object.
+        _login: Logs in to the XTB trading platform.
+        _logout: Logs out the user from the XTB trading platform.
+        getData: Retrieves data from the server based on the specified command and arguments.
+        _reconnect: Reconnects the data handler to the server.
+        _attach_stream_handler: Attaches a stream handler to the logger.
+        _detach_stream_handler: Detaches a stream handler from the logger.
+        _close_stream_handlers: Closes the stream handlers.
+        get_status: Returns the status of the handler.
+        get_StreamHandler: Returns the stream handlers associated with the XTB handler.
+        get_demo: Returns the demo mode.
+        set_demo: Sets the demo mode.
+        get_logger: Returns the logger.
+        set_logger: Sets the logger.
 
     """
-    def __init__(self, demo: bool=True, logger = None):
+
+    def __init__(self, demo: bool=True, logger=None):
+        """
+        Initializes a new instance of the DataHandler class.
+
+        Args:
+            demo (bool, optional): Specifies whether to use the demo account. Defaults to True.
+            logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
+
+        Raises:
+            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
+        """
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -336,15 +381,23 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("DataHandler created")
         
     def __del__(self):
+        """
+        Destructor method for the Handler class.
+        
+        This method is automatically called when the object is about to be destroyed.
+        It performs cleanup operations and deletes the object.
+        """
         self.delete()
     
     def delete(self):
         """
-        Destructor method for the DataHandler class.
-        Logs out the user if not already logged out.
-        
+        Deletes the DataHandler.
+
+        This method performs the necessary cleanup operations to delete the DataHandler.
+        It closes stream handlers, stops the ping, logs out, and marks the DataHandler as deleted.
+
         Returns:
-            bool: True if successfully logged out, False otherwise.
+            bool: True if the DataHandler is successfully deleted, False otherwise.
         """
         if self._deleted:
             self._logger.error("DataHandler already deleted")
@@ -363,11 +416,10 @@ class _DataHandler(_GeneralHandler):
             
     def _login(self):
         """
-        Log in to the XTB API.
+        Logs in to the XTB trading platform.
 
         Returns:
-            bool: True if the login was successful, False otherwise.
-
+            bool: True if the login is successful, False otherwise.
         """
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging in ...")
@@ -377,35 +429,34 @@ class _DataHandler(_GeneralHandler):
                 return False
             
             # retry False because login is part of reconnection routine
-            if not self._request(retry = False, command='login',arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
+            if not self._request(retry=False, command='login', arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
                 self._logger.error("Log in failed")
                 return False
             
             # retry False because login is part of reconnection routine
-            response=self._receive(retry = False, data = True)
+            response = self._receive(retry=False, data=True)
             if not response:
                 self._logger.error("Log in failed")
                 return False
 
             self._logger.info("Log in successfully")
-            self._ssid=response['streamSessionId']
+            self._ssid = response['streamSessionId']
 
-            self._status='active'
+            self._status = 'active'
                                 
             return True
 
     def _logout(self):
         """
-        Log out from the XTB API.
+        Logs out the user from the XTB trading platform.
 
         Returns:
-            bool: True if logout was successfull
-
+            bool: True if the logout was successful, False otherwise.
         """
         if not self._ssid:
             self._logger.error("Already logged out")
             # no false return function must run through
-        
+            
         with self._ping_lock: # waits for the ping check loop to finish
             self._logger.info("Logging out ...")
 
@@ -433,15 +484,15 @@ class _DataHandler(_GeneralHandler):
 
     def getData(self, command, **kwargs):
         """
-        Retrieves data from the XTB API.
+        Retrieves data from the server based on the specified command and arguments.
 
         Args:
-            command (str): The type of data to retrieve.
-            **kwargs: Additional arguments for the data request.
+            command (str): The command to be executed.
+            **kwargs: Additional keyword arguments to be passed as arguments to the command.
 
         Returns:
-            bool or list: The retrieved data if successful, False otherwise.
-            
+            The data received from the server as a response to the command.
+
         """
         if not self._ssid:
             self._logger.error("Got no StreamSessionId from Server")
@@ -470,25 +521,24 @@ class _DataHandler(_GeneralHandler):
         
     def _reconnect(self):
         """
-        Reconnects to the server.
+        Reconnects the data handler to the server.
 
-        This method attempts to reconnect to the server by creating a new socket connection,
-        opening the connection, and logging in. If any of these steps fail, an error message
-        is logged and the reconnection process is aborted.
+        This method is responsible for reconnecting the data handler to the server in case of disconnection.
+        It first checks if the basic connection is established, and if not, it retries the connection.
+        If the connection is successfully created, it then logs in to the server.
+        After a successful reconnection, the data handler's status is set to 'active' and the ping process is started.
 
         Returns:
-            bool: True if the reconnection was successful, False otherwise.
+            bool: True if the reconnection is successful, False otherwise.
         """
-        # The reconnection by a StreamHandler is as good as the reconnection by the Datahandler itself
-        # But the Datahandler has to wait for he reconnection because his functions depend directly on it
         with self._reconnect_lock:
             self._logger.info("Reconnecting ...")
 
-            self._status='inactive'
+            self._status = 'inactive'
 
             if not self.check('basic'):
                 self._logger.info("Retry connection")
-                
+
                 if not self.create():
                     self._logger.error("Creation of socket failed")
                     return False
@@ -496,7 +546,7 @@ class _DataHandler(_GeneralHandler):
                     self._logger.error("Could not log in")
                     return False
 
-                self._status='active'
+                self._status = 'active'
                 self._logger.info("Reconnection successful")
                 self._start_ping()
             else:
@@ -506,13 +556,14 @@ class _DataHandler(_GeneralHandler):
 
     def _attach_stream_handler(self, handler):
         """
-        Attach a StreamHandler at the DataHandler.
+        Attach a stream handler to the logger.
 
         Args:
-            handler (StreamHandler): The StreamHandler to attach.
+            handler: The stream handler to attach.
 
         Returns:
             None
+
         """
         if handler not in self._stream_handlers:
             self._stream_handlers.append(handler)
@@ -522,13 +573,14 @@ class _DataHandler(_GeneralHandler):
 
     def _detach_stream_handler(self, handler):
         """
-        Detach a StreamHandler from the DataHandler.
+        Detaches a stream handler from the logger.
 
         Args:
-            handler (StreamHandler): The StreamHandler to detach.
+            handler: The stream handler to detach.
 
         Returns:
             None
+
         """
         if handler in self._stream_handlers:
             self._stream_handlers.remove(handler)
@@ -538,10 +590,14 @@ class _DataHandler(_GeneralHandler):
 
     def _close_stream_handlers(self):
         """
-        Close all StreamHandlers.
+        Closes the stream handlers.
+
+        This method closes all the stream handlers associated with the logger.
+        If there are no stream handlers to close, it returns True.
+        If any stream handler fails to close, it logs an error message and continues.
 
         Returns:
-            bool: True if all StreamHandlers were closed successfully, False otherwise.
+            bool: True if all stream handlers are closed successfully, False otherwise.
         """
         self._logger.info("Closing StreamHandlers ...")
 
@@ -554,30 +610,24 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("Could not close StreamHandler")
                 # no false return function must run through
                 # detaching is only executed by StreamHandler itself
-        
+
         return True
     
     def get_status(self):
         """
-        Returns status of DataHandler.
-
-        Args:
-            None
+        Returns the status of the handler.
 
         Returns:
-            Status (str)
+            str: The status of the handler.
         """
         return self._status
 
     def get_StreamHandler(self):
         """
-        Returns list of StreamHandler.
-
-        Args:
-            None
+        Returns the stream handlers associated with the XTB handler.
 
         Returns:
-            Streams (list) 
+            list: A list of stream handlers.
         """
         return self._stream_handlers
 
@@ -601,49 +651,74 @@ class _StreamHandler(_GeneralHandler):
     """
     Class for handling streaming data from XTB API.
 
-    Args:
-        dataHandler (DataHandler): The DataHandler object.
-        demo (bool, optional): Flag indicating whether to use demo mode. Defaults to True.
-        logger (Logger, optional): The logger object. Defaults to None.
+    Methods:
+        __init__: Initializes the StreamHandler object.
+        __del__: Destructor method for the StreamHandler object.
+        delete: Destructor method for the StreamHandler object.
+        streamData: Streams data for a given request.
+        _readStream: Reads and processes the streamed data for the specified request.
+        endStream: Stops the stream for the specified request.
+        _reconnect: Reconnects the data and stream connections.
+        get_status: Returns the status of the StreamHandler.
+        get_datahandler: Returns the DataHandler object.
+        set_datahandler: Sets the DataHandler object.
+        get_demo: Returns the demo mode.
+        set_demo: Sets the demo mode.
+        get_logger: Returns the logger.
+        set_logger: Sets the logger.
+
     """
-    def __init__(self, dataHandler=None, demo: bool=True, logger = None):
+    def __init__(self, dataHandler=None, demo: bool=True, logger=None):
+        """
+        Initialize the StreamHandler object.
+
+        Args:
+            dataHandler (_DataHandler): The data handler object.
+            demo (bool, optional): Flag indicating whether to use the demo stream or real stream. Defaults to True.
+            logger (logging.Logger, optional): The logger object. Defaults to None.
+
+        Raises:
+            ValueError: If logger argument is provided but is not an instance of logging.Logger.
+            ValueError: If dataHandler object is not provided or is not an instance of _DataHandler.
+
+        """
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
             
             self._logger = logger
         else:
-            self._logger=generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
+            self._logger = generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
 
         if not isinstance(dataHandler, _DataHandler):
             raise ValueError("Error: DataHandler object required")
         else:
-            self._dh=dataHandler
+            self._dh = dataHandler
 
-        self._demo=demo
+        self._demo = demo
 
-        self._host=HOST
+        self._host = HOST
         if self._demo:
-            self._port=PORT_DEMO_STREAM
-            self._userid=account.userid_demo
+            self._port = PORT_DEMO_STREAM
+            self._userid = account.userid_demo
         else:
-            self._port=PORT_REAL_STREAM
-            self._userid=account.userid_real
+            self._port = PORT_REAL_STREAM
+            self._userid = account.userid_real
 
         self._logger.info("Creating StreamHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, stream = True, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, userid=self._userid, stream=True, logger=self._logger)
         self._set_reconnect_method(self._reconnect)
-        self._status='active'
+        self._status = 'active'
         self._deleted = False
 
         self.open()
         # stream must be initialized right after connection is opened
-        self._streams={'tasks': {}}
+        self._streams = {'tasks': {}}
         self.streamData('KeepAlive')
         
         # start ping to keep connection open
-        self._start_ping(ssid = self._dh._ssid)
+        self._start_ping(ssid=self._dh._ssid)
         
         self._dh._attach_stream_handler(self)
         self._logger.info("Attached at DataHandler")
@@ -897,14 +972,18 @@ class _StreamHandler(_GeneralHandler):
 
 class HandlerManager():
     """
-    The HandlerManager class manages the creation and deletion of Data- and StreamHandlers for the XTB package.
-
-    Args:
-        demo (bool, optional): Specifies whether to use the demo mode. Defaults to True.
-        logger (logging.Logger, optional): The logger instance to use. Defaults to None.
-
+    The HandlerManager class manages the creation and deletion of data and stream handlers.
+    It keeps track of the maximum number of connections and provides available handlers when requested.
     """
+
     def __init__(self, demo: bool=True, logger=None):
+        """
+        Initializes a new instance of the HandlerManager class.
+
+        Args:
+            demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
+            logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
+        """
         self._demo=demo
 
         if logger:
@@ -922,34 +1001,34 @@ class HandlerManager():
         self._deleted=False
 
     def __del__(self):
+        """
+        Destructor method that is called when the HandlerManager instance is deleted.
+        """
         self.delete()
 
     def delete(self):
-            """
-            Destructor method that is automatically called when the object is about to be destroyed.
-            It deletes all the handlers in the `_handlers['data']` list.
-            """
-
-            if self._deleted:
-                self._logger.error("HandlerManager already deleted")
-                return True
+        """
+        Deletes the HandlerManager instance and all associated handlers.
+        """
+        if self._deleted:
+            self._logger.error("HandlerManager already deleted")
+            return True
         
-            for handler in self._handlers['data']:
-                if handler.get_status() == 'active':
-                    self._delete_handler(handler)
+        for handler in self._handlers['data']:
+            if handler.get_status() == 'active':
+                self._delete_handler(handler)
 
-            self._deleted=True
+        self._deleted=True
 
     def _delete_handler(self, handler):
         """
-        Deletes the specified handler.
+        Deletes a specific handler and deregisters it from the HandlerManager.
 
         Args:
-            handler: The handler object to be deleted.
+            handler: The handler to delete.
 
         Returns:
-            bool: True if the handler is successfully deleted, False otherwise.
-
+            bool: True if the handler was successfully deleted, False otherwise.
         """
         if isinstance(handler, _DataHandler):
             for stream in list(handler.get_StreamHandler()):
@@ -968,23 +1047,22 @@ class HandlerManager():
 
     def _get_name(self, handler):
         """
-        Get the name of the handler.
+        Gets the name of a specific handler.
 
-        Parameters:
-        - handler: The handler object whose name needs to be retrieved.
+        Args:
+            handler: The handler to get the name of.
 
         Returns:
-        - The name of the handler.
-
+            str: The name of the handler.
         """
         return self._handlers['data'][handler]['name']
         
     def _avlb_DataHandler(self):
         """
-        Returns the first active DataHandler from the list of handlers.
+        Gets an available data handler.
 
         Returns:
-            The first active DataHandler, or None if no active handler is found.
+            _DataHandler or None: An available data handler if found, None otherwise.
         """
         for handler in self._handlers['data']:
             if handler.get_status() == 'active':
@@ -993,10 +1071,10 @@ class HandlerManager():
     
     def _avlb_StreamHandler(self):
         """
-        Returns the available StreamHandler that is currently active and has fewer streams than the maximum allowed.
+        Gets an available stream handler.
 
         Returns:
-            str or None: The name of the available StreamHandler, or None if no handler is available.
+            _StreamHandler or None: An available stream handler if found, None otherwise.
         """
         for handler in self._handlers['stream']:
             if handler.get_status() == 'active':
@@ -1006,11 +1084,10 @@ class HandlerManager():
     
     def _generate_DataHandler(self):
         """
-        Generates a new DataHandler instance and adds it to the list of handlers.
+        Generates a new data handler.
 
         Returns:
-            DataHandler: The newly created DataHandler instance.
-
+            _DataHandler or False: A new data handler if the maximum number of connections is not reached, False otherwise.
         """
         if self._connections >= self._max_connections:
             self._logger.error("Error: Maximum number of connections reached")
@@ -1030,11 +1107,10 @@ class HandlerManager():
 
     def _generate_StreamHandler(self):
         """
-        Generates a new StreamHandler instance.
+        Generates a new stream handler.
 
         Returns:
-            StreamHandler: The newly created StreamHandler instance.
-
+            _StreamHandler or False: A new stream handler if the maximum number of connections is not reached, False otherwise.
         """
         if self._connections >= self._max_connections:
             self._logger.error("Error: Maximum number of connections reached")
@@ -1055,12 +1131,10 @@ class HandlerManager():
 
     def provide_DataHandler(self):
         """
-        Returns the DataHandler for the XTB trading system.
-
-        If a DataHandler is available, it is returned. Otherwise, a new DataHandler is generated and returned.
+        Provides an available data handler.
 
         Returns:
-            DataHandler: The DataHandler for the XTB trading system.
+            _DataHandler: An available data handler if found, otherwise a new data handler.
         """
         handler=self._avlb_DataHandler()
         if handler:
@@ -1070,13 +1144,10 @@ class HandlerManager():
 
     def provide_StreamHandler(self):
         """
-        Retrieves the StreamHandler object.
-
-        If a StreamHandler object is available, it is returned.
-        Otherwise, a new StreamHandler object is generated and returned.
+        Provides an available stream handler.
 
         Returns:
-            StreamHandler: The StreamHandler object.
+            _StreamHandler: An available stream handler if found, otherwise a new stream handler.
         """
         handler=self._avlb_StreamHandler()
         if handler:

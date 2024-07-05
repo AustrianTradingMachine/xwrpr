@@ -28,7 +28,7 @@ XTBData.getCandles(symbol='EURUSD')
 #XTBData.getKeepAlive()
 
 
-time.sleep(60*2)
+time.sleep(60*4)
 
 XTBData.delete()
 

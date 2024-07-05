@@ -10,21 +10,31 @@ class Client():
     """
     A class representing a client for socket communication.
 
-    Args:
-        host (str): The host address to connect to.
-        port (int): The port number to connect to.
-        encrypted (bool): Whether to use SSL encryption for the socket connection.
-        timeout (float): The timeout value for socket operations.
-        interval (float): The interval between socket operations.
-        max_fails (int): The maximum number of connection attempts.
-        bytes_out (int): The maximum number of bytes to send in each message.
-        bytes_in (int): The maximum number of bytes to receive in each message.
-        stream (bool): Whether to receive messages as a stream or not.
-        logger: The logger object to use for logging.
-
+    Methods:
+        check(mode: str) -> bool: Check the socket for readability, writability, or errors.
+        create() -> bool: Creates a socket connection.
+        open() -> bool: Opens a connection to the server.
+        send(msg: str) -> bool: Sends a message over the socket connection.
+        receive() -> str: Receives a message from the socket.
+        close() -> bool: Closes the connection and releases the socket.
     """
 
     def __init__(self, host: str=None, port: int=None, encrypted: bool=False, timeout: float=None, interval: float=None, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, stream: bool=False, logger=None):
+        """
+        Initializes a new instance of the Client class.
+
+        Args:
+            host (str, optional): The host address. Defaults to None.
+            port (int, optional): The port number. Defaults to None.
+            encrypted (bool, optional): Indicates if the connection should be encrypted. Defaults to False.
+            timeout (float, optional): The timeout value in seconds. Defaults to None.
+            interval (float, optional): The interval value in seconds. Defaults to None.
+            max_fails (int, optional): The maximum number of failed attempts. Defaults to 10.
+            bytes_out (int, optional): The number of bytes to send. Defaults to 1024.
+            bytes_in (int, optional): The number of bytes to receive. Defaults to 1024.
+            stream (bool, optional): Indicates if the connection should be a stream. Defaults to False.
+            logger (Logger, optional): The logger instance. Defaults to None.
+        """
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
