@@ -86,9 +86,9 @@ class Wrapper(HandlerManager):
         df=pd.DataFrame()
         lock=Lock()
         
-        sh.streamData(command = "Candles", symbol=symbol, df=df, lock=lock)
+        thread=sh.streamData(command = "Candles", symbol=symbol, df=df, lock=lock)
 
-        return df, lock
+        return df, lock, thread
 
     def getSymbols(self) ->dict:
         dh=self.provide_DataHandler()
