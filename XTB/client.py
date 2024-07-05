@@ -273,7 +273,7 @@ class Client():
 
         This method is automatically called when the object is about to be destroyed.
         It ensures that any open connections are closed properly and any resources
-        are released.
+        are released
 
         """
         self.close()
