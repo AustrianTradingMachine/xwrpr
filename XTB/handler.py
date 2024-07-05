@@ -831,6 +831,8 @@ class _StreamHandler(_GeneralHandler):
         index = len(self._stream_tasks)
         self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
         self._stream_tasks[index]['task'] = True
+        self._stream_tasks[index]['df'] = df
+        self._stream_tasks[index]['lock'] = lock
         self._stream_tasks[index]['thread'] = Thread(target=self._exchange_stream, args=(index, df, lock,), daemon=True)
         self._stream_tasks[index]['queue'] = Queue()
 
@@ -951,7 +953,17 @@ class _StreamHandler(_GeneralHandler):
             self._stop_task(index)
 
         return True
-            
+
+    def _restart_streams(self):
+        self._stop_stream(inThread=False)
+        
+        for index in list(self._stream_tasks):
+            command=self._stream_tasks['command']
+            df=self._stream_tasks['df']
+            lock=self._stream_tasks['lock']
+            kwargs=self._stream_tasks['kwargs']
+            self._streamData(command=command, df=df, lock=lock, kwargs)
+              
     def _reconnect(self):
         """
         Reconnects the DataHandler and StreamHandler if the connection is inactive or lost.
