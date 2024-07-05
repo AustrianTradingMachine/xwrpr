@@ -836,7 +836,7 @@ class _StreamHandler(_GeneralHandler):
 
             self._logger.info("Stream started for " + command)
 
-            return Thread(target=self._stop_task, args=(index,), daemon=True)
+            return Thread(target=self._stop_task, args=(index=index,keep=False,), daemon=True)
     
     def _receive_stream(self):
         """
