@@ -1,5 +1,4 @@
 import json
-import re
 import os
 import logging
 import time
@@ -9,7 +8,7 @@ from threading import Thread, Lock
 from queue import Queue
 import pandas as pd
 from XTB.client import Client
-from XTB.utils import generate_logger, CustomThread
+from XTB.utils import pretty ,generate_logger, CustomThread
 from XTB import account
 
 
@@ -28,20 +27,6 @@ MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
 MAX_CONNECTION_FAILS=config.getint('CONNECTION','MAX_CONNECTION_FAILS')
 MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
 MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
-
-import re
-
-def pretty(command: str):
-    """
-    Returns a pretty version of the given command by inserting a space before each capital letter.
-
-    Args:
-        command (str): The command to make pretty.
-
-    Returns:
-        str: The pretty version of the command.
-    """
-    return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
 
 class _GeneralHandler(Client):
     """

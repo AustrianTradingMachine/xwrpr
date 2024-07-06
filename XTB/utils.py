@@ -1,6 +1,7 @@
 import logging
 import os
 import threading
+import re
 import datetime
 
 
@@ -97,6 +98,17 @@ class CustomThread(threading.Thread):
     def kwargs(self):
         return self._kwargs
 
+def pretty(command: str):
+    """
+    Returns a pretty version of the given command by inserting a space before each capital letter.
+
+    Args:
+        command (str): The command to make pretty.
+
+    Returns:
+        str: The pretty version of the command.
+    """
+    return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
 
 
 
