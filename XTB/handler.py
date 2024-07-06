@@ -1,4 +1,3 @@
-
 import os
 import logging
 import time
@@ -912,8 +911,6 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             None
         """
-        buffer_df = pd.DataFrame()
-
         while self._stream_tasks[index]['run']:
             try:
                 data = self._stream_tasks[index]['queue'].get(timeout=self._interval)
@@ -921,7 +918,7 @@ class _StreamHandler(_GeneralHandler):
                 continue
 
             # Add the data to the buffer DataFrame
-            if buffer_df.empty:
+            if not buffer_df:
                 buffer_df = pd.DataFrame([data])
             else:
                 buffer_df = pd.concat([buffer_df,pd.DataFrame([data])], ignore_index=True)
