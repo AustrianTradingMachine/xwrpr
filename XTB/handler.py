@@ -919,16 +919,22 @@ class _StreamHandler(_GeneralHandler):
                 data = self._stream_tasks[index]['queue'].get(timeout=self._interval)
             except:
                 continue
-            
-            print(data)
-            buffer_df = buffer_df.append(data, ignore_index=True)
+
+            # Add the data to the buffer DataFrame
+            if buffer_df.columns.empty:
+                buffer_df = pd.DataFrame([data])
+            else:
+                buffer_df = buffer_df.append(data, ignore_index=True)
+
             self._stream_tasks[index]['queue'].task_done()
 
             lock.acquire(blocking=False)
 
+            # Append the buffer DataFrame to the exchange DataFrame
             df = pd.concat([df, buffer_df], ignore_index=True)
-            buffer_df = pd.DataFrame()
+            buffer_df = pd.DataFrame(columns=buffer_df.columns)
 
+            # Limit the DataFrame to the last 1000 rows
             if len(df) > 1000:
                 df = df.iloc[-1000:]
                 df = df.reset_index(drop=True)
