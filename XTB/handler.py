@@ -917,11 +917,11 @@ class _StreamHandler(_GeneralHandler):
         while self._stream_tasks[index]['run']:
             try:
                 data = self._stream_tasks[index]['queue'].get(timeout=self._interval)
-            except:
+            except queue.Empty:
                 continue
 
             # Add the data to the buffer DataFrame
-            if buffer_df.columns.empty:
+            if buffer_df.empty:
                 buffer_df = pd.DataFrame([data])
             else:
                 buffer_df = buffer_df.append(data, ignore_index=True)
