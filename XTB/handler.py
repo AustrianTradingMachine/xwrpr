@@ -887,7 +887,10 @@ class _StreamHandler(_GeneralHandler):
                 return False
             
             for index in self._stream_tasks:
-                if self._stream_tasks[index]['command'] != response['command']:
+                if self._stream_tasks[index]['command'].lower() != response['command'].lower():
+                    continue
+
+                if self._stream_tasks[index]['command'] == 'KeepAlive':
                     continue
 
                 if 'symbol' in response['data']:
@@ -916,7 +919,8 @@ class _StreamHandler(_GeneralHandler):
                 data = self._stream_tasks[index]['queue'].get(timeout=self._interval)
             except:
                 continue
-
+            
+            print(data)
             buffer_df = buffer_df.append(data, ignore_index=True)
             self._stream_tasks[index]['queue'].task_done()
 

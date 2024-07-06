@@ -74,7 +74,7 @@ class Wrapper(HandlerManager):
     def getProfits(self):
         return self._open_stream_channel(command="Profits")
 
-    def getTickerPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
+    def getTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
         if minArrivalTime < SEND_INTERVAL:
             minArrivalTime=SEND_INTERVAL
             self._logger.warning("minArrivalTime must be greater than " + str(SEND_INTERVAL) + ". Setting minArrivalTime to " + str(SEND_INTERVAL))
@@ -83,7 +83,7 @@ class Wrapper(HandlerManager):
             maxLevel=1
             self._logger.warning("maxLevel must be greater than 1. Setting maxLevel to 1")
 
-        return self._open_stream_channel(command="TickerPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
+        return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
 
     def getTrades(self):
         return self._open_stream_channel(command="Trades")
