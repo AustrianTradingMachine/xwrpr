@@ -4,6 +4,7 @@ import time
 import select
 import os
 import logging
+import json
 from XTB.utils import generate_logger
 
 class Client():
@@ -30,6 +31,7 @@ class Client():
     _bytes_out (int): The maximum number of bytes to send in each request.
     _bytes_in (int): The maximum number of bytes to receive in each response.
     _stream (bool): Indicates whether to use a streaming connection.
+    _decoder (json.JSONDecoder): The JSON decoder instance.
     _logger (logging.Logger): The logger instance to use for logging.
 
     Methods:
@@ -88,6 +90,7 @@ class Client():
         self._bytes_out = bytes_out
         self._bytes_in = bytes_in
         self._stream = stream
+        self._decoder=json.JSONDecoder()
 
     def check(self, mode: str):
         """
@@ -138,7 +141,7 @@ class Client():
         try:
             avl_addresses=socket.getaddrinfo(self._host, self._port, socket.AF_UNSPEC, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         except socket.error as e:
-            self._logger.error("Failed to query socket info: %s", e)
+            self._logger.error("Failed to query socket info: %s" % str(e))
             return False
 
         self._logger.info(f"{len(avl_addresses)} addresses found")
@@ -171,7 +174,7 @@ class Client():
             try:
                 self._socket = socket.socket(self._family, self._socktype, self._proto)
             except socket.error as e:
-                self._logger.error("Failed to create socket: %s", e)
+                self._logger.error("Failed to create socket: %s" % str(e))
                 continue
             self._logger.info("Socket created")
 
@@ -180,7 +183,7 @@ class Client():
                     context = ssl.create_default_context()
                     self._socket=context.wrap_socket(self._socket, server_hostname=self._host)
                 except socket.error as e:
-                    self._logger.error("Failed to wrap socket: %s", e)
+                    self._logger.error("Failed to wrap socket: %s" % str(e))
                     continue
                 self._logger.info("Socket wrapped")
 
@@ -215,8 +218,8 @@ class Client():
                 if self._timeout:
                     self._socket.settimeout(self._timeout)
                 self._socket.connect((self._sockaddr))
-            except socket.error as error_msg:
-                self._logger.error("Socket error: %s" % error_msg)
+            except socket.error as e:
+                self._logger.error("Socket error: %s" % str(e))
                 time.sleep(self._interval)
                 continue
             self._logger.info("Socket connected")
@@ -235,6 +238,7 @@ class Client():
         """
         self._logger.info("Sending message ...")
 
+        msg =  json.dumps(msg)
         msg = msg.encode("utf-8")
         send_msg = 0
         while send_msg < len(msg):
@@ -256,7 +260,7 @@ class Client():
 
     def receive(self):
         """
-        Receives a message from the socket.
+        Receive a message from the socket.
 
         Returns:
             str: The received message.
@@ -267,25 +271,33 @@ class Client():
         self._logger.info("Receiving message ...")
 
         full_msg = ''
+        buffer=''
         while True:
-            msg=''
             try:
-                if self.check(mode='readable'):
-                    msg = self._socket.recv(self._bytes_in)
+                msg = self._socket.recv(self._bytes_in).decode("utf-8")
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))
                 return False
-            
-            if len(msg) > 0:
-                full_msg += msg.decode("utf-8")
 
-            if self._stream and len(msg) > 0:
-                break
-            elif not self._stream and len(msg) <= 0:
-                break
+            # fill buffer with recieved data package
+            buffer += msg
 
-            time.sleep(self._interval)
-    
+            # thanks to the JSON format we can easily check if the message is complete
+            try:
+                full_msg, pos = self._decoder.raw_decode(buffer)
+                if pos == len(buffer):
+                    # Entire buffer has been successfully decoded
+                    buffer=''
+                    break
+                elif pos < len(buffer):
+                    # Partially decoded, more data might follow
+                    buffer = buffer[pos:].strip()
+                    break
+            except json.JSONDecodeError:
+                # Continue receiving data if JSON is not yet complete
+                # No output of error message because error is necessary
+                continue
+
         self._logger.info("Message received")
         return full_msg
 
@@ -323,7 +335,7 @@ class Client():
                 self._logger.info("Socket closed")
                 return True
         else:
-            self._logger.error("Socket is already closed")
+            self._logger.warning("Socket is already closed")
             return True
         
     def get_host(self):

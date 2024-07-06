@@ -77,11 +77,11 @@ class Wrapper(HandlerManager):
     def getTickerPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
         if minArrivalTime < SEND_INTERVAL:
             minArrivalTime=SEND_INTERVAL
-            self._logger("minArrivalTime must be greater than "+SEND_INTERVAL+". Setting minArrivalTime to "+SEND_INTERVAL)
+            self._logger.warning("minArrivalTime must be greater than " + str(SEND_INTERVAL) + ". Setting minArrivalTime to " + str(SEND_INTERVAL))
 
         if maxLevel < 1:
             maxLevel=1
-            self._logger("maxLevel must be greater than 1. Setting maxLevel to 1")
+            self._logger.warning("maxLevel must be greater than 1. Setting maxLevel to 1")
 
         return self._open_stream_channel(command="TickerPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
 
@@ -127,6 +127,9 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="ChartLastRequest", period=period, start=start, symbol=symbol)
 
+    def getSymbol(self, symbol: str):
+        return self._open_data_channel(command="Symbol")
+
     def getVersion(self):
         return self._open_data_channel(command="Version")
 
@@ -134,13 +137,7 @@ class Wrapper(HandlerManager):
 
 
 
-    def getSymbols(self) ->dict:
-        dh=self.provide_DataHandler()
-        response=dh.getData("AllSymbols")
-        if not response:
-            return False
 
-        return response
 
 
 

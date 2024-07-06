@@ -1,10 +1,10 @@
-import json
+
 import os
 import logging
 import time
 import configparser
 from math import floor
-from threading import Thread, Lock
+from threading import Lock
 from queue import Queue
 import pandas as pd
 from XTB.client import Client
@@ -43,8 +43,6 @@ class _GeneralHandler(Client):
         _max_fails (int): The maximum number of connection fails.
         _bytes_out (int): The maximum number of bytes to send.
         _bytes_in (int): The maximum number of bytes to receive.
-        _decoder (json.JSONDecoder): The JSON decoder instance.
-        _call_reconnect (None): The reconnect method.
         _ping (dict): A dictionary to store ping related information.
         _ping_lock (Lock): A lock for ping operations.
 
@@ -89,7 +87,6 @@ class _GeneralHandler(Client):
         self._max_fails=MAX_CONNECTION_FAILS
         self._bytes_out=MAX_SEND_DATA
         self._bytes_in=MAX_RECIEVE_DATA
-        self._decoder=json.JSONDecoder()
 
         super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
 
@@ -115,14 +112,14 @@ class _GeneralHandler(Client):
 
         req_dict = dict([('command', command)])
 
-        if arguments is not None:
-            req_dict.update(arguments)
         if ssid is not None:
             req_dict['streamSessionId'] = ssid
+        if arguments is not None:
+            req_dict.update(arguments)
         if tag is not None:
             req_dict['customTag'] = tag
 
-        if not self.send(json.dumps(req_dict)):
+        if not self.send(req_dict):
             self._logger.error("Failed to send request")
             return False
         else:
@@ -134,10 +131,12 @@ class _GeneralHandler(Client):
         Receives a response from the server.
 
         Args:
-            data (bool, optional): A flag indicating whether to expect data in the response. Defaults to True.
+            data (bool): Flag indicating whether to process the response data. Default is True.
 
         Returns:
-            bool: True if the response was received successfully, False otherwise.
+            dict or bool: The received response as a dictionary if `data` is True and the response is valid,
+                          otherwise False.
+
         """
         self._logger.info("Receiving response ...")
 
@@ -147,12 +146,11 @@ class _GeneralHandler(Client):
             self._logger.error("Failed to receive response")
             return False
         
-        try:
-            (response, _) = self._decoder.raw_decode(response)
-        except json.JSONDecodeError:
-            self._logger.error("JSON decode error")
-            return False
         self._logger.info("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
+
+        if not isinstance(response, dict):
+            self._logger.error("Response not a dictionary")
+            return False
 
         if data:
             if not 'status' in response:
@@ -167,55 +165,63 @@ class _GeneralHandler(Client):
 
         return response
     
-    def thread_monitor(self, thread: CustomThread, run, reconnect=None):
+    def thread_monitor(self, thread_data, reconnect=None):
         """
-        Monitors a thread and handles reconnection.
+        Monitors the specified thread and handles reconnection if necessary.
 
         Args:
-            thread (CustomThread): The thread to monitor.
-            run: A flag indicating whether the thread should continue running.
-            reconnect (callable, optional): The reconnection method. Defaults to None.
+            thread_data (dict): A dictionary containing information about the thread.
+                It should have the following keys:
+                - 'run': A boolean indicating whether the thread should continue running.
+                - 'thread': The thread object to monitor.
+            reconnect (callable, optional): A callable function that will be called
+                when the monitored thread is not alive. This function should handle
+                the reconnection logic. Defaults to None.
 
         Raises:
-            ValueError: If the reconnect method is not callable.
+            ValueError: If the reconnect parameter is provided but is not callable.
+
+        Returns:
+            None
         """
         if reconnect:
             if not callable(reconnect):
                 raise ValueError("Reconnection method not callable")
 
-        while run:
-            if not thread.is_alive():
+        while thread_data['run']:
+            if not thread_data['thread'].is_alive():
                 time.sleep(self._interval)
 
                 if reconnect:
                     reconnect()
-                    
-                thread = CustomThread(target=thread.target, args=thread.args, daemon=thread.daemon, kwargs=thread.kwargs)
-                thread.start()
+                
+                dead_thread=thread_data['thread']
+                thread_data['thread'] = CustomThread(target=dead_thread._target, args=dead_thread._args, daemon=dead_thread._daemon, kwargs=dead_thread.kwargs)
+                thread_data['thread'].start()
 
     def start_ping(self, handler):
         """
-        Starts the ping process.
+        Starts the ping functionality.
 
         Args:
-            handler: The handler instance.
+            handler: The handler object.
 
         Returns:
-            bool: True if the ping process was started successfully, False otherwise.
+            bool: True if the ping is started successfully, False otherwise.
         """
         self._logger.info("Starting ping ...")
 
         self._ping['run'] = True
-        self._ping['thread'] = CustomThread(target=self._send_ping, args=(handler,self._ping['run']), daemon=True)
+        self._ping['thread'] = CustomThread(target=self._send_ping, args=(handler,self._ping), daemon=True)
         self._ping['thread'].start()
         self._logger.info("Ping started")
 
-        monitor_thread = CustomThread(target=self.thread_monitor, args=(self._ping['thread'],self._ping['run'], handler._reconnect,), daemon=True)
+        monitor_thread = CustomThread(target=self.thread_monitor, args=(self._ping, handler._reconnect,), daemon=True)
         monitor_thread.start()
 
         return True
 
-    def _send_ping(self, handler, run):
+    def _send_ping(self, handler, thread_data):
         """
         Sends ping requests to the server.
 
@@ -231,7 +237,7 @@ class _GeneralHandler(Client):
         next_ping=0
         check_interval=self._interval/10
 
-        while run:
+        while thread_data['run']:
             start_time = time.time()
             if next_ping >= ping_interval:
                 # thanks to th with statement the ping could fail to keep is sheduled interval
@@ -273,7 +279,7 @@ class _GeneralHandler(Client):
             return False
             
         if not self._ping['run']:
-            self._logger.error("Ping already stopped")
+            self._logger.warning("Ping already stopped")
         else:
             self._ping['run'] = False
 
@@ -381,7 +387,7 @@ class _DataHandler(_GeneralHandler):
             bool: True if the DataHandler is successfully deleted, False otherwise.
         """
         if self._status == 'deleted':
-            self._logger.error("DataHandler already deleted")
+            self._logger.warning("DataHandler already deleted")
             return True
 
         self._logger.info("Deleting DataHandler ...")
@@ -437,7 +443,7 @@ class _DataHandler(_GeneralHandler):
         # No reconnection because login is undesirable
 
         if not self._ssid:
-            self._logger.error("Already logged out")
+            self._logger.warning("Already logged out")
             
         with self._ping_lock:
             self._logger.info("Logging out ...")
@@ -515,7 +521,7 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("No data in response")
                 return False
                 
-            self._logger.info(" Data for "+pretty(command) +" recieved")
+            self._logger.info("Data for "+pretty(command) +" recieved")
 
             return response['returnData']
  
@@ -540,12 +546,10 @@ class _DataHandler(_GeneralHandler):
         Returns:
             bool: True if the reconnection is successful, False otherwise.
         """
-        self._logger.info("Reconnecting ...")
-
         self._status = 'inactive'
 
         if not self.check(mode='basic'):
-            self._logger.info("Retry connection")
+            self._logger.info("Reconnecting ...")
 
             if not self.create():
                 self._logger.error("Creation of socket failed")
@@ -577,7 +581,7 @@ class _DataHandler(_GeneralHandler):
             self._stream_handlers.append(handler)
             self._logger.info("StreamHandler attached")
         else:
-            self._logger.error("StreamHandler already attached")
+            self._logger.warning("StreamHandler already attached")
 
     def _detach_stream_handler(self, handler: '_StreamHandler'):
         """
@@ -596,7 +600,7 @@ class _DataHandler(_GeneralHandler):
             self._stream_handlers.remove(handler)
             self._logger.info("StreamHandler detached")
         else:
-            self._logger.error("StreamHandler not found")
+            self._logger.warning("StreamHandler not found")
 
     def _close_stream_handlers(self):
         """
@@ -738,6 +742,7 @@ class _StreamHandler(_GeneralHandler):
         self._stream=dict()
         self._stream_tasks = dict()
         self.streamData(command='KeepAlive')
+        time.sleep(5)
         
         # start ping to keep connection open
         self.start_ping(handler=self)
@@ -764,7 +769,7 @@ class _StreamHandler(_GeneralHandler):
             bool: True if the StreamHandler is successfully deleted, False otherwise.
         """
         if self._status == 'deleted':
-            self._logger.error("StreamHandler already deleted")
+            self._logger.warning("StreamHandler already deleted")
             return True
 
         self._logger.info("Deleting StreamHandler ...")
@@ -815,12 +820,12 @@ class _StreamHandler(_GeneralHandler):
             self._stream['thread'] = CustomThread(target=self._receive_stream, daemon=True)
             self._stream['thread'].start()
 
-            monitor_thread = CustomThread(target=self.thread_monitor, args=(self._stream['thread'],self._stream['run'], self._reconnect,), daemon=True)
+            monitor_thread = CustomThread(target=self.thread_monitor, args=(self._stream, self._reconnect,), daemon=True)
             monitor_thread.start()
 
         index = len(self._stream_tasks)
         self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
-
+        
         if command == 'KeepAlive':
             return True
 
@@ -834,7 +839,7 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("Stream started for " + pretty(command))
 
         return CustomThread(target=self._stop_task, args=(index,), daemon=True)
-       
+
     def _start_stream(self, command: str, **kwargs):
         """
         Starts a stream for the given command.
@@ -856,7 +861,7 @@ class _StreamHandler(_GeneralHandler):
                 return False 
                 
             return True
-
+        
     def _receive_stream(self):
         """
         Receive and process streaming data from the server.
@@ -868,7 +873,7 @@ class _StreamHandler(_GeneralHandler):
             bool: True if the stream was successfully received and processed, False otherwise.
         """
         while self._stream['run']:
-            self._logger.info("Streaming Data ...")
+            self._logger.info("Streaming data ...")
 
             with self._ping_lock: # waits for the ping check loop to finish
                 response = self.receive_response(data=False)
@@ -881,8 +886,6 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.error("No data received")
                 return False
             
-            print(response['data'])
-
             for index in self._stream_tasks:
                 if self._stream_tasks[index]['command'] != response['command']:
                     continue
@@ -890,7 +893,8 @@ class _StreamHandler(_GeneralHandler):
                 if 'symbol' in response['data']:
                     if set(self._stream_tasks[index]['arguments']['symbol']) != set(response['data']['symbol']):
                         continue
-
+                
+                self._logger.info("Data received for " + pretty(response['command']))
                 self._stream_tasks[index]['queue'].put(response['data'])
 
     def _exchange_stream(self, index: int, df: pd.DataFrame, lock: Lock):
@@ -937,17 +941,22 @@ class _StreamHandler(_GeneralHandler):
             index (int): The index of the stream task to stop.
 
         Returns:
-            None
+            bool: True if the stream task was successfully stopped, False otherwise.
         """
         command = self._stream_tasks[index]['command']
         arguments = self._stream_tasks[index]['arguments']
+
+        self._logger.info("Stopping stream for " + pretty(command) + " ...")
 
         with self._ping_lock:
             if not self.send_request(command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
                 self._logger.error("Failed to end stream")
 
+        if command == 'KeepAlive':
+            return True
+
         if not self._stream_tasks[index]['run']:
-            self._logger.error("Stream task already ended")
+            self._logger.warning("Stream task already ended")
         else:
             self._stream_tasks[index]['run'] = False
 
@@ -955,7 +964,9 @@ class _StreamHandler(_GeneralHandler):
 
         self._stream_tasks.pop(index)
         
-        self._logger.info("Stream task ended for " + pretty(command))
+        self._logger.info("Stream stopped for " + pretty(command))
+
+        return True
                 
     def _stop_stream(self):
         """
@@ -971,7 +982,7 @@ class _StreamHandler(_GeneralHandler):
             return False
 
         if not self._stream['run']:
-            self._logger.error("Stream already ended")
+            self._logger.warning("Stream already ended")
         else:
             self._stream['run'] = False
 
@@ -980,8 +991,32 @@ class _StreamHandler(_GeneralHandler):
         for index in list(self._stream_tasks):
             self._stop_task(index=index)
 
+        self._logger.info("All streams stopped")
+
         return True
-         
+    
+    def _restart_streams(self):
+        """
+        Restarts all stream tasks.
+
+        Returns:
+            bool: True if all stream tasks are successfully restarted, False otherwise.
+        """
+        self._logger.info("Restarting all streams ...")
+
+        for index in list(self._stream_tasks):
+            command=self._stream_tasks[index]['command']
+            kwargs=self._stream_tasks[index]['arguments']
+            response  = self._start_stream(command, **kwargs)
+
+            if not response:
+                self._logger.error("Failed to restart stream")
+                return False
+
+        self._logger.info("All streams restarted")
+
+        return True
+ 
     def _reconnect(self):
         """
         Reconnects the StreamHandler to the DataHandler.
@@ -1001,12 +1036,10 @@ class _StreamHandler(_GeneralHandler):
             self._logger.info("Reconnection attempt for DataHandler is already in progress by another StreamHandler.")
 
         with self._dh._reconnect_lock:
-            self._logger.info("Reconnecting ...")
-
             self._status='inactive'
 
             if not self.check('basic'):
-                self._logger.info("Retry connection")
+                self._logger.info("Reconnecting ...")
                 
                 if not self.create():
                     self._logger.error("Creation of socket failed")
@@ -1017,6 +1050,8 @@ class _StreamHandler(_GeneralHandler):
                     return False
 
                 self._logger.info("Reconnection successful")
+
+                self._restart_streams()
             else:
                 self._logger.info("Stream connection is already active")
 
@@ -1102,7 +1137,7 @@ class HandlerManager():
         Deletes the HandlerManager instance and all associated handlers.
         """
         if self._deleted:
-            self._logger.error("HandlerManager already deleted")
+            self._logger.warning("HandlerManager already deleted")
             return True
         
         for handler in self._handlers['data']:
@@ -1181,7 +1216,7 @@ class HandlerManager():
             _DataHandler or False: A new data handler if the maximum number of connections is not reached, False otherwise.
         """
         if self._connections >= self._max_connections:
-            self._logger.error("Error: Maximum number of connections reached")
+            self._logger.error("Maximum number of connections reached")
             return False
 
         index = len(self._handlers['data'])
@@ -1204,7 +1239,7 @@ class HandlerManager():
             _StreamHandler or False: A new stream handler if the maximum number of connections is not reached, False otherwise.
         """
         if self._connections >= self._max_connections:
-            self._logger.error("Error: Maximum number of connections reached")
+            self._logger.error("Maximum number of connections reached")
             return False
 
         index = len(self._handlers['stream'])

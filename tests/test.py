@@ -10,6 +10,11 @@ logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTB/Logger')
 
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
+alls=XTBData.getAllSymbols()
+
+for record in alls:
+    logger.info(record['symbol']+" "+record['categoryName']+" "+record['description'])
+
 version=XTBData.getVersion()
 
 print(version)
@@ -18,9 +23,13 @@ print(version)
 
 #print(th)
 
-time.sleep(5)
+XTBData.getCandles(symbol='BTC')
 
-XTBData.getCandles(symbol='EURUSD')
+#XTBData.getBalance()
+
+#XTBData.getNews()
+
+#XTBData.getTickerPrices(symbol='BITCOIN', minArrivalTime=0, maxLevel=1)
 
 #XTBData.getTrades()
 
@@ -29,10 +38,9 @@ XTBData.getCandles(symbol='EURUSD')
 
 #XTBData.getProfits()
 
-#XTBData.getKeepAlive()
 
 
-time.sleep(60*4)
+time.sleep(60*1)
 
 XTBData.delete()
 
