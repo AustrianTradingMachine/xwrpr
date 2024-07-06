@@ -924,7 +924,7 @@ class _StreamHandler(_GeneralHandler):
             if buffer_df.empty:
                 buffer_df = pd.DataFrame([data])
             else:
-                buffer_df = buffer_df.append(data, ignore_index=True)
+                buffer_df = pd.concat([buffer_df,pd.DataFrame([data])], ignore_index=True)
 
             self._stream_tasks[index]['queue'].task_done()
 
