@@ -1,5 +1,7 @@
 import logging
 import os
+import threading
+import datetime
 
 
 def generate_logger(name: str, stream_level: str = None, file_level: str = None, path: str = None):
@@ -70,3 +72,71 @@ def _validate_level(level: str = None, default: str = "debug"):
         level = levels[default.lower()]
 
     return level
+
+class CustomThread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        self._target = kwargs.pop('target', None)
+        self._args = kwargs.pop('args', ())
+        self._daemon = kwargs.pop('daemon', True)
+        self._kwargs = kwargs.pop('kwargs', {})
+        super().__init__(target=self._target, args=self._args, daemon=self._daemon, kwargs=self._kwargs)
+
+    @property
+    def target(self):
+        return self._target
+
+    @property
+    def args(self):
+        return self._args
+    
+    @property
+    def daemon(self):
+        return self._daemon
+
+    @property
+    def kwargs(self):
+        return self._kwargs
+
+
+
+
+def timestamp_to_datetime(self, timestamp: int) -> datetime.datetime:
+    """
+    Converts a timestamp to a datetime object in the CET timezone.
+
+    Args:
+        timestamp (int): The timestamp to convert.
+
+    Returns:
+        datetime.datetime: The datetime object in the CET timezone.
+    """
+    timestamp = timestamp / 1000
+    cet_datetime = datetime.datetime.fromtimestamp(timestamp, tz=self._utc_tz)
+
+    return cet_datetime
+
+def datetime_to_timestamp(self, dt: datetime.datetime) -> int:
+    """
+    Converts a datetime object to a timestamp in milliseconds.
+
+    Args:
+        dt (datetime.datetime): The datetime object to convert.
+
+    Returns:
+        int: The timestamp in milliseconds.
+    """
+    return int(dt.timestamp()*1000)
+
+def _get_current_time(self) -> datetime.datetime:
+    """
+    Returns the current time in the CET timezone.
+
+    Returns:
+        datetime.datetime: The current time in the CET timezone.
+    """
+    return datetime.datetime.now(self._cest_tz)
+
+def _cet_to_utc(self, cet_time: datetime.datetime) -> datetime.datetime:
+    utc_time=cet_time.astimezone(self._utc_tz)
+
+    return utc_time

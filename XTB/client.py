@@ -8,15 +8,38 @@ from XTB.utils import generate_logger
 
 class Client():
     """
-    A class representing a client for socket communication.
+    The Client class provides a simple interface for creating and managing
+
+    Attributes:
+    _host (str): The host address to connect to.
+    _port (int): The port number to connect to.
+    _encrypted (bool): Indicates whether the connection should be encrypted.
+    _timeout (float): The timeout value for the connection.
+    _blocking (bool): Indicates whether the connection is blocking.
+    _used_addresses (list): A list of addresses that have been used.
+    _family (int): The address family.
+    _socktype (int): The socket type.
+    _proto (int): The protocol.
+    _cname (str): The canonical name.
+    _sockaddr (tuple): The socket address.
+    _ip_address (str): The IP address.
+    _port (int): The port number.
+    _socket (socket): The socket connection.
+    _interval (float): The interval between requests in seconds.
+    _max_fails (int): The maximum number of consecutive failed requests before giving up.
+    _bytes_out (int): The maximum number of bytes to send in each request.
+    _bytes_in (int): The maximum number of bytes to receive in each response.
+    _stream (bool): Indicates whether to use a streaming connection.
+    _logger (logging.Logger): The logger instance to use for logging.
 
     Methods:
-        check(mode: str) -> bool: Check the socket for readability, writability, or errors.
-        create() -> bool: Creates a socket connection.
-        open() -> bool: Opens a connection to the server.
-        send(msg: str) -> bool: Sends a message over the socket connection.
-        receive() -> str: Receives a message from the socket.
-        close() -> bool: Closes the connection and releases the socket.
+        check: Check the socket for readability, writability, or errors.
+        create: Creates a socket connection.
+        open: Opens a connection to the server.
+        send: Sends a message over the socket connection.
+        receive: Receives a message from the socket.
+        close: Closes the connection and releases the socket.
+
     """
 
     def __init__(self, host: str, port: int, encrypted: bool, timeout: float, stream: bool, interval: float=0.5, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, logger=None):
@@ -122,7 +145,7 @@ class Client():
 
         tried_addresses = []
         while len(tried_addresses) < len(avl_addresses):
-            # Always trie adresses first that did not fail
+            # Always tries those  adresses first that did not fail
             if len(self._used_addresses)+len(tried_addresses) < len(avl_addresses):
                 for address in avl_addresses:
                     if address[4] not in tried_addresses and address[4] not in self._used_addresses:
@@ -134,7 +157,6 @@ class Client():
                         tried_addresses.append(address)
                         break
                         
-            # Extract the tuple
             self._family, self._socktype, self._proto, self._cname, self._sockaddr = tried_addresses[-1]
             if self._family == socket.AF_INET: # For IPv4
                 self._ip_address, self._port = self._sockaddr
@@ -153,7 +175,6 @@ class Client():
                 continue
             self._logger.info("Socket created")
 
-            # in case socket is SSL wrapped
             if self._encrypted:
                 try:
                     context = ssl.create_default_context()
@@ -163,7 +184,6 @@ class Client():
                     continue
                 self._logger.info("Socket wrapped")
 
-            # stops the socket from blocking when receive or send is called
             self._socket.setblocking(self._blocking)
 
             # safe used address
@@ -220,7 +240,6 @@ class Client():
         while send_msg < len(msg):
             package_size = min(self._bytes_out, len(msg) - send_msg)
             try:
-                # Check socket for writability
                 if self.check(mode='writable'):
                     send_msg += self._socket.send(msg[send_msg:send_msg + package_size])
                 else:
@@ -288,6 +307,8 @@ class Client():
         Returns:
             bool: True if the connection was successfully closed, False otherwise.
         """
+        # no false return function must run through
+
         self._logger.info("Closing connection ...")
 
         if self._socket.fileno() != -1:
@@ -296,7 +317,6 @@ class Client():
                 self._logger.info("Connections closed")
             except Exception as e:
                 self._logger.error("Error shutting down socket: %s" % str(e))
-                # no false return function must run through
             finally:
                 self._socket.close()
                 self._used_addresses.pop() #stable sockets are relieved

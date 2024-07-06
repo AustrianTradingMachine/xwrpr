@@ -2,10 +2,19 @@ import logging
 import os
 import pandas as pd
 from threading import Lock
+import configparser
 import datetime
 import pytz
 from XTB.handler import HandlerManager
 from XTB.utils import generate_logger
+
+
+# read api configuration
+config = configparser.ConfigParser()
+config.read('XTB/api.cfg')
+
+SEND_INTERVAL=config.getint('CONNECTION','SEND_INTERVAL')
+
 
 class Wrapper(HandlerManager):
     def __init__(self, demo: bool=True, logger=None):
@@ -28,6 +37,8 @@ class Wrapper(HandlerManager):
 
         self._running=dict()
 
+        self._deleted=False
+
         self._logger.info("Wrapper initialized")
 
     def __del__(self):
@@ -38,57 +49,90 @@ class Wrapper(HandlerManager):
         super().delete()
         self._logger.info("Wrapper deleted.")
 
-    def getTickerPrices(self, symbol: str) -> dict:
-        sh=self.provide_StreamHandler()
-
-        sh.streamData("TickerPrices", symbol=symbol)
-
-    
-    def getTrades(self) -> dict:
+    def _open_stream_channel(self, **kwargs):
         sh=self.provide_StreamHandler()
         if not sh:
-            self._logger("Could not provide data")
-            return False
-
-        response=sh.streamData("Trades")
-        if not response:
+            self._logger("Could not provide stream channel")
             return False
         
-    def getProfits(self) -> dict:
-        sh=self.provide_StreamHandler()
-        if not sh:
-            self._logger("Could not provide data")
-            return False
-
-        response=sh.streamData("Profits")
-        if not response:
-            return False
-        
-
-    def getBalance(self) -> dict:
-        sh=self.provide_StreamHandler()
-        if not sh:
-            self._logger("Could not provide data")
-            return False
-
-        response=sh.streamData("Balance")
-        if not response:
-            return False
-
-        return response
-    
-    def getCandles(self, symbol) -> dict:
-        sh=self.provide_StreamHandler()
-        if not sh:
-            self._logger("Could not provide data")
-            return False
-
         df=pd.DataFrame()
         lock=Lock()
-        
-        thread=sh.streamData(command = "Candles", symbol=symbol, df=df, lock=lock)
+
+        thread=sh.streamData(df=df, lock=lock, **kwargs)
 
         return df, lock, thread
+    
+    def getBalance(self):
+        return self._open_stream_channel(command="Balance")
+
+    def getCandles(self, symbol):
+        return self._open_stream_channel(command="Candles", symbol=symbol)
+    
+    def getNews(self):
+        return self._open_stream_channel(command="News")
+
+    def getProfits(self):
+        return self._open_stream_channel(command="Profits")
+
+    def getTickerPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
+        if minArrivalTime < SEND_INTERVAL:
+            minArrivalTime=SEND_INTERVAL
+            self._logger("minArrivalTime must be greater than "+SEND_INTERVAL+". Setting minArrivalTime to "+SEND_INTERVAL)
+
+        if maxLevel < 1:
+            maxLevel=1
+            self._logger("maxLevel must be greater than 1. Setting maxLevel to 1")
+
+        return self._open_stream_channel(command="TickerPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
+
+    def getTrades(self):
+        return self._open_stream_channel(command="Trades")
+    
+    def getTradeStatus(self):
+        return self._open_stream_channel(command="TradeStatus")
+
+
+    def _open_data_channel(self, **kwargs):
+        dh=self.provide_DataHandler()
+        if not dh:
+            self._logger("Could not provide data channel")
+            return False
+        
+        response = dh.getData(**kwargs)
+
+        if not response:
+            return False
+        else:
+            return response
+        
+    def getAllSymbols(self):
+        return self._open_data_channel(command="AllSymbols")
+    
+    def getCalendar(self):
+        return self._open_data_channel(command="Calendar")
+    
+    def getChartLastRequest(self, period: str, start: datetime, symbol: str):
+        period_code=[
+            "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"
+        ]
+
+        if period not in period_code:
+            self._logger("Invalid period. Choose from: "+", ".join(period_code))
+            return False
+        
+    
+        
+        
+
+
+        return self._open_data_channel(command="ChartLastRequest", period=period, start=start, symbol=symbol)
+
+    def getVersion(self):
+        return self._open_data_channel(command="Version")
+
+
+
+
 
     def getSymbols(self) ->dict:
         dh=self.provide_DataHandler()
@@ -98,20 +142,9 @@ class Wrapper(HandlerManager):
 
         return response
 
-    def getVersion(self) -> dict:
-        dh=self.provide_DataHandler()
-        if not dh:
-            self._logger("Could not provide data")
-            return False
 
-        response=dh.getData("Version")
-        if not response:
-            return False
-        
-        version=response['version']
-        major, minor, patch = version.split('.')
 
-        return {'major': major, 'minor': minor, 'patch': patch}
+       
     
     def getTradingHours(self, symbols: list) -> dict:
         dh=self.provide_DataHandler()
@@ -143,11 +176,9 @@ class Wrapper(HandlerManager):
 
 
 
-    def _to_datetime(self, timestamp: int) -> datetime.datetime:
-        timestamp=timestamp/1000
-        cet_datetime=datetime.datetime.fromtimestamp(timestamp, tz=self._utc_tz)
 
-        return cet_datetime
+
+        
     
     def _to_time(self, timestamp: int) -> datetime.time:
         cet_datetime=self._to_datetime(timestamp)
