@@ -3,6 +3,7 @@ import os
 import threading
 import re
 import datetime
+from dateutil.relativedelta import relativedelta
 
 
 def generate_logger(name: str, stream_level: str = None, file_level: str = None, path: str = None):
@@ -75,7 +76,23 @@ def _validate_level(level: str = None, default: str = "debug"):
     return level
 
 class CustomThread(threading.Thread):
+    """
+    A custom thread class that extends the functionality of the threading.Thread class.
+    """
+
     def __init__(self, *args, **kwargs):
+        """
+        Initialize a new instance of the class.
+
+        Args:
+            target (callable): The callable object to be invoked by the thread's run() method.
+            args (tuple): The arguments to be passed to the target callable.
+            daemon (bool): A flag indicating whether the thread should be a daemon thread.
+            kwargs (dict): The keyword arguments to be passed to the target callable.
+
+        Returns:
+            None
+        """
         self._target = kwargs.pop('target', None)
         self._args = kwargs.pop('args', ())
         self._daemon = kwargs.pop('daemon', True)
@@ -84,18 +101,30 @@ class CustomThread(threading.Thread):
 
     @property
     def target(self):
+        """
+        Get the target function of the thread.
+        """
         return self._target
 
     @property
     def args(self):
+        """
+        Get the arguments passed to the target function.
+        """
         return self._args
     
     @property
     def daemon(self):
+        """
+        Get the daemon flag of the thread.
+        """
         return self._daemon
 
     @property
     def kwargs(self):
+        """
+        Get the keyword arguments passed to the target function.
+        """
         return self._kwargs
 
 def pretty(command: str):
@@ -110,45 +139,60 @@ def pretty(command: str):
     """
     return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
 
-
-
-def timestamp_to_datetime(self, timestamp: int) -> datetime.datetime:
+def signum(x):
     """
-    Converts a timestamp to a datetime object in the CET timezone.
+    Returns the sign of a number.
 
-    Args:
-        timestamp (int): The timestamp to convert.
+    Parameters:
+    x (float or int): The number to determine the sign of.
 
     Returns:
-        datetime.datetime: The datetime object in the CET timezone.
+    int: 1 if x is positive, -1 if x is negative, 0 if x is zero.
     """
-    timestamp = timestamp / 1000
-    cet_datetime = datetime.datetime.fromtimestamp(timestamp, tz=self._utc_tz)
-
-    return cet_datetime
-
-def datetime_to_timestamp(self, dt: datetime.datetime) -> int:
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+    
+def calculate_timedelta(start: datetime, end: datetime, period: str='minutes'):
     """
-    Converts a datetime object to a timestamp in milliseconds.
+    Calculate the time difference between two datetime objects.
 
-    Args:
-        dt (datetime.datetime): The datetime object to convert.
+    Parameters:
+        start (datetime): The starting datetime object.
+        end (datetime): The ending datetime object.
+        period (str, optional): The unit of time to calculate the difference in. Defaults to 'minutes'.
 
     Returns:
-        int: The timestamp in milliseconds.
+        float: The difference between the two datetime objects in the specified unit.
+
+    Raises:
+        ValueError: If an unsupported unit is provided.
+
+    Supported units:
+        - 'minutes'
+        - 'hours'
+        - 'days'
+        - 'weeks'
+        - 'months'
     """
-    return int(dt.timestamp()*1000)
-
-def _get_current_time(self) -> datetime.datetime:
-    """
-    Returns the current time in the CET timezone.
-
-    Returns:
-        datetime.datetime: The current time in the CET timezone.
-    """
-    return datetime.datetime.now(self._cest_tz)
-
-def _cet_to_utc(self, cet_time: datetime.datetime) -> datetime.datetime:
-    utc_time=cet_time.astimezone(self._utc_tz)
-
-    return utc_time
+    # Calculate the difference
+    delta = end - start
+    
+    # Return the difference in the desired unit
+    if period == 'minutes':
+        return delta.total_seconds() / 60
+    elif period == 'hours':
+        return delta.total_seconds() / 3600
+    elif period == 'days':
+        return delta.days
+    elif period == 'weeks':
+        return delta.days / 7
+    elif period == 'months':
+        # Use relativedelta to calculate the number of months
+        rd = relativedelta(end, start)
+        return rd.years * 12 + rd.months
+    else:
+        raise ValueError("Unsupported unit. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
