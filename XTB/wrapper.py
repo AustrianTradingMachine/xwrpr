@@ -369,6 +369,10 @@ class Wrapper(HandlerManager):
 
         Format of Output:
             name	            type	    description
+	                            dictionary	Array of SYMBOL_RECORD 
+
+        Format of SYMBOL_RECORD:
+            name	            type	    description
             ask	                float	    Ask price in base currency
             bid	                float	    Bid price in base currency
             categoryName	    string	    Category name
@@ -443,6 +447,10 @@ class Wrapper(HandlerManager):
 
         Format of Output:
             name	            type	    description
+    	                        dictionary	Array of CALENDAR_RECORD 
+
+        Format of CALENDAR_RECORD:
+            name	            type	    description
             country	            string	    Two letter country code
             current	            string	    Market value (current), empty before time of release of this value (time from "time" record)
             forecast	        string	    Forecasted value
@@ -475,7 +483,7 @@ class Wrapper(HandlerManager):
         Format of Output:
             name	            type	    description
             digits	            int 	    Number of decimal places
-            rateInfos	        array	    Array of RATE_INFO_RECORD objects
+            rateInfos	        dictionary	Array of RATE_INFO_RECORD objects
 
         Format of RATE_INFO_RECORD:
             name	            type	    description
@@ -537,7 +545,7 @@ class Wrapper(HandlerManager):
         Format of Output:
             name	            type	    description
             digits	            int 	    Number of decimal places
-            rateInfos	        array	    Array of RATE_INFO_RECORD objects
+            rateInfos	        dictionary	Array of RATE_INFO_RECORD objects
 
         Format of RATE_INFO_RECORD:
             name	            type	    description
@@ -648,6 +656,11 @@ class Wrapper(HandlerManager):
             rateOfExchange	    float	    rate of exchange between account currency and instrument base currency, could be null if not applicable
 
         """
+
+        if volume < 0:
+            self._logger.error("Volume must be greater than 0.")
+            return False
+
         return self._open_data_channel(command="CommissionDef", symbol=symbol, volume=volume)
     
     def getCurrentUserData(self):
@@ -678,6 +691,10 @@ class Wrapper(HandlerManager):
 
         Format of Output:
             name	            type	    description
+	                            dictionary  Array of IB_RECORD 
+
+        Format of IB_RECORD:
+            name	            type	    description
             closePrice	        float	    IB close price or null if not allowed to view
             login	            string	    IB user login or null if not allowed to view
             nominal	            float	    IB nominal or null if not allowed to view
@@ -696,6 +713,10 @@ class Wrapper(HandlerManager):
         """
         start_time=start.timestamp()
         end_time=end.timestamp()
+
+        if start_time > end_time:
+            self._logger.error("Start time is greater than end time.")
+            return False
 
         return self._open_data_channel(command="IbsHistory", end=end_time, start=start_time)
     
@@ -718,24 +739,124 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="MarginLevel")
     
     def getMarginTrade(self, symbol: str, volume: float):
+        """
+        Returns expected margin for given instrument and volume. The value is calculated as expected margin value, and therefore might not be perfectly accurate.
+
+        Args:
+            symbol (str): The symbol for which to retrieve margin trade information.
+            volume (float): The volume of the trade.
+
+        Format of Output:
+            name	            type	    description        
+            margin	            float	    calculated margin in account currency
+              
+        """
         return self._open_data_channel(command="MarginTrade", symbol=symbol, volume=volume)
     
-    def getNews(self):
-        return self._open_data_channel(command="News")
+    def getNews(self, start: datetime, end: datetime):
+        """
+        Retrieves news data from the XTB API within the specified time range.
+
+        Args:
+            start (datetime): The start time of the news data range.
+            end (datetime): The end time of the news data range.
+
+        Format of Output:
+            name	            type	    description
+	                            dictionary	Array of NEWS_TOPIC_RECORD 
+
+        Format of NEWS_TOPIC_RECORD:
+            name	            type	    description
+            body	            String	    Body
+            bodylen	            Number	    Body length
+            key	                String	    News key
+            time	            Time	    Time
+            timeString	        String	    Time string
+            title	            String	N   ews title
+            
+        """
+        start_time=start.timestamp()
+        end_time=end.timestamp()
+
+        if start_time > end_time:
+            self._logger.error("Start time is greater than end time.")
+            return False
+
+        return self._open_data_channel(command="News", end=end_time, start=start_time)
     
     def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int):
+        """
+        Calculates estimated profit for given deal data Should be used for calculator-like apps only.
+        Profit for opened transactions should be taken from server, due to higher precision of server calculation.
+
+        Args:
+            symbol (str): The symbol of the trade.
+            volume (float): The volume of the trade.
+            openPrice (float): The opening price of the trade.
+            closePrice (float): The closing price of the trade.
+            cmd (int): The command type of the trade.
+
+            Possible values of cmd field:
+                name	            type	    description
+                BUY	                0	        buy
+                SELL	            1	        sell
+                BUY_LIMIT	        2	        buy limit
+                SELL_LIMIT	        3	        sell limit
+                BUY_STOP	        4	        buy stop
+                SELL_STOP	        5	        sell stop
+                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                CREDIT	            7	        Read only
+
+        Format of Output:
+            name	            type	    description
+            profit	            float	    Profit in account currency
+
+        """
         cmds = [0, 1, 2, 3, 4, 5, 6, 7]
 
         if cmd not in cmds:
             self._logger.error("Invalid cmd. Choose from: "+", ".join(cmds))
             return False
+        
+        if volume < 0:
+            self._logger.error("Volume must be greater than 0.")
+            return False
 
         return self._open_data_channel(command="ProfitCalculation", closePrice=closePrice, cmd=cmd, openPrice=openPrice, symbol=symbol, volume=volume)
         
     def getServerTime(self):
+        """
+        Returns current time on trading server.
+
+        Format of Output:
+            name	            type	    description
+            time	            Time	    Time
+            timeString	        String	    Time described in form set on server (local time of server)
+        
+
+        """
         return self._open_data_channel(command="ServerTime")
     
     def getStepRules(self):
+        """
+        Returns a list of step rules for DMAs.
+
+        Format of Output:
+            name	            type	    description
+        	                    dictionary	Array of STEP_RULE_RECORD
+
+        Format of STEP_RULE_RECORD:
+            name	            type	    description
+            id	                Number	    Step rule ID
+            name	            String	    Step rule name
+            steps	            dictionary	Array of STEP_RECORD
+
+        Format of STEP_RECORD:
+            name	            type	    description
+            fromValue	        float	    Lower border of the volume range
+            step	            float	    lotStep value in the given volume range
+
+        """
         return self._open_data_channel(command="StepRules")
 
     def getSymbol(self, symbol: str):
