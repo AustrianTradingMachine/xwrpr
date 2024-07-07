@@ -26,11 +26,11 @@ print(version)
 
 XTBData.getCandles(symbol='ETHEREUM')
 
-#XTBData.getBalance()
+XTBData.getBalance()
 
-#XTBData.getNews()
+XTBData.getNews()
 
-XTBData.getTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
+#XTBData.getTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
 #XTBData.getTrades()
 
@@ -41,7 +41,7 @@ XTBData.getTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
 
 
-time.sleep(60*1)
+time.sleep(60*12)
 
 XTBData.delete()
 

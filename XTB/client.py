@@ -171,6 +171,9 @@ class Client():
                 self._family, self._socktype, self._proto, self._cname, self._ip_address, self._port
             )
             
+            # For request limitation
+            time.sleep(self._interval)
+
             try:
                 self._socket = socket.socket(self._family, self._socktype, self._proto)
             except socket.error as e:
@@ -220,6 +223,7 @@ class Client():
                 self._socket.connect((self._sockaddr))
             except socket.error as e:
                 self._logger.error("Socket error: %s" % str(e))
+                # For request limitation
                 time.sleep(self._interval)
                 continue
             self._logger.info("Socket connected")
@@ -253,6 +257,7 @@ class Client():
                 self._logger.error("Error sending message: %s" % str(e))
                 return False
             
+            # For request limitation
             time.sleep(self._interval)
 
         self._logger.info("Message sent")
@@ -272,8 +277,11 @@ class Client():
 
         full_msg = ''
         buffer=''
+
+        # No request limitation necessary
         while True:
             try:
+                # No check for readability because big Messages could fail
                 msg = self._socket.recv(self._bytes_in).decode("utf-8")
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))

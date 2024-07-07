@@ -4,7 +4,7 @@ import time
 import configparser
 from math import floor
 from threading import Lock
-from queue import Queue
+from queue import Queue, Empty
 import pandas as pd
 from XTB.client import Client
 from XTB.utils import pretty ,generate_logger, CustomThread
@@ -164,18 +164,14 @@ class _GeneralHandler(Client):
 
         return response
     
-    def thread_monitor(self, thread_data, reconnect=None):
+    def thread_monitor(self, name: str, thread_data: dict, reconnect=None):
         """
         Monitors the specified thread and handles reconnection if necessary.
 
         Args:
+            name (str): The name of the thread being monitored.
             thread_data (dict): A dictionary containing information about the thread.
-                It should have the following keys:
-                - 'run': A boolean indicating whether the thread should continue running.
-                - 'thread': The thread object to monitor.
-            reconnect (callable, optional): A callable function that will be called
-                when the monitored thread is not alive. This function should handle
-                the reconnection logic. Defaults to None.
+            reconnect (callable, optional): A method to be called for reconnection. Defaults to None.
 
         Raises:
             ValueError: If the reconnect parameter is provided but is not callable.
@@ -187,16 +183,28 @@ class _GeneralHandler(Client):
             if not callable(reconnect):
                 raise ValueError("Reconnection method not callable")
 
-        while thread_data['run']:
-            if not thread_data['thread'].is_alive():
-                time.sleep(self._interval)
+        self._logger.info("Monitoring thread for " + name + " ...")
 
-                if reconnect:
-                    reconnect()
-                
-                dead_thread=thread_data['thread']
-                thread_data['thread'] = CustomThread(target=dead_thread._target, args=dead_thread._args, daemon=dead_thread._daemon, kwargs=dead_thread.kwargs)
-                thread_data['thread'].start()
+        while thread_data['run']:
+            if thread_data['thread'].is_alive():
+                continue
+
+            # must be checked again because of thread asynchronity
+            if not thread_data['run']:
+                break
+
+            self._logger.error("Thread for " + name + " died")
+            if reconnect:
+                reconnect()
+            
+            self._logger.error("Restarting thread for " + name + " ...")
+            dead_thread=thread_data['thread']
+            thread_data['thread'] = CustomThread(target=dead_thread._target, args=dead_thread._args, daemon=dead_thread._daemon, kwargs=dead_thread.kwargs)
+            thread_data['thread'].start()
+
+            time.sleep(self._interval)
+
+        self._logger.info("Monitoring for thread " + name + " stopped")
 
     def start_ping(self, handler):
         """
@@ -215,7 +223,7 @@ class _GeneralHandler(Client):
         self._ping['thread'].start()
         self._logger.info("Ping started")
 
-        monitor_thread = CustomThread(target=self.thread_monitor, args=(self._ping, handler._reconnect,), daemon=True)
+        monitor_thread = CustomThread(target=self.thread_monitor, args=('Ping', self._ping, handler._reconnect,), daemon=True)
         monitor_thread.start()
 
         return True
@@ -244,7 +252,7 @@ class _GeneralHandler(Client):
                 # a function that locks the ping_key also initiates a reset to the server
                 with self._ping_lock:
                     # dynamic allocation of ssid for StreamHandler
-                    if not handler._ssid:
+                    if isinstance(handler, _StreamHandler):
                         ssid = handler._dh._ssid
                     else:
                         ssid = None
@@ -263,6 +271,8 @@ class _GeneralHandler(Client):
 
             time.sleep(check_interval)
             next_ping += time.time() - start_time
+
+        self._logger.info("Ping stopped")
 
     def stop_ping(self):
         """
@@ -283,8 +293,6 @@ class _GeneralHandler(Client):
             self._ping['run'] = False
 
         self._ping['thread'].join()
-
-        self._logger.info("Ping stopped")
 
         return True
     
@@ -479,12 +487,12 @@ class _DataHandler(_GeneralHandler):
             self._logger.error("Got no StreamSessionId from Server")
             return False
         
-        for _ in range(2):
+        for tries in range(2):
             response = self._retrieve_data(command, **kwargs)
 
             if response:
                 return response
-            else:
+            elif tries == 0:
                 self._reconnect()
                 
         self._logger.error("Failed to retrieve data")
@@ -741,7 +749,6 @@ class _StreamHandler(_GeneralHandler):
         self._stream=dict()
         self._stream_tasks = dict()
         self.streamData(command='KeepAlive')
-        time.sleep(5)
         
         # start ping to keep connection open
         self.start_ping(handler=self)
@@ -807,24 +814,23 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.warning("Stream for data already open")
                 return False
         
-        for _ in range(2):
+        for tries in range(2):
             response = self._start_stream(command, **kwargs)
 
-            if not response:
+            if response:
+                break
+            elif tries == 0:
                 self._reconnect()
             else:
-                break
-        
-        if not response:
-            self._logger.error("Failed to stream data")
-            return False
+                self._logger.error("Failed to stream data")
+                return False
 
         if not self._stream:
             self._stream['run'] = True
             self._stream['thread'] = CustomThread(target=self._receive_stream, daemon=True)
             self._stream['thread'].start()
 
-            monitor_thread = CustomThread(target=self.thread_monitor, args=(self._stream, self._reconnect,), daemon=True)
+            monitor_thread = CustomThread(target=self.thread_monitor, args=('Stream',self._stream, self._reconnect,), daemon=True)
             monitor_thread.start()
 
         index = len(self._stream_tasks)
@@ -901,8 +907,10 @@ class _StreamHandler(_GeneralHandler):
                     if set(self._stream_tasks[index]['arguments']['symbol']) != set(response['data']['symbol']):
                         continue
                 
-                self._logger.info("Data received for " + pretty(response['command']))
+                self._logger.info("Data received for " + pretty(self._stream_tasks[index]['command']))
                 self._stream_tasks[index]['queue'].put(response['data'])
+
+        self._logger.info("All streams stopped")
 
     def _exchange_stream(self, index: int, df: pd.DataFrame, lock: Lock):
         """
@@ -920,12 +928,16 @@ class _StreamHandler(_GeneralHandler):
         
         while self._stream_tasks[index]['run']:
             try:
+                # Attempt to get data from the queue with a timeout
                 data = self._stream_tasks[index]['queue'].get(timeout=self._interval)
-            except queue.Empty:
+            except Empty:
                 continue
 
             # Add the data to the buffer DataFrame
-            buffer_df = pd.concat([buffer_df,pd.DataFrame([data])], ignore_index=True)
+            if buffer_df.empty:
+                buffer_df = pd.DataFrame([data])
+            else:
+                buffer_df = pd.concat([buffer_df,pd.DataFrame([data])], ignore_index=True)
 
             self._stream_tasks[index]['queue'].task_done()
 
@@ -942,7 +954,7 @@ class _StreamHandler(_GeneralHandler):
 
             lock.release()
 
-            time.sleep(self._interval)
+        self._logger.info("Stream stopped for " + pretty(self._stream_tasks[index]['command']))
 
     def _stop_task(self, index: int):
         """
@@ -975,8 +987,6 @@ class _StreamHandler(_GeneralHandler):
 
         self._stream_tasks.pop(index)
         
-        self._logger.info("Stream stopped for " + pretty(command))
-
         return True
                 
     def _stop_stream(self):
@@ -1001,8 +1011,6 @@ class _StreamHandler(_GeneralHandler):
 
         for index in list(self._stream_tasks):
             self._stop_task(index=index)
-
-        self._logger.info("All streams stopped")
 
         return True
     
