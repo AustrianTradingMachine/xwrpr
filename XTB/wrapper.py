@@ -546,7 +546,7 @@ class Wrapper(HandlerManager):
             return False
         
         now=datetime.datetime.now()
-        now_time = now.timestamp()
+        now_ts = now.timestamp()
         if period in periods[6:]:
             limit=None
         elif period in periods[5:]:
@@ -555,22 +555,22 @@ class Wrapper(HandlerManager):
             limit=now - relativedelta(months=7)
         else:
             limit=now - relativedelta(months=1)
-        limit_time=limit.timestamp()
+        limit_ts=limit.timestamp()
         
         if not start:
-            start_time=datetime.min().timestamp()
+            start_ts=datetime.min().timestamp()
         else:
-            start_time=start.timestamp()
+            start_ts=start.timestamp()
 
-        if start_time > now_time:
+        if start_ts > now_ts:
             self._logger.error("Start time is greater than current time.")
             return False
 
-        if start_time < limit_time:
+        if start_ts < limit_ts:
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
-            start_time=limit_time
+            start_ts=limit_ts
 
-        return self._open_data_channel(command="ChartLastRequest", info=dict(period=period, start=start_time, symbol=symbol))
+        return self._open_data_channel(command="ChartLastRequest", info=dict(period=period, start=start_ts, symbol=symbol))
 
     def getChartRangeRequest(self, symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0):
         """
@@ -609,7 +609,7 @@ class Wrapper(HandlerManager):
             return False
         
         now=datetime.datetime.now()
-        now_time = now.timestamp()
+        now_ts = now.timestamp()
         if period in periods[6:]:
             limit=None
         elif period in periods[5:]:
@@ -618,32 +618,32 @@ class Wrapper(HandlerManager):
             limit=now - relativedelta(months=7)
         else:
             limit=now - relativedelta(months=1)
-        limit_time=limit.timestamp()
+        limit_ts=limit.timestamp()
 
         if not start:
-            start_time=datetime.min().timestamp()
+            start_ts=datetime.min().timestamp()
         else:
-            start_time=start.timestamp()
+            start_ts=start.timestamp()
 
-        if start_time < limit_time:
+        if start_ts < limit_ts:
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
-            start_time=limit_time
+            start_ts=limit_ts
 
-        if start_time > now_time:
+        if start_ts > now_ts:
             self._logger.error("Start time is greater than current time.")
             return False
 
         if ticks == 0:
             if not end:
-                end_time=now_time
+                end_ts=now_ts
             else:
-                end_time=end.timestamp()  
+                end_ts=end.timestamp()  
                 
-            if end_time > now_time:
+            if end_ts > now_ts:
                 self._logger.error("End time is greater than current time.")
                 return False
 
-            if start_time >= end_time:
+            if start_ts >= end_ts:
                 self._logger.error("Start time is greater or equal than end time.")
                 return False
         else:
@@ -682,7 +682,7 @@ class Wrapper(HandlerManager):
                     self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
                     ticks = delta
 
-        return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_time, period=period, start=start_time, symbol=symbol, ticks=ticks))
+        return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_ts, period=period, start=start_ts, symbol=symbol, ticks=ticks))
 
     def getCommissionDef(self, symbol: str, volume: float):
         """
@@ -756,14 +756,14 @@ class Wrapper(HandlerManager):
             SELL	            1	        sell
 
         """
-        start_time=start.timestamp()
-        end_time=end.timestamp()
+        start_ts=start.timestamp()
+        end_ts=end.timestamp()
 
-        if start_time > end_time:
+        if start_ts > end_ts:
             self._logger.error("Start time is greater than end time.")
             return False
 
-        return self._open_data_channel(command="IbsHistory", end=end_time, start=start_time)
+        return self._open_data_channel(command="IbsHistory", end=end_ts, start=start_ts)
     
     def getMarginLevel(self):
         """
@@ -827,14 +827,14 @@ class Wrapper(HandlerManager):
             title	            string      News title
             
         """
-        start_time=start.timestamp()
-        end_time=end.timestamp()
+        start_ts=start.timestamp()
+        end_ts=end.timestamp()
 
-        if start_time > end_time:
+        if start_ts > end_ts:
             self._logger.error("Start time is greater than end time.")
             return False
 
-        return self._open_data_channel(command="News", end=end_time, start=start_time)
+        return self._open_data_channel(command="News", end=end_ts, start=start_ts)
     
     def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int):
         """
@@ -1209,14 +1209,14 @@ class Wrapper(HandlerManager):
             CREDIT	            7	        Read only
 
         """
-        start_time = start.timestamp()
-        end_time = end.timestamp()
+        start_ts = start.timestamp()
+        end_ts = end.timestamp()
 
-        if start_time > end_time:
+        if start_ts > end_ts:
             self._logger.error("Start time is greater than end time.")
             return False
 
-        return self._open_data_channel(command="TradeHistory", start=start_time, end=end_time)
+        return self._open_data_channel(command="TradeHistory", start=start_ts, end=end_ts)
 
     def getTradingHours(self, symbols: list):
         """
@@ -1334,9 +1334,9 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             return False
 
-        expiration_time = expiration.timestamp()
+        expiration_ts = expiration.timestamp()
 
-        return self._open_data_channel(command="tradeTransaction", tradeTransInf=dict(cmd=cmd, customCommand=customComment, expiration=expiration_time, offset=offset, order=order, price=price, sl=sl, symbol=symbol, tp=tp, type=type, volume=volume))
+        return self._open_data_channel(command="tradeTransaction", tradeTransInf=dict(cmd=cmd, customCommand=customComment, expiration=expiration_ts, offset=offset, order=order, price=price, sl=sl, symbol=symbol, tp=tp, type=type, volume=volume))
     
     def tradeTransactionStatus(self, order: int):
         """
