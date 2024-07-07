@@ -64,6 +64,7 @@ class Wrapper(HandlerManager):
             demo (bool, optional): Specifies whether to use the demo mode. Defaults to True.
             logger (logging.Logger, optional): The logger object to use for logging. 
                 If not provided, a new logger will be created. Defaults to None.
+
         """
         self._demo=demo
 
@@ -91,6 +92,7 @@ class Wrapper(HandlerManager):
         Destructor method for the XTB wrapper class.
         This method is automatically called when the object is about to be destroyed.
         It performs cleanup operations and deletes the object.
+
         """
         self.delete()
 
@@ -102,6 +104,7 @@ class Wrapper(HandlerManager):
 
         Returns:
             bool: True if the wrapper is successfully deleted, False otherwise.
+
         """
         if self._deleted:
             self._logger.warning("Wrapper already deleted.")
@@ -124,9 +127,6 @@ class Wrapper(HandlerManager):
                 - lock (threading.Lock): A lock object for thread synchronization.
                 - thread (Thread): Startin the Thread will terminate the stream
 
-        Raises:
-            None
-
         """
         sh = self.provide_StreamHandler()
         if not sh:
@@ -144,9 +144,6 @@ class Wrapper(HandlerManager):
         """
         Allows to get actual account indicators values in real-time, as soon as they are available in the system.
 
-        Returns:
-            The balance of the trading account.
-        
         Format of Output:
             name	            type	    description
             balance	            float	    balance in account currency
@@ -166,9 +163,6 @@ class Wrapper(HandlerManager):
         Parameters:
         symbol (str): The symbol for which to retrieve the candles.
 
-        Returns:
-            The candles for the specified symbol.
-        
         Format of Output:
             name	            type	    description
             close	            float	    Close price in base currency
@@ -195,24 +189,19 @@ class Wrapper(HandlerManager):
         """
         Subscribes for and unsubscribes from news.
 
-        Returns:
-            The news data retrieved from the API.
-        
         Format of Output:
             name	            type	    description
             body	            string	    Body
             key	                string	    News key
             time	            timestamp	Time
             title	            string	    News title
+
         """
         return self._open_stream_channel(command="News")
 
     def getProfits(self):
         """
         Subscribes for and unsubscribes from profits.
-
-        Returns:
-            The profits from the XTB trading platform.
 
         Format of Output:
             name	            type	    description
@@ -232,9 +221,6 @@ class Wrapper(HandlerManager):
             symbol (str): The symbol for which to retrieve tick prices.
             minArrivalTime (int): The minimum arrival time for the tick prices.
             maxLevel (int, optional): The maximum level of tick prices to retrieve. Defaults to 1.
-
-        Returns:
-            The tick prices for the specified symbol within the specified time range.
 
         Format of Output:
             name	            type	    description
@@ -277,9 +263,6 @@ class Wrapper(HandlerManager):
             - Closing the trade
             - Modification of trade parameters
             - Explicit trade update done by server system to synchronize data.
-
-        Returns:
-            The trades retrieved from the XTB API.
 
         Format of Output:
             name	            type	    description
@@ -344,10 +327,7 @@ class Wrapper(HandlerManager):
     
     def getTradeStatus(self):
         """
-            Allows to get status for sent trade requests in real-time, as soon as it is available in the system.
-
-        Returns:
-            The trade status.
+        Allows to get status for sent trade requests in real-time, as soon as it is available in the system.
 
         Format of Output:
             name	            type	    description
@@ -369,6 +349,7 @@ class Wrapper(HandlerManager):
 
         Returns:
             The response from the getData method if successful, False otherwise.
+            
         """
         dh = self.provide_DataHandler()
         if not dh:
@@ -384,59 +365,56 @@ class Wrapper(HandlerManager):
         
     def getAllSymbols(self):
         """
-        Retrieves all symbols from the data channel.
-
-        Returns:
-            A list of symbols available in the data channel.
+        Returns array of all symbols available for the user.
 
         Format of Output:
             name	            type	    description
             ask	                float	    Ask price in base currency
             bid	                float	    Bid price in base currency
-            categoryName	    String	    Category name
-            contractSize	    Number	    Size of 1 lot
-            currency	        String	    Currency
-            currencyPair	    Boolean	    Indicates whether the symbol represents a currency pair
-            currencyProfit	    String	    The currency of calculated profit
-            description	        String	    Description
-            expiration	        Time	    Null if not applicable
-            groupName	        String	    Symbol group name
+            categoryName	    string	    Category name
+            contractSize	    int         Size of 1 lot
+            currency	        string	    Currency
+            currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
+            currencyProfit	    string	    The currency of calculated profit
+            description	        string	    Description
+            expiration	        timestamp	Null if not applicable
+            groupName	        string	    Symbol group name
             high	            float	    The highest price of the day in base currency
-            initialMargin	    Number	    Initial margin for 1 lot order, used for profit/margin calculation
-            instantMaxVolume    Number	    Maximum instant volume multiplied by 100 (in lots)
+            initialMargin	    int     	Initial margin for 1 lot order, used for profit/margin calculation
+            instantMaxVolume    int 	    Maximum instant volume multiplied by 100 (in lots)
             leverage	        float	    Symbol leverage
-            longOnly	        Boolean	    Long only
+            longOnly	        boolean	    Long only
             lotMax	            float	    Maximum size of trade
             lotMin	            float	    Minimum size of trade
             lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
             low	                float	    The lowest price of the day in base currency
-            marginHedged	    Number	    Used for profit calculation
-            marginHedgedStrong  Boolean	    For margin calculation
-            marginMaintenance   Number	    For margin calculation, null if not applicable
-            marginMode	        Number	    For margin calculation
+            marginHedged	    int 	    Used for profit calculation
+            marginHedgedStrong  boolean	    For margin calculation
+            marginMaintenance   int 	    For margin calculation, null if not applicable
+            marginMode	        int 	    For margin calculation
             percentage	        float	    Percentage
-            pipsPrecision	    Number	    Number of symbol's pip decimal places
-            precision	        Number	    Number of symbol's price decimal places
-            profitMode	        Number	    For profit calculation
-            quoteId     	    Number	    Source of price
-            shortSelling	    Boolean	    Indicates whether short selling is allowed on the instrument
+            pipsPrecision	    int 	    Number of symbol's pip decimal places
+            precision	        int 	    Number of symbol's price decimal places
+            profitMode	        int 	    For profit calculation
+            quoteId     	    int 	    Source of price
+            shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
             spreadRaw	        float	    The difference between raw ask and bid prices
             spreadTable	        float	    Spread representation
-            starting	        Time	    Null if not applicable
-            stepRuleId	        Number	    Appropriate step rule ID from getStepRules  command response
-            stopsLevel	        Number	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
-            swap_rollover3days	Number	    Time when additional swap is accounted for weekend
-            swapEnable	        Boolean	    Indicates whether swap value is added to position on end of day
+            starting	        timestamp	Null if not applicable
+            stepRuleId	        int 	    Appropriate step rule ID from getStepRules  command response
+            stopsLevel	        int 	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
+            swap_rollover3days	int 	    timestamp when additional swap is accounted for weekend
+            swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
             swapLong	        float	    Swap value for long positions in pips
             swapShort	        float	    Swap value for short positions in pips
-            swapType	        Number	    Type of swap calculated
-            symbol	            String	    Symbol name
+            swapType	        int 	    Type of swap calculated
+            symbol	            string	    Symbol name
             tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
             tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
-            time	            Time	    Ask & bid tick time
-            timeString	        String	    Time in String
-            trailingEnabled	    Boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
-            type	            Number	    Instrument class number
+            time	            timestamp	Ask & bid tick time
+            timeString	        string	    Time in String
+            trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
+            type	            int 	    Instrument class number
 
         Possible values of quoteId field:
             name	            value	    description
@@ -460,16 +438,56 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="AllSymbols")
     
     def getCalendar(self):
-            """
-            Retrieves the calendar data from the XTB API.
+        """
+        Returns calendar with market events.
 
-            Returns:
-                The calendar data as returned by the XTB API.
+        Format of Output:
+            name	            type	    description
+            country	            string	    Two letter country code
+            current	            string	    Market value (current), empty before time of release of this value (time from "time" record)
+            forecast	        string	    Forecasted value
+            impact	            string	    Impact on market
+            period	            string	    Information period
+            previous	        string	    Value from previous information release
+            time	            timestamp	Time, when the information will be released (in this time empty "current" value should be changed with exact released value)
+            title           	String	    Name of the indicator for which values will be released
 
-            """
-            return self._open_data_channel(command="Calendar")
+        Possible values of impact field:
+            name	            value	    description
+            low	                1	        low
+            medium	            2	        medium
+            high	            3	        high
+
+        """
+        return self._open_data_channel(command="Calendar")
     
     def getChartLastRequest(self, symbol: str, period: str, start: datetime=None):
+        """
+        Returns chart info, from start date to the current time. If the chosen period is greater than 1 minute, 
+        the last candle returned by the API can change until the end of the period.
+        the candle is being automatically updated every minute.
+
+        Args:
+            symbol (str): The symbol for which to retrieve the chart data.
+            period (str): The period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            start (datetime, optional): The start time of the chart data. Defaults to None.
+
+        Format of Output:
+            name	            type	    description
+            digits	            int 	    Number of decimal places
+            rateInfos	        array	    Array of RATE_INFO_RECORD objects
+
+        Format of RATE_INFO_RECORD:
+            name	            type	    description
+            close	            float	    Value of close price (shift from open price)
+            ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
+            ctmString	        string	    String representation of the 'ctm' field
+            high	            float   	Highest value in the given period (shift from open price)
+            low	                float	    Lowest value in the given period (shift from open price)
+            open            	float	    Open price (in base currency * 10 to the power of digits)
+            vol	                float	    Volume in lots
+
+        """
         periods=[
             "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"
         ]
@@ -506,6 +524,32 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="ChartLastRequest", period=period, start=start_time, symbol=symbol)
 
     def getChartRangeRequest(self, symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0):
+        """
+        Returns chart info with data between given start and end dates.
+
+        Args:
+            symbol (str): The symbol for which to retrieve the chart data.
+            period (str): The time period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            start (datetime, optional): The start time of the chart data. Defaults to None.
+            end (datetime, optional): The end time of the chart data. Defaults to None.
+            ticks (int, optional): The number of ticks to retrieve. If set to 0, the start and end times are used. Defaults to 0.
+
+        Format of Output:
+            name	            type	    description
+            digits	            int 	    Number of decimal places
+            rateInfos	        array	    Array of RATE_INFO_RECORD objects
+
+        Format of RATE_INFO_RECORD:
+            name	            type	    description
+            close	            float	    Value of close price (shift from open price)
+            ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
+            ctmString	        string	    String representation of the 'ctm' field
+            high	            float   	Highest value in the given period (shift from open price)
+            low	                float	    Lowest value in the given period (shift from open price)
+            open            	float	    Open price (in base currency * 10 to the power of digits)
+            vol	                float	    Volume in lots
+        
+        """
         periods=[
             "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"
         ]
@@ -591,18 +635,86 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="ChartRangeRequest", end=end_time, period=period, start=start_time, symbol=symbol, ticks=ticks)
 
     def getCommissionDef(self, symbol: str, volume: float):
+        """
+        Returns calculation of commission and rate of exchange. The value is calculated as expected value, and therefore might not be perfectly accurate.
+
+        Args:
+            symbol (str): The symbol for which to retrieve the commission definition.
+            volume (float): The volume for which to retrieve the commission definition.
+
+        Format of Output:
+            name	            type	    description        
+            commission	        float	    calculated commission in account currency, could be null if not applicable
+            rateOfExchange	    float	    rate of exchange between account currency and instrument base currency, could be null if not applicable
+
+        """
         return self._open_data_channel(command="CommissionDef", symbol=symbol, volume=volume)
     
     def getCurrentUserData(self):
+        """
+        Returns information about account currency, and account leverage.
+
+        Format of Output:
+            name	            type	    description
+            companyUnit	        int 	    Unit the account is assigned to.
+            currency	        string	    account currency
+            group	            string	    group
+            ibAccount	        boolean	    Indicates whether this account is an IB account.
+            leverage	        int 	    This field should not be used. It is inactive and its value is always 1.
+            leverageMultiplier	float	    The factor used for margin calculations. The actual value of leverage can be calculated by dividing this value by 100.
+            spreadType	        string	    spreadType, null if not applicable
+            trailingStop	    boolean	    Indicates whether this account is enabled to use trailing stop   
+
+        """
         return self._open_data_channel(command="CurrentUserData")
     
     def getIbsHistory(self, start: datetime, end: datetime):
+        """
+        Retrieves the IBS (Internal Bar Strength) history data from the specified start time to the specified end time.
+
+        Args:
+            start (datetime): The start time of the data range.
+            end (datetime): The end time of the data range.
+
+        Format of Output:
+            name	            type	    description
+            closePrice	        float	    IB close price or null if not allowed to view
+            login	            string	    IB user login or null if not allowed to view
+            nominal	            float	    IB nominal or null if not allowed to view
+            openPrice	        float	    IB open price or null if not allowed to view
+            side	            int 	    Operation code or null if not allowed to view
+            surname	            string	    IB user surname or null if not allowed to view
+            symbol	            string	    Symbol or null if not allowed to view
+            timestamp	        timestamp	Time the record was created or null if not allowed to view
+            volume	            float	    Volume in lots or null if not allowed to view
+
+        Possible values of side field:
+            name	            value   	description
+            BUY	                0	        buy
+            SELL	            1	        sell
+
+        """
         start_time=start.timestamp()
         end_time=end.timestamp()
 
-        return self._open_data_channel(command="IbsHistory", start=start_time, end=end_time)
+        return self._open_data_channel(command="IbsHistory", end=end_time, start=start_time)
     
     def getMarginLevel(self):
+        """
+        Returns various account indicators.
+
+        Format of Output:
+            name	            type	    description
+            balance	            float	    balance in account currency
+            credit	            float	    credit
+            currency	        string	    user currency
+            equity	            float	    sum of balance and all profits in account currency
+            margin	            float	    margin requirements in account currency
+            margin_free	        float	    free margin in account currency
+            margin_level	    float	    margin level percentage
+
+
+        """
         return self._open_data_channel(command="MarginLevel")
     
     def getMarginTrade(self, symbol: str, volume: float):
