@@ -798,6 +798,10 @@ class Wrapper(HandlerManager):
             margin	            float	    calculated margin in account currency
               
         """
+        if volume < 0:
+            self._logger.error("Volume must be greater than 0.")
+            return False
+
         return self._open_data_channel(command="MarginTrade", symbol=symbol, volume=volume)
     
     def getNews(self, start: datetime, end: datetime):
@@ -1279,7 +1283,31 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="TradeTransaction", cmd=cmd, symbol=symbol, volume=volume, openPrice=openPrice, sl=sl, tp=tp, comment=comment)
     
     def tradeTransactionStatus(self, order: int):
-        return self._open_data_channel(command="TradeTransactionStatus", order=order)
+        """
+        Returns current transaction status.
+
+        Parameters:
+        order (int): The order ID for which to retrieve the transaction status.
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            ask	                float	    Price in base currency
+            bid	                float	    Price in base currency
+            customComment	    string	    The value the customer may provide in order to retrieve it later.
+            message	            string	    Can be null
+            order	            integer	    Unique order number
+            requestStatus	    integer	    Request status code, described below
+
+        Possible values of requestStatus field:
+            name	            type	    description
+            ERROR	            0	        error
+            PENDING	            1	        pending
+            ACCEPTED	        3	        The transaction has been executed successfully
+            REJECTED	        4       	The transaction has been rejected
+
+        """
+        return self._open_data_channel(command="tradeTransactionStatus", order=order)
 
 
 
