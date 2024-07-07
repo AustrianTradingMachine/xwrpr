@@ -1364,13 +1364,3 @@ class Wrapper(HandlerManager):
 
         """
         return self._open_data_channel(command="tradeTransactionStatus", order=order)
-
-
-
-
-
-
-
-
-
-    
