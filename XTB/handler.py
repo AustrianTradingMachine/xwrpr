@@ -479,7 +479,7 @@ class _DataHandler(_GeneralHandler):
             self._logger.error("Got no StreamSessionId from Server")
             return False
         
-        for _ in range(3):
+        for _ in range(2):
             response = self._retrieve_data(command, **kwargs)
 
             if response:
@@ -807,7 +807,7 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.warning("Stream for data already open")
                 return False
         
-        for _ in range(3):
+        for _ in range(2):
             response = self._start_stream(command, **kwargs)
 
             if not response:
