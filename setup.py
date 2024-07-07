@@ -7,7 +7,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 setup(
     name="XTB",
     version="1.0.0",
-    author="AustrianTradingMachine",
+    author="Philipp Craighero",
     author_email="",
     description="A wrapper for the XTB API",
     long_description=long_description,
