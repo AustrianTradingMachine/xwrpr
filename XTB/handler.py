@@ -882,6 +882,18 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the stream was successfully received and processed, False otherwise.
         """
+        # Thanks to the inconsstency of the API necessary to translate the command
+        translate = {
+            'Balance': 'balance',
+            'Candles': 'candle',
+            'KeepAlive': 'keepAlive',
+            'News': 'news',
+            'Profits': 'profit',
+            'TickPrices': 'tickPrices',
+            'Trades':'trade',
+            'TradeStatus': 'tradeStatus',
+            }
+
         while self._stream['run']:
             self._logger.info("Streaming data ...")
 
@@ -896,18 +908,20 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.error("No data received")
                 return False
             
+            command = self._stream_tasks[index]['command']
+            
             for index in self._stream_tasks:
-                if self._stream_tasks[index]['command'].lower() != response['command'].lower():
+                if translate[command] != response['command']:
                     continue
 
-                if self._stream_tasks[index]['command'] == 'KeepAlive':
+                if command == 'KeepAlive':
                     continue
 
                 if 'symbol' in response['data']:
                     if set(self._stream_tasks[index]['arguments']['symbol']) != set(response['data']['symbol']):
                         continue
                 
-                self._logger.info("Data received for " + pretty(self._stream_tasks[index]['command']))
+                self._logger.info("Data received for " + pretty(command))
                 self._stream_tasks[index]['queue'].put(response['data'])
 
         self._logger.info("All streams stopped")

@@ -518,7 +518,7 @@ class Wrapper(HandlerManager):
         Args:
             symbol (str): The symbol for which to retrieve the chart data.
             period (str): The period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
-            start (datetime, optional): The start time of the chart data. Defaults to None.
+            start (datetime, optional): The start time of the chart data. Default is 0 AD
 
         Returns:
             Dictionary: A Dictionary containing the following fields:
@@ -548,14 +548,14 @@ class Wrapper(HandlerManager):
         now=datetime.datetime.now()
         now_time = now.timestamp()
         if period in periods[6:]:
-            time_limit=None
+            limit=None
         elif period in periods[5:]:
-            time_limit=now - relativedelta(years=13)
+            limit=now - relativedelta(years=13)
         elif period in periods[3:]:
-            time_limit=now - relativedelta(months=7)
+            limit=now - relativedelta(months=7)
         else:
-            time_limit=now - relativedelta(months=1)
-        time_limit=time_limit.timestamp()
+            limit=now - relativedelta(months=1)
+        limit_time=limit.timestamp()
         
         if not start:
             start_time=datetime.min().timestamp()
@@ -566,11 +566,11 @@ class Wrapper(HandlerManager):
             self._logger.error("Start time is greater than current time.")
             return False
 
-        if start_time < time_limit:
-            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(time_limit))
-            start_time=time_limit
+        if start_time < limit_time:
+            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
+            start_time=limit_time
 
-        return self._open_data_channel(command="ChartLastRequest", period=period, start=start_time, symbol=symbol)
+        return self._open_data_channel(command="ChartLastRequest", info=dict(period=period, start=start_time, symbol=symbol))
 
     def getChartRangeRequest(self, symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0):
         """
@@ -579,8 +579,8 @@ class Wrapper(HandlerManager):
         Args:
             symbol (str): The symbol for which to retrieve the chart data.
             period (str): The time period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
-            start (datetime, optional): The start time of the chart data. Defaults to None.
-            end (datetime, optional): The end time of the chart data. Defaults to None.
+            start (datetime, optional): The start time of the chart data. Default 0 AD
+            end (datetime, optional): The end time of the chart data. Default is now.
             ticks (int, optional): The number of ticks to retrieve. If set to 0, the start and end times are used. Defaults to 0.
 
         Returns:
@@ -611,23 +611,23 @@ class Wrapper(HandlerManager):
         now=datetime.datetime.now()
         now_time = now.timestamp()
         if period in periods[6:]:
-            time_limit=None
+            limit=None
         elif period in periods[5:]:
-            time_limit=now - relativedelta(years=13)
+            limit=now - relativedelta(years=13)
         elif period in periods[3:]:
-            time_limit=now - relativedelta(months=7)
+            limit=now - relativedelta(months=7)
         else:
-            time_limit=now - relativedelta(months=1)
-        time_limit=time_limit.timestamp()
+            limit=now - relativedelta(months=1)
+        limit_time=limit.timestamp()
 
         if not start:
             start_time=datetime.min().timestamp()
         else:
             start_time=start.timestamp()
 
-        if start_time < time_limit:
-            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(time_limit))
-            start_time=time_limit
+        if start_time < limit_time:
+            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
+            start_time=limit_time
 
         if start_time > now_time:
             self._logger.error("Start time is greater than current time.")
@@ -649,40 +649,40 @@ class Wrapper(HandlerManager):
         else:
             self._logger.info("Ticks parameter is set. Ignoring end time.")
 
-            reference_time = start_time
+            reference = start
 
             if ticks < 0:
                 if period in ["M1", "M5", "M15", "M30"]:
-                    delta = calculate_timedelta(time_limit,reference_time, period='minutes')
+                    delta = calculate_timedelta(limit,reference, period='minutes')
                 elif period in ["H1", "H4"]:
-                    delta = calculate_timedelta(time_limit,reference_time, period='hours')
+                    delta = calculate_timedelta(limit,reference, period='hours')
                 elif period is "D1":
-                    delta = calculate_timedelta(time_limit,reference_time, period='days')
+                    delta = calculate_timedelta(limit,reference, period='days')
                 elif period is "W1":
-                    delta = calculate_timedelta(time_limit,reference_time, period='weeks')
+                    delta = calculate_timedelta(limit,reference, period='weeks')
                 else:
-                    delta = calculate_timedelta(reference_time, now_time,period='months')
+                    delta = calculate_timedelta(limit,reference,period='months')
 
                 if delta < abs(ticks):
                     self._logger.warning("Ticks reach too far in the past for selected period "+period+". Setting tick to "+str(delta))
                     ticks = delta
             else:
                 if period in ["M1", "M5", "M15", "M30"]:
-                    delta = calculate_timedelta(reference_time, now_time, period='minutes')
+                    delta = calculate_timedelta(reference, now, period='minutes')
                 elif period in ["H1", "H4"]:
-                    delta = calculate_timedelta(reference_time, now_time, period='hours')
+                    delta = calculate_timedelta(reference, now, period='hours')
                 elif period is "D1":
-                    delta = calculate_timedelta(reference_time, now_time, period='days')
+                    delta = calculate_timedelta(reference, now, period='days')
                 elif period is "W1":
-                    delta = calculate_timedelta(reference_time, now_time, period='weeks')
+                    delta = calculate_timedelta(reference, now, period='weeks')
                 else:
-                    delta = calculate_timedelta(reference_time, now_time, period='months')
+                    delta = calculate_timedelta(reference, now, period='months')
                 
                 if delta < ticks:
                     self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
                     ticks = delta
 
-        return self._open_data_channel(command="ChartRangeRequest", end=end_time, period=period, start=start_time, symbol=symbol, ticks=ticks)
+        return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_time, period=period, start=start_time, symbol=symbol, ticks=ticks))
 
     def getCommissionDef(self, symbol: str, volume: float):
         """
@@ -1273,14 +1273,70 @@ class Wrapper(HandlerManager):
         """
         return self._open_data_channel(command="Version")
     
-    def tradeTransaction(self, cmd: int, symbol: str, volume: float, openPrice: float, sl: float, tp: float, comment: str):
+    def tradeTransaction(self, cmd: int, customComment: str, expiration: datetime, offset: int, order: int, price: float, sl: float, symbol: str, tp: float, type: int, volume: float):
+        """
+        Executes a trade transaction.
+
+        Args:
+            cmd (int): Operation code
+            customComment (str): The value the customer may provide in order to retrieve it later.
+            expiration (datetime): Pending order expiration time
+            offset (int): Trailing offset
+            order (int): 0 or position number for closing/modifications
+            price (float): Trade price
+            sl (float): Stop loss
+            symbol (str): Trade symbol
+            tp (float): Take profit
+            type (int): Trade transaction type
+            volume (float): Trade volume
+
+        Possible values of cmd field:
+            name	            type	    description
+            BUY	                0	        buy
+            SELL	            1	        sell
+            BUY_LIMIT	        2	        buy limit
+            SELL_LIMIT	        3	        sell limit
+            BUY_STOP	        4	        buy stop
+            SELL_STOP	        5	        sell stop
+            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	        Read only
+
+        Possible values of type field:
+            name	            type	    description
+            OPEN	            0	        order open, used for opening orders
+            PENDING	            1	        order pending, only used in the streaming getTrades  command
+            CLOSE	            2	        order close
+            MODIFY	            3	        order modify, only used in the tradeTransaction  command
+            DELETE	            4	        order delete, only used in the tradeTransaction  command
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            order	            integer	    order
+
+        """
         cmds = [0, 1, 2, 3, 4, 5, 6, 7]
+        types = [0, 1, 2, 3, 4]
 
         if cmd not in cmds:
             self._logger.error("Invalid cmd. Choose from: "+", ".join(cmds))
             return False
+        
+        if type not in types:
+            self._logger.error("Invalid type. Choose from: "+", ".join(types))
+            return False
+        
+        if expiration < datetime.datetime.now():
+            self._logger.error("Expiration time is in the past.")
+            return False
+        
+        if volume < 0:
+            self._logger.error("Volume must be greater than 0.")
+            return False
 
-        return self._open_data_channel(command="TradeTransaction", cmd=cmd, symbol=symbol, volume=volume, openPrice=openPrice, sl=sl, tp=tp, comment=comment)
+        expiration_time = expiration.timestamp()
+
+        return self._open_data_channel(command="tradeTransaction", tradeTransInf=dict(cmd=cmd, customCommand=customComment, expiration=expiration_time, offset=offset, order=order, price=price, sl=sl, symbol=symbol, tp=tp, type=type, volume=volume))
     
     def tradeTransactionStatus(self, order: int):
         """
