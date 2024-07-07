@@ -340,17 +340,17 @@ class Wrapper(HandlerManager):
             - If the comment remained unchanged from that of opened order, then the order was closed by user
 
         Possible values of state field:
-            name	            value	        description
-            MODIFIED	        "Modified"	    modified
-            DELETED	            "Deleted"	    deleted
+            name	            value	    description
+            MODIFIED	        "Modified"	modified
+            DELETED	            "Deleted"	deleted
 
         Possible values of type field:
-            name	            value	        description
-            OPEN	            0	            order open, used for opening orders
-            PENDING	            1	            order pending, only used in the streaming getTrades  command
-            CLOSE	            2	            order close
-            MODIFY	            3	            order modify, only used in the tradeTransaction  command
-            DELETE	            4	            order delete, only used in the tradeTransaction  command
+            name	            value	    description
+            OPEN	            0	        order open, used for opening orders
+            PENDING	            1	        order pending, only used in the streaming getTrades  command
+            CLOSE	            2	        order close
+            MODIFY	            3	        order modify, only used in the tradeTransaction  command
+            DELETE	            4	        order delete, only used in the tradeTransaction  command
 
         
         """
@@ -415,7 +415,7 @@ class Wrapper(HandlerManager):
             ask	                float	    Ask price in base currency
             bid	                float	    Bid price in base currency
             categoryName	    string	    Category name
-            contractSize	    integer        Size of 1 lot
+            contractSize	    integer     Size of 1 lot
             currency	        string	    Currency
             currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
             currencyProfit	    string	    The currency of calculated profit
@@ -815,12 +815,12 @@ class Wrapper(HandlerManager):
 
         Format of NEWS_TOPIC_RECORD:
             name	            type	    description
-            body	            string    Body
+            body	            string      Body
             bodylen	            integer	    Body length
-            key	                string    News key
-            time	            timestamp	    Time
-            timeString	        string    Time string
-            title	            stringN   ews title
+            key	                string      News key
+            time	            timestamp   Time
+            timeString	        string      Time string
+            title	            string      News title
             
         """
         start_time=start.timestamp()
@@ -922,7 +922,7 @@ class Wrapper(HandlerManager):
             ask	                float	    Ask price in base currency
             bid	                float	    Bid price in base currency
             categoryName	    string	    Category name
-            contractSize	    integer        Size of 1 lot
+            contractSize	    integer     Size of 1 lot
             currency	        string	    Currency
             currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
             currencyProfit	    string	    The currency of calculated profit
