@@ -908,9 +908,10 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.error("No data received")
                 return False
             
-            command = self._stream_tasks[index]['command']
-            
             for index in self._stream_tasks:
+                command = self._stream_tasks[index]['command']
+                arguments = self._stream_tasks[index]['arguments']
+                
                 if translate[command] != response['command']:
                     continue
 
@@ -918,7 +919,7 @@ class _StreamHandler(_GeneralHandler):
                     continue
 
                 if 'symbol' in response['data']:
-                    if set(self._stream_tasks[index]['arguments']['symbol']) != set(response['data']['symbol']):
+                    if set(arguments['symbol']) != set(response['data']['symbol']):
                         continue
                 
                 self._logger.info("Data received for " + pretty(command))
