@@ -5,9 +5,8 @@ from threading import Lock
 import configparser
 import datetime
 from dateutil.relativedelta import relativedelta
-import pytz
 from XTB.handler import HandlerManager
-from XTB.utils import generate_logger, signum, calculate_timedelta
+from XTB.utils import generate_logger, calculate_timedelta
 
 
 # read api configuration
@@ -24,8 +23,6 @@ class Wrapper(HandlerManager):
     Attributes:
         _demo (bool): Flag indicating whether the demo environment is used.
         _logger (logging.Logger): Logger instance for logging messages.
-        _utc_tz (pytz.timezone): Timezone for UTC.
-        _cest_tz (pytz.timezone): Timezone for Europe/Berlin.
         _deleted (bool): Flag indicating whether the wrapper has been deleted.
 
     Methods:
@@ -78,9 +75,6 @@ class Wrapper(HandlerManager):
 
         self._logger.info("Initializing wrapper")
 
-        self._utc_tz = pytz.utc
-        self._cest_tz = pytz.timezone('Europe/Berlin')
-
         super().__init__(demo=self._demo, logger = self._logger)
 
         self._deleted=False
@@ -124,7 +118,7 @@ class Wrapper(HandlerManager):
         Returns:
             Tuple: A tuple containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for thread synchronization.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
 
         """
@@ -144,7 +138,13 @@ class Wrapper(HandlerManager):
         """
         Allows to get actual account indicators values in real-time, as soon as they are available in the system.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe: 
             name	            type	    description
             balance	            float	    balance in account currency
             credit	            float	    credit in account currency
@@ -163,7 +163,13 @@ class Wrapper(HandlerManager):
         Parameters:
         symbol (str): The symbol for which to retrieve the candles.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe: 
             name	            type	    description
             close	            float	    Close price in base currency
             ctm	                timestamp	Candle  start time in CET time zone (Central European Time)
@@ -171,7 +177,7 @@ class Wrapper(HandlerManager):
             high	            float	    Highest value in the given period in base currency
             low	                float	    Lowest  value in the given period in base currency
             open	            float	    Open price in base currency
-            quoteId	            int	        Source of price
+            quoteId	            integer 	Source of price
             symbol	            string	    Symbol
             vol	                float	    Volume in lots
 
@@ -189,7 +195,13 @@ class Wrapper(HandlerManager):
         """
         Subscribes for and unsubscribes from news.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe: 
             name	            type	    description
             body	            string	    Body
             key	                string	    News key
@@ -203,12 +215,18 @@ class Wrapper(HandlerManager):
         """
         Subscribes for and unsubscribes from profits.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe: 
             name	            type	    description
-            order	            int	    Order number
-            order2	            int	    Transaction ID
-            position	        int	    Position number
-            profit	            float	Profit in account currency
+            order	            integer 	Order number
+            order2	            integer 	Transaction ID
+            position	        integer 	Position number
+            profit	            float	    Profit in account currency
 
         """
         return self._open_stream_channel(command="Profits")
@@ -222,16 +240,22 @@ class Wrapper(HandlerManager):
             minArrivalTime (int): The minimum arrival time for the tick prices.
             maxLevel (int, optional): The maximum level of tick prices to retrieve. Defaults to 1.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe:
             name	            type	    description
             ask	                float	    Ask price in base currency
-            askVolume	        int	        Number of available lots to buy at given price or null if not applicable
+            askVolume	        integer 	Number of available lots to buy at given price or null if not applicable
             bid	                float	    Bid price in base currency
-            bidVolume	        int	        Number of available lots to buy at given price or null if not applicable
+            bidVolume	        integer 	Number of available lots to buy at given price or null if not applicable
             high	            float	    The highest price of the day in base currency
-            level	            int	        Price level
+            level	            integer 	Price level
             low	                float	    The lowest price of the day in base currency
-            quoteId	            int	        Source of price, detailed description below
+            quoteId	            integer 	Source of price, detailed description below
             spreadRaw	        float	    The difference between raw ask and bid prices
             spreadTable	        float	    Spread representation
             symbol	            string	    Symbol
@@ -264,31 +288,38 @@ class Wrapper(HandlerManager):
             - Modification of trade parameters
             - Explicit trade update done by server system to synchronize data.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe:
+            Dictionary with the following fields:
             name	            type	    description
             close_price	        float	    Close price in base currency
             close_time	        timestamp	Null if order is not closed
             closed	            boolean	    Closed
-            cmd	                int	        Operation code
+            cmd	                integer 	Operation code
             comment	            string	    Comment
             commission	        float	    Commission in account currency, null if not applicable
             customComment	    string	    The value the customer may provide in order to retrieve it later.
-            digits	            int	        Number of decimal places
+            digits	            integer 	Number of decimal places
             expiration	        timestamp	Null if order is not closed
             margin_rate	        float	    Margin rate
-            offset	            int	        Trailing offset
+            offset	            integer 	Trailing offset
             open_price	        float	    Open price in base currency
             open_time	        timestamp	Open time
-            order	            int	        Order number for opened transaction
-            order2	            int	        Transaction id
-            position	        int	        Position number (if type is 0 and 2) or transaction parameter (if type is 1)
+            order	            integer 	Order number for opened transaction
+            order2	            integer 	Transaction id
+            position	        integer 	Position number (if type is 0 and 2) or transaction parameter (if type is 1)
             profit	            float	    null unless the trade is closed (type=2) or opened (type=0)
             sl	                float	    Zero if stop loss is not set (in base currency)
             state	            string	    Trade state, should be used for detecting pending order's cancellation
             storage	            float	    Storage
             symbol	            string	    Symbol
             tp	                float	    Zero if take profit is not set (in base currency)
-            type	            int	        type
+            type	            integer 	type
             volume	            float	    Volume in lots
 
         Possible values of cmd field:
@@ -329,13 +360,20 @@ class Wrapper(HandlerManager):
         """
         Allows to get status for sent trade requests in real-time, as soon as it is available in the system.
 
-        Format of Output:
+        Returns:
+            Tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The DataFrame to store the streamed data.
+                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+                - thread (Thread): Startin the Thread will terminate the stream
+
+        Format of Dataframe:
+            Dictionary with the following fields:
             name	            type	    description
             customComment	    string	    The value the customer may provide in order to retrieve it later.
             message	            string	    Can be null
-            order	            int	        Unique order number
+            order	            integer 	Unique order number
             price	            float	    Price in base currency
-            requestStatus	    int	        Request status code, described below
+            requestStatus	    integer 	Request status code, described below
 
         """
         return self._open_stream_channel(command="TradeStatus")
@@ -367,16 +405,17 @@ class Wrapper(HandlerManager):
         """
         Returns array of all symbols available for the user.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-	                            dictionary	Array of SYMBOL_RECORD 
+	                            dictionary	SYMBOL_RECORD 
 
         Format of SYMBOL_RECORD:
             name	            type	    description
             ask	                float	    Ask price in base currency
             bid	                float	    Bid price in base currency
             categoryName	    string	    Category name
-            contractSize	    int         Size of 1 lot
+            contractSize	    integer        Size of 1 lot
             currency	        string	    Currency
             currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
             currencyProfit	    string	    The currency of calculated profit
@@ -384,41 +423,41 @@ class Wrapper(HandlerManager):
             expiration	        timestamp	Null if not applicable
             groupName	        string	    Symbol group name
             high	            float	    The highest price of the day in base currency
-            initialMargin	    int     	Initial margin for 1 lot order, used for profit/margin calculation
-            instantMaxVolume    int 	    Maximum instant volume multiplied by 100 (in lots)
+            initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
+            instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
             leverage	        float	    Symbol leverage
             longOnly	        boolean	    Long only
             lotMax	            float	    Maximum size of trade
             lotMin	            float	    Minimum size of trade
             lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
             low	                float	    The lowest price of the day in base currency
-            marginHedged	    int 	    Used for profit calculation
+            marginHedged	    integer	    Used for profit calculation
             marginHedgedStrong  boolean	    For margin calculation
-            marginMaintenance   int 	    For margin calculation, null if not applicable
-            marginMode	        int 	    For margin calculation
+            marginMaintenance   integer	    For margin calculation, null if not applicable
+            marginMode	        integer	    For margin calculation
             percentage	        float	    Percentage
-            pipsPrecision	    int 	    Number of symbol's pip decimal places
-            precision	        int 	    Number of symbol's price decimal places
-            profitMode	        int 	    For profit calculation
-            quoteId     	    int 	    Source of price
+            pipsPrecision	    integer	    Number of symbol's pip decimal places
+            precision	        integer	    Number of symbol's price decimal places
+            profitMode	        integer	    For profit calculation
+            quoteId     	    integer	    Source of price
             shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
             spreadRaw	        float	    The difference between raw ask and bid prices
             spreadTable	        float	    Spread representation
             starting	        timestamp	Null if not applicable
-            stepRuleId	        int 	    Appropriate step rule ID from getStepRules  command response
-            stopsLevel	        int 	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
-            swap_rollover3days	int 	    timestamp when additional swap is accounted for weekend
+            stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
+            stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
+            swap_rollover3days	integer	    timestamp when additional swap is accounted for weekend
             swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
             swapLong	        float	    Swap value for long positions in pips
             swapShort	        float	    Swap value for short positions in pips
-            swapType	        int 	    Type of swap calculated
+            swapType	        integer	    Type of swap calculated
             symbol	            string	    Symbol name
             tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
             tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
             time	            timestamp	Ask & bid tick time
             timeString	        string	    Time in String
             trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
-            type	            int 	    Instrument class number
+            type	            integer	    Instrument class number
 
         Possible values of quoteId field:
             name	            value	    description
@@ -445,9 +484,10 @@ class Wrapper(HandlerManager):
         """
         Returns calendar with market events.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-    	                        dictionary	Array of CALENDAR_RECORD 
+    	                        dictionary	CALENDAR_RECORD 
 
         Format of CALENDAR_RECORD:
             name	            type	    description
@@ -480,10 +520,11 @@ class Wrapper(HandlerManager):
             period (str): The period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
             start (datetime, optional): The start time of the chart data. Defaults to None.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-            digits	            int 	    Number of decimal places
-            rateInfos	        dictionary	Array of RATE_INFO_RECORD objects
+            digits	            integer	    Number of decimal places
+            rateInfos	        dictionary	RATE_INFO_RECORD objects
 
         Format of RATE_INFO_RECORD:
             name	            type	    description
@@ -542,10 +583,11 @@ class Wrapper(HandlerManager):
             end (datetime, optional): The end time of the chart data. Defaults to None.
             ticks (int, optional): The number of ticks to retrieve. If set to 0, the start and end times are used. Defaults to 0.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-            digits	            int 	    Number of decimal places
-            rateInfos	        dictionary	Array of RATE_INFO_RECORD objects
+            digits	            integer	    Number of decimal places
+            rateInfos	        dictionary	RATE_INFO_RECORD
 
         Format of RATE_INFO_RECORD:
             name	            type	    description
@@ -650,7 +692,8 @@ class Wrapper(HandlerManager):
             symbol (str): The symbol for which to retrieve the commission definition.
             volume (float): The volume for which to retrieve the commission definition.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description        
             commission	        float	    calculated commission in account currency, could be null if not applicable
             rateOfExchange	    float	    rate of exchange between account currency and instrument base currency, could be null if not applicable
@@ -667,13 +710,14 @@ class Wrapper(HandlerManager):
         """
         Returns information about account currency, and account leverage.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-            companyUnit	        int 	    Unit the account is assigned to.
+            companyUnit	        integer	    Unit the account is assigned to.
             currency	        string	    account currency
             group	            string	    group
             ibAccount	        boolean	    Indicates whether this account is an IB account.
-            leverage	        int 	    This field should not be used. It is inactive and its value is always 1.
+            leverage	        integer	    This field should not be used. It is inactive and its value is always 1.
             leverageMultiplier	float	    The factor used for margin calculations. The actual value of leverage can be calculated by dividing this value by 100.
             spreadType	        string	    spreadType, null if not applicable
             trailingStop	    boolean	    Indicates whether this account is enabled to use trailing stop   
@@ -689,9 +733,10 @@ class Wrapper(HandlerManager):
             start (datetime): The start time of the data range.
             end (datetime): The end time of the data range.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-	                            dictionary  Array of IB_RECORD 
+	                            dictionary  IB_RECORD 
 
         Format of IB_RECORD:
             name	            type	    description
@@ -699,7 +744,7 @@ class Wrapper(HandlerManager):
             login	            string	    IB user login or null if not allowed to view
             nominal	            float	    IB nominal or null if not allowed to view
             openPrice	        float	    IB open price or null if not allowed to view
-            side	            int 	    Operation code or null if not allowed to view
+            side	            integer	    Operation code or null if not allowed to view
             surname	            string	    IB user surname or null if not allowed to view
             symbol	            string	    Symbol or null if not allowed to view
             timestamp	        timestamp	Time the record was created or null if not allowed to view
@@ -724,7 +769,8 @@ class Wrapper(HandlerManager):
         """
         Returns various account indicators.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
             balance	            float	    balance in account currency
             credit	            float	    credit
@@ -746,7 +792,8 @@ class Wrapper(HandlerManager):
             symbol (str): The symbol for which to retrieve margin trade information.
             volume (float): The volume of the trade.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description        
             margin	            float	    calculated margin in account currency
               
@@ -761,18 +808,19 @@ class Wrapper(HandlerManager):
             start (datetime): The start time of the news data range.
             end (datetime): The end time of the news data range.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-	                            dictionary	Array of NEWS_TOPIC_RECORD 
+	                            dictionary	NEWS_TOPIC_RECORD 
 
         Format of NEWS_TOPIC_RECORD:
             name	            type	    description
-            body	            String	    Body
-            bodylen	            Number	    Body length
-            key	                String	    News key
-            time	            Time	    Time
-            timeString	        String	    Time string
-            title	            String	N   ews title
+            body	            string    Body
+            bodylen	            integer	    Body length
+            key	                string    News key
+            time	            timestamp	    Time
+            timeString	        string    Time string
+            title	            stringN   ews title
             
         """
         start_time=start.timestamp()
@@ -807,7 +855,8 @@ class Wrapper(HandlerManager):
                 BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
                 CREDIT	            7	        Read only
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
             profit	            float	    Profit in account currency
 
@@ -828,12 +877,12 @@ class Wrapper(HandlerManager):
         """
         Returns current time on trading server.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-            time	            Time	    Time
-            timeString	        String	    Time described in form set on server (local time of server)
+            time	            timestamp	Time
+            timeString	        string      Time described in form set on server (local time of server)
         
-
         """
         return self._open_data_channel(command="ServerTime")
     
@@ -841,15 +890,16 @@ class Wrapper(HandlerManager):
         """
         Returns a list of step rules for DMAs.
 
-        Format of Output:
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-        	                    dictionary	Array of STEP_RULE_RECORD
+        	                    dictionary	STEP_RULE_RECORD
 
         Format of STEP_RULE_RECORD:
             name	            type	    description
-            id	                Number	    Step rule ID
-            name	            String	    Step rule name
-            steps	            dictionary	Array of STEP_RECORD
+            id	                integer	    Step rule ID
+            name	            string      Step rule name
+            steps	            dictionary	STEP_RECORD
 
         Format of STEP_RECORD:
             name	            type	    description
@@ -860,9 +910,118 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="StepRules")
 
     def getSymbol(self, symbol: str):
-        return self._open_data_channel(command="Symbol")
+        """
+        Returns information about symbol available for the user.
+
+        Args:
+            symbol (str): The symbol to retrieve information for.
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            ask	                float	    Ask price in base currency
+            bid	                float	    Bid price in base currency
+            categoryName	    string	    Category name
+            contractSize	    integer        Size of 1 lot
+            currency	        string	    Currency
+            currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
+            currencyProfit	    string	    The currency of calculated profit
+            description	        string	    Description
+            expiration	        timestamp	Null if not applicable
+            groupName	        string	    Symbol group name
+            high	            float	    The highest price of the day in base currency
+            initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
+            instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
+            leverage	        float	    Symbol leverage
+            longOnly	        boolean	    Long only
+            lotMax	            float	    Maximum size of trade
+            lotMin	            float	    Minimum size of trade
+            lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
+            low	                float	    The lowest price of the day in base currency
+            marginHedged	    integer	    Used for profit calculation
+            marginHedgedStrong  boolean	    For margin calculation
+            marginMaintenance   integer	    For margin calculation, null if not applicable
+            marginMode	        integer	    For margin calculation
+            percentage	        float	    Percentage
+            pipsPrecision	    integer	    Number of symbol's pip decimal places
+            precision	        integer	    Number of symbol's price decimal places
+            profitMode	        integer	    For profit calculation
+            quoteId     	    integer	    Source of price
+            shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
+            spreadRaw	        float	    The difference between raw ask and bid prices
+            spreadTable	        float	    Spread representation
+            starting	        timestamp	Null if not applicable
+            stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
+            stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
+            swap_rollover3days	integer	    timestamp when additional swap is accounted for weekend
+            swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
+            swapLong	        float	    Swap value for long positions in pips
+            swapShort	        float	    Swap value for short positions in pips
+            swapType	        integer	    Type of swap calculated
+            symbol	            string	    Symbol name
+            tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
+            tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
+            time	            timestamp	Ask & bid tick time
+            timeString	        string	    Time in String
+            trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
+            type	            integer	    Instrument class number
+
+        Possible values of quoteId field:
+            name	            value	    description
+            fixed	            1	        fixed
+            float	            2	        float
+            depth	            3	        depth
+            cross	            4	        cross
+
+        Possible values of marginMode field:
+            name	            value	    description
+            Forex	            101	        Forex
+            CFD leveraged	    102	        CFD leveraged
+            CFD	                103	        CFD
+
+        Possible values of profitMode field:
+            name	            value	    description
+            FOREX	            5	        FOREX
+            CFD	                6	        CFD
+
+        """
+        return self._open_data_channel(command="Symbol", symbol=symbol)
     
     def getTickPrices(self, symbols: list, time: datetime, level: int=-1):
+        """
+        Retrieves tick prices for the specified symbols at the given time.
+
+        Args:
+            symbols (list): A list of symbols for which tick prices are to be retrieved.
+            time (datetime): The timestamp at which tick prices are to be retrieved.
+            level (int, optional): The level of tick prices to retrieve. Defaults to -1.
+
+        Possible values of level field:
+            name	            type	    description
+                                -1	        all available levels
+                                 0	        base level bid and ask price for instrument
+                                >0	        specified level      
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            quotations  	    dictionary	TICK_RECORD 
+
+        Format of TICK_RECORD:
+            name	            type	    description
+            ask	                float	    Ask price in base currency
+            askVolume	        int	        Number of available lots to buy at given price or null if not applicable
+            bid	                float	    Bid price in base currency
+            bidVolume	        int	        Number of available lots to buy at given price or null if not applicable
+            high	            float	    The highest price of the day in base currency
+            level	            int	        Price level
+            low	                float	    The lowest price of the day in base currency
+            spreadRaw	        float	    The difference between raw ask and bid prices
+            spreadTable	        float	    Spread representation
+            symbol	            string	    Symbol
+            timestamp	        timestamp	Timestamp
+            
+        """
         levels = [-1, 0]
 
         if level not in levels or level > 0:
@@ -873,12 +1032,64 @@ class Wrapper(HandlerManager):
             self._logger.error("Invalid symbols. All symbols must be strings.")
             return False
         
-        timestamp=time.timestamp()
+        timestamp = time.timestamp()
 
-        return self._open_data_channel(command="TickPrices", symbols=symbols, timestamp=timestamp)
+        return self._open_data_channel(command="TickPrices", level=level, symbols=symbols, timestamp=timestamp)
     
     def getTradeRecords(self, orders: list):
+        """
+        Returns array of trades listed in orders argument.
 
+        Args:
+            orders (list): A list of order IDs.
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+	                            dictionary	TRADE_RECORD
+        
+        Format of TRADE_RECORD:
+            name	            type	    description
+            close_price	        float       Close price in base currency
+            close_time	        timestamp	Null if order is not closed
+            close_timeString	string      Null if order is not closed
+            closed	            boolean	    Closed
+            cmd	                integer	    Operation code
+            comment	            string      Comment
+            commission	        float       Commission in account currency, null if not applicable
+            customComment	    string      The value the customer may provide in order to retrieve it later.
+            digits	            integer	    Number of decimal places
+            expiration	        timestamp	Null if order is not closed
+            expirationString	string      Null if order is not closed
+            margin_rate     	float       Margin rate
+            offset	            integer	    Trailing offset
+            open_price	        float       Open price in base currency
+            open_time	        timestamp	Open time
+            open_timeString	    string      Open time string
+            order	            integer	    Order number for opened transaction
+            order2	            integer	    Order number for closed transaction
+            position	        integer	    Order number common both for opened and closed transaction
+            profit	            float       Profit in account currency
+            sl	                float       Zero if stop loss is not set (in base currency)
+            storage	            float       Order swaps in account currency
+            symbol	            string      Symbol name or null for deposit/withdrawal operations
+            timestamp	        timestamp	Timestamp
+            tp	                float       Zero if take profit is not set (in base currency)
+            volume	            float       Volume in lots
+
+        Possible values of cmd field:
+            name	            value	    description
+            BUY	                0	        buy
+            SELL	            1	        sell
+            BUY_LIMIT	        2	        buy limit
+            SELL_LIMIT	        3	        sell limit
+            BUY_STOP	        4	        buy stop
+            SELL_STOP	        5	        sell stop
+            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	        Read only
+
+            
+        """
         if all(isinstance(item, int) for item in orders):
             self._logger.error("Invalid order. All orders must be integers.")
             return False
@@ -886,21 +1097,160 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="TradeRecords", orders=orders)
     
     def getTrades(self, openedOnly: bool):
+        """
+        Returns array of user's trades.
+
+        Parameters:
+        - openedOnly (bool): If True, only retrieves opened trades. If False, retrieves all trades.
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+                                dictionary	TRADE_RECORD
+
+        Format of TRADE_RECORD:
+            name	            type	    description
+            close_price	        float       Close price in base currency
+            close_time	        timestamp	Null if order is not closed
+            close_timeString	string      Null if order is not closed
+            closed	            boolean	    Closed
+            cmd	                integer	    Operation code
+            comment	            string      Comment
+            commission	        float       Commission in account currency, null if not applicable
+            customComment	    string      The value the customer may provide in order to retrieve it later.
+            digits	            integer	    Number of decimal places
+            expiration	        timestamp	Null if order is not closed
+            expirationString	string      Null if order is not closed
+            margin_rate     	float       Margin rate
+            offset	            integer	    Trailing offset
+            open_price	        float       Open price in base currency
+            open_time	        timestamp	Open time
+            open_timeString	    string      Open time string
+            order	            integer	    Order number for opened transaction
+            order2	            integer	    Order number for closed transaction
+            position	        integer	    Order number common both for opened and closed transaction
+            profit	            float       Profit in account currency
+            sl	                float       Zero if stop loss is not set (in base currency)
+            storage	            float       Order swaps in account currency
+            symbol	            string      Symbol name or null for deposit/withdrawal operations
+            timestamp	        timestamp	Timestamp
+            tp	                float       Zero if take profit is not set (in base currency)
+            volume	            float       Volume in lots
+
+        Possible values of cmd field:
+            name	            value	    description
+            BUY	                0	        buy
+            SELL	            1	        sell
+            BUY_LIMIT	        2	        buy limit
+            SELL_LIMIT	        3	        sell limit
+            BUY_STOP	        4	        buy stop
+            SELL_STOP	        5	        sell stop
+            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	        Read only
+
+        """
         return self._open_data_channel(command="Trades", openedOnly=openedOnly)
     
     def getTradeHistory(self, start: datetime, end: datetime):
-        if end == 0:
-            end = datetime.datetime.now()
+        """
+        Returns array of user's trades which were closed within specified period of time.
 
-        if start == 0:
-            start = end - relativedelta(months=1)
+        Args:
+            start (datetime): The start timestamp.
+            end (datetime): The end timestamp.
 
-        start_time=start.timestamp()
-        end_time=end.timestamp()
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+                                dictionary	TRADE_RECORD
+
+        Format of TRADE_RECORD:
+            name	            type	    description
+            close_price	        float       Close price in base currency
+            close_time	        timestamp	Null if order is not closed
+            close_timeString	string      Null if order is not closed
+            closed	            boolean	    Closed
+            cmd	                integer	    Operation code
+            comment	            string      Comment
+            commission	        float       Commission in account currency, null if not applicable
+            customComment	    string      The value the customer may provide in order to retrieve it later.
+            digits	            integer	    Number of decimal places
+            expiration	        timestamp	Null if order is not closed
+            expirationString	string      Null if order is not closed
+            margin_rate     	float       Margin rate
+            offset	            integer	    Trailing offset
+            open_price	        float       Open price in base currency
+            open_time	        timestamp	Open time
+            open_timeString	    string      Open time string
+            order	            integer	    Order number for opened transaction
+            order2	            integer	    Order number for closed transaction
+            position	        integer	    Order number common both for opened and closed transaction
+            profit	            float       Profit in account currency
+            sl	                float       Zero if stop loss is not set (in base currency)
+            storage	            float       Order swaps in account currency
+            symbol	            string      Symbol name or null for deposit/withdrawal operations
+            timestamp	        timestamp	Timestamp
+            tp	                float       Zero if take profit is not set (in base currency)
+            volume	            float       Volume in lots
+
+        Possible values of cmd field:
+            name	            value	    description
+            BUY	                0	        buy
+            SELL	            1	        sell
+            BUY_LIMIT	        2	        buy limit
+            SELL_LIMIT	        3	        sell limit
+            BUY_STOP	        4	        buy stop
+            SELL_STOP	        5	        sell stop
+            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	        Read only
+
+        """
+        start_time = start.timestamp()
+        end_time = end.timestamp()
+
+        if start_time > end_time:
+            self._logger.error("Start time is greater than end time.")
+            return False
 
         return self._open_data_channel(command="TradeHistory", start=start_time, end=end_time)
-    
+
     def getTradingHours(self, symbols: list):
+        """
+        Returns quotes and trading times.
+
+        Args:
+            symbols (list): A list of symbols for which to retrieve trading hours.
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            quotes	            dictionary	QUOTES_RECORD 
+            symbol	            string      Symbol
+            trading	            dictionary	TRADING_RECORD 
+
+        Format of QUOTES_RECORD:
+            name	            type	    description
+            day	                integer	    Day of week
+            fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+            toT	                timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+
+        Format of TRADING_RECORD:
+            name	            type	    description
+            day	                integer	    Day of week
+            fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+            toT             	timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+
+        Possible values of day field:
+            name	            type	    description
+                                1	        Monday
+                                2	        Tuesday
+                                3	        Wednesday
+                                4	        Thursday
+                                5	        Friday
+                                6	        Saturday
+                                7	        Sunday
+            
+        """
         if all(isinstance(item, str) for item in symbols):
             self._logger.error("Invalid symbols. All symbols must be strings.")
             return False
@@ -908,6 +1258,15 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command="TradingHours", symbols=symbols)
 
     def getVersion(self):
+        """
+        Returns the current API version.
+
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            version	            string	    API versionversion	String	current API version      
+
+        """
         return self._open_data_channel(command="Version")
     
     def tradeTransaction(self, cmd: int, symbol: str, volume: float, openPrice: float, sl: float, tp: float, comment: str):
