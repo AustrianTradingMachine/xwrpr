@@ -801,6 +801,11 @@ class _StreamHandler(_GeneralHandler):
         if not self._dh._ssid:
             self._logger.error("Got no StreamSessionId from Server")
             return False
+
+        for index in self._stream_tasks:
+            if self._stream_tasks[index]['command'] == command and self._stream_tasks[index]['kwargs'] == kwargs:
+                self._logger.warning("Stream for data already open")
+                return False
         
         for _ in range(3):
             response = self._start_stream(command, **kwargs)
