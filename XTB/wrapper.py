@@ -848,16 +848,16 @@ class Wrapper(HandlerManager):
             closePrice (float): The closing price of the trade.
             cmd (int): The command type of the trade.
 
-            Possible values of cmd field:
-                name	            type	    description
-                BUY	                0	        buy
-                SELL	            1	        sell
-                BUY_LIMIT	        2	        buy limit
-                SELL_LIMIT	        3	        sell limit
-                BUY_STOP	        4	        buy stop
-                SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-                CREDIT	            7	        Read only
+        Possible values of cmd field:
+            name	            type	    description
+            BUY	                0	        buy
+            SELL	            1	        sell
+            BUY_LIMIT	        2	        buy limit
+            SELL_LIMIT	        3	        sell limit
+            BUY_STOP	        4	        buy stop
+            SELL_STOP	        5	        sell stop
+            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	        Read only
 
         Returns:
             Dictionary: A Dictionary containing the following fields:
