@@ -792,19 +792,7 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("StreamHandler deleted")
         return True
         
-    def streamData(self, command: str, df: pd.DataFrame=None, lock: Lock=None,**kwargs):
-        """
-        Starts streaming data from the server.
-
-        Args:
-            command (str): The command to start streaming.
-            df (pd.DataFrame, optional): The DataFrame to store the streamed data. Defaults to None.
-            lock (Lock, optional): The lock object to synchronize access to the DataFrame. Defaults to None.
-            **kwargs: Additional keyword arguments for the streaming command.
-
-        Returns:
-            bool or Thread: If the command is 'KeepAlive', returns True. Otherwise, returns a Thread object that can be used to stop the streaming task.
-        """
+    def streamData(self, command: str, exchange: dict=None,**kwargs):
         if not self._dh._ssid:
             self._logger.error("Got no StreamSessionId from Server")
             return False
@@ -840,16 +828,13 @@ class _StreamHandler(_GeneralHandler):
             return True
 
         self._stream_tasks[index]['run'] = True
-        self._stream_tasks[index]['df'] = df
-        self._stream_tasks[index]['lock'] = lock
         self._stream_tasks[index]['queue'] = Queue()
-        self._stream_tasks[index]['thread'] = CustomThread(target=self._exchange_stream, args=(index, df, lock,), daemon=True)
-        self._stream_tasks[index]['stop'] = CustomThread(target=self._stop_task, args=(index,), daemon=True)
+        self._stream_tasks[index]['thread'] = CustomThread(target=self._exchange_stream, args=(exchange,), daemon=True)
         self._stream_tasks[index]['thread'].start()
 
         self._logger.info("Stream started for " + pretty(command))
 
-        return self._stream_tasks[index]['stop']
+        exchange['thread'] = CustomThread(target=self._stop_task, args=(index,), daemon=True)
 
     def _start_stream(self, command: str, **kwargs):
         """
@@ -928,18 +913,7 @@ class _StreamHandler(_GeneralHandler):
 
         self._logger.info("All streams stopped")
 
-    def _exchange_stream(self, index: int, df: pd.DataFrame, lock: Lock):
-        """
-        Continuously streams data from a queue and appends it to a DataFrame.
-
-        Args:
-            index (int): The index of the stream task.
-            df (pd.DataFrame): The DataFrame to append the streamed data to.
-            lock (Lock): The lock object used for thread synchronization.
-
-        Returns:
-            None
-        """
+    def _exchange_stream(self, index=index, exchange=exchange):
         buffer_df = pd.DataFrame()
         
         while self._stream_tasks[index]['run']:
@@ -957,15 +931,15 @@ class _StreamHandler(_GeneralHandler):
 
             self._stream_tasks[index]['queue'].task_done()
 
-            if lock.acquire(blocking=False):
+            if exchange['lock'].acquire(blocking=False):
                 # Append the buffer DataFrame to the exchange DataFrame
-                df = pd.concat([df, buffer_df], ignore_index=True)
+                exchange['df']  = pd.concat([exchange['df'], buffer_df], ignore_index=True)
                 buffer_df = pd.DataFrame(columns=buffer_df.columns)
 
                 # Limit the DataFrame to the last 1000 rows
-                if len(df) > 1000:
-                    df = df.iloc[-1000:]
-                    df = df.reset_index(drop=True)
+                if len(exchange['df']) > 1000:
+                    exchange['df'] = exchange['df'].iloc[-1000:]
+                    exchange['df'] = exchange['df'].reset_index(drop=True)
                     
                 lock.release()
 
