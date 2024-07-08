@@ -966,7 +966,7 @@ class _StreamHandler(_GeneralHandler):
                 if len(df) > 1000:
                     df = df.iloc[-1000:]
                     df = df.reset_index(drop=True)
-
+                    
                 lock.release()
 
         self._logger.info("Stream stopped for " + pretty(self._stream_tasks[index]['command']))

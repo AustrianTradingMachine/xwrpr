@@ -41,7 +41,7 @@ print(th)
 # Streaming data an reading the df
 control=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
-later = datetime.now() + timedelta(seconds=60*5)
+later = datetime.now() + timedelta(seconds=60*1)
 while datetime.now() < later:
     control['lock'].acquire(blocking=True)
     if not control['df'].empty:
