@@ -829,7 +829,7 @@ class _StreamHandler(_GeneralHandler):
 
         self._stream_tasks[index]['run'] = True
         self._stream_tasks[index]['queue'] = Queue()
-        self._stream_tasks[index]['thread'] = CustomThread(target=self._exchange_stream, args=(exchange,), daemon=True)
+        self._stream_tasks[index]['thread'] = CustomThread(target=self._exchange_stream, args=(index, exchange,), daemon=True)
         self._stream_tasks[index]['thread'].start()
 
         self._logger.info("Stream started for " + pretty(command))
