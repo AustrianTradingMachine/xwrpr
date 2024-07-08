@@ -140,7 +140,7 @@ class Wrapper(HandlerManager):
         Allows to get actual account indicators values in real-time, as soon as they are available in the system.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -165,7 +165,7 @@ class Wrapper(HandlerManager):
         symbol (str): The symbol for which to retrieve the candles.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -197,7 +197,7 @@ class Wrapper(HandlerManager):
         Subscribes for and unsubscribes from news.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -217,7 +217,7 @@ class Wrapper(HandlerManager):
         Subscribes for and unsubscribes from profits.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -242,7 +242,7 @@ class Wrapper(HandlerManager):
             maxLevel (int, optional): The maximum level of tick prices to retrieve. Defaults to 1.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -290,7 +290,7 @@ class Wrapper(HandlerManager):
             - Explicit trade update done by server system to synchronize data.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -362,7 +362,7 @@ class Wrapper(HandlerManager):
         Allows to get status for sent trade requests in real-time, as soon as it is available in the system.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
