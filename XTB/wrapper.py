@@ -150,8 +150,8 @@ class Wrapper(HandlerManager):
             credit	            float	    credit in account currency
             equity	            float	    sum of balance and all profits in account currency
             margin	            float	    margin requirements
-            marginFree	            float	    free margin
-            marginLevel	            float	    margin level percentage
+            marginFree	        float	    free margin
+            marginLevel	        float	    margin level percentage
 
         """
         return self._open_stream_channel(command="Balance")
@@ -172,21 +172,21 @@ class Wrapper(HandlerManager):
         Format of Dataframe: 
             name	            type	    description
             close	            float	    Close price in base currency
-            ctm	                    timestamp	    Candle  start time in CET time zone (Central European Time)
-            ctmString	            string	    String representation of the ctm field
+            ctm	                timestamp	Candle  start time in CET time zone (Central European Time)
+            ctmString	        string	    String representation of the ctm field
             high	            float	    Highest value in the given period in base currency
-            low	                    float	    Lowest  value in the given period in base currency
+            low	                float	    Lowest  value in the given period in base currency
             open	            float	    Open price in base currency
-            quoteId	            integer         Source of price
+            quoteId	            integer     Source of price
             symbol	            string	    Symbol
-            vol	                    float	    Volume in lots
+            vol	                float	    Volume in lots
 
         Possible values of quoteId field:
             name	            value	    description
-            fixed	            1	            fixed
-            float	            2	            float
-            depth	            3	            depth
-            cross	            4	            cross
+            fixed	            1	        fixed
+            float	            2	        float
+            depth	            3	        depth
+            cross	            4	        cross
 
         """
         return self._open_stream_channel(command="Candles", symbol=symbol)
@@ -204,8 +204,8 @@ class Wrapper(HandlerManager):
         Format of Dataframe: 
             name	            type	    description
             body	            string	    Body
-            key	                    string	    News key
-            time	            timestamp	    Time
+            key	                string	    News key
+            time	            timestamp   Time
             title	            string	    News title
 
         """
@@ -223,9 +223,9 @@ class Wrapper(HandlerManager):
 
         Format of Dataframe: 
             name	            type	    description
-            order	            integer 	    Order number
-            order2	            integer 	    Transaction ID
-            position	            integer         Position number
+            order	            integer 	Order number
+            order2	            integer     Transaction ID
+            position	        integer     Position number
             profit	            float	    Profit in account currency
 
         """
@@ -248,25 +248,25 @@ class Wrapper(HandlerManager):
 
         Format of Dataframe:
             name	            type	    description
-            ask	                    float	    Ask price in base currency
-            askVolume	            integer 	    Number of available lots to buy at given price or null if not applicable
-            bid	                    float	    Bid price in base currency
-            bidVolume	            integer 	    Number of available lots to buy at given price or null if not applicable
+            ask	                float	    Ask price in base currency
+            askVolume	        integer     Number of available lots to buy at given price or null if not applicable
+            bid	                float	    Bid price in base currency
+            bidVolume	        integer 	Number of available lots to buy at given price or null if not applicable
             high	            float	    The highest price of the day in base currency
-            level	            integer 	    Price level
-            low	                    float	    The lowest price of the day in base currency
-            quoteId	            integer         Source of price, detailed description below
-            spreadRaw	            float	    The difference between raw ask and bid prices
-            spreadTable	            float	    Spread representation
+            level	            integer 	Price level
+            low	                float	    The lowest price of the day in base currency
+            quoteId	            integer     Source of price, detailed description below
+            spreadRaw	        float	    The difference between raw ask and bid prices
+            spreadTable	        float	    Spread representation
             symbol	            string	    Symbol
-            timestamp	            timestamp       Timestamp
+            timestamp	        timestamp   Timestamp
 
         Possible values of quoteId field:
             name	            value	    description
-            fixed	            1	            fixed
-            float	            2	            float
-            depth	            3	            depth
-            cross	            4	            cross
+            fixed	            1	        fixed
+            float	            2	        float
+            depth	            3	        depth
+            cross	            4	        cross
 
         """
         if minArrivalTime < SEND_INTERVAL:
@@ -297,41 +297,41 @@ class Wrapper(HandlerManager):
         Format of Dataframe:
             Dictionary with the following fields:
             name	            type	    description
-            close_price	            float	    Close price in base currency
-            close_time	            timestamp	    Null if order is not closed
+            close_price	        float	    Close price in base currency
+            close_time	        timestamp   Null if order is not closed
             closed	            boolean	    Closed
-            cmd	                    integer 	    Operation code
+            cmd	                integer     Operation code
             comment	            string	    Comment
-            commission	            float	    Commission in account currency, null if not applicable
+            commission	        float	    Commission in account currency, null if not applicable
             customComment	    string	    The value the customer may provide in order to retrieve it later.
-            digits	            integer 	    Number of decimal places
-            expiration	            timestamp	    Null if order is not closed
-            margin_rate	            float	    Margin rate
-            offset	            integer 	    Trailing offset
-            open_price	            float	    Open price in base currency
-            open_time	            timestamp	    Open time
-            order	            integer 	    Order number for opened transaction
-            order2	            integer 	    Transaction id
-            position	            integer 	    Position number (if type is 0 and 2) or transaction parameter (if type is 1)
+            digits	            integer     Number of decimal places
+            expiration	        timestamp	Null if order is not closed
+            margin_rate	        float	    Margin rate
+            offset	            integer     Trailing offset
+            open_price	        float	    Open price in base currency
+            open_time	        timestamp	Open time
+            order	            integer 	Order number for opened transaction
+            order2	            integer     Transaction id
+            position	        integer     Position number (if type is 0 and 2) or transaction parameter (if type is 1)
             profit	            float	    null unless the trade is closed (type=2) or opened (type=0)
-            sl	                    float	    Zero if stop loss is not set (in base currency)
+            sl	                float	    Zero if stop loss is not set (in base currency)
             state	            string	    Trade state, should be used for detecting pending order's cancellation
             storage	            float	    Storage
             symbol	            string	    Symbol
-            tp	                    float	    Zero if take profit is not set (in base currency)
-            type	            integer 	    type
+            tp	                float	    Zero if take profit is not set (in base currency)
+            type	            integer     type
             volume	            float	    Volume in lots
 
         Possible values of cmd field:
             name	            value	    description
-            BUY	                    0	            buy
-            SELL	            1	            sell
-            BUY_LIMIT	            2	            buy limit
-            SELL_LIMIT	            3	            sell limit
-            BUY_STOP	            4	            buy stop
-            SELL_STOP	            5	            sell stop
-            BALANCE	            6	            Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-            CREDIT	            7	            Read only
+            BUY	                0	        buy
+            SELL	            1	        sell
+            BUY_LIMIT	        2	        buy limit
+            SELL_LIMIT	        3	        sell limit
+            BUY_STOP	        4	        buy stop
+            SELL_STOP	        5	        sell stop
+            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	        Read only
 
         Possible values of comment field:
             - "[S/L]", then the trade was closed by stop loss
@@ -341,8 +341,8 @@ class Wrapper(HandlerManager):
 
         Possible values of state field:
             name	            value	    description
-            MODIFIED	            "Modified"      modified
-            DELETED	            "Deleted"       deleted
+            MODIFIED	        "Modified"  modified
+            DELETED	            "Deleted"   deleted
 
         Possible values of type field:
             name	            value	    description
