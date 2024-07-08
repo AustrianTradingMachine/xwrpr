@@ -39,18 +39,18 @@ th=XTBData.getTradingHours(symbols=['EURUSD'])
 print(th)
 
 # Streaming data an reading the df
-control=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
+exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
 later = datetime.now() + timedelta(seconds=60*1)
 while datetime.now() < later:
-    control['lock'].acquire(blocking=True)
-    if not control['df'].empty:
-        print(control['df'])
-        control['df'] = control['df'].iloc[0:0]
-    control['lock'].release()
+    exchange['lock'].acquire(blocking=True)
+    if not exchange['df'].empty:
+        print(exchange['df'])
+        exchange['df'] = exchange['df'].iloc[0:0]
+    exchange['lock'].release()
     time.sleep(1)
 
-control['thread'].join()
+exchange['thread'].join()
 
 
 XTBData.delete()
