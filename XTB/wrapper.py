@@ -116,7 +116,7 @@ class Wrapper(HandlerManager):
             **kwargs: Additional keyword arguments to be passed to the `streamData` method.
 
         Returns:
-            Tuple: A tuple containing the following elements:
+            A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
                 - thread (Thread): Startin the Thread will terminate the stream
@@ -130,10 +130,8 @@ class Wrapper(HandlerManager):
         df = pd.DataFrame()
         lock = Lock()
 
-        control = dict()
-        control['df'] = df
-        control['lock'] = lock
-        control['thread'] = sh.streamData(df=control['df'], lock=control['lock'], **kwargs)
+        exchange = {'df': df, 'lock': lock}
+        sh.streamData(exchange=exchange, **kwargs)
 
         return control
     
