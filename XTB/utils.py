@@ -3,6 +3,8 @@ import os
 import threading
 import re
 import datetime
+import pytz
+import tzlocal
 from dateutil.relativedelta import relativedelta
 
 
@@ -196,3 +198,49 @@ def calculate_timedelta(start: datetime, end: datetime, period: str='minutes'):
         return rd.years * 12 + rd.months
     else:
         raise ValueError("Unsupported unit. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
+    
+def datetime_to_unixtime(dt: datetime):
+    """
+    Convert a datetime object into a Unix timestamp.
+    which represents the number of milliseconds since 01.01.1970, 00:00 GMT
+
+    Practical Equivalence: For most practical purposes, GMT and UTC are nearly
+    equivalent in modern usage. However, technically, UTC is more precise due
+    to its incorporation of leap seconds, whereas GMT does not adjust for these.
+
+    Naming: Despite the differences in their technical definitions, in everyday
+    usage and conversation, the terms "GMT" and "UTC" are often used interchangeably.
+
+    Args:
+        dt (datetime): The datetime object to convert.
+
+    Returns:
+        float: The timestamp in milliseconds.
+    """
+    epoch = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
+
+    delta = local_to_utc(dt) - epoch
+
+    # Convert seconds to milliseconds
+    return delta.total_seconds() * 1000
+
+def local_to_utc(dt_local):
+    """
+    Converts a datetime object from the local timezone to a UTC datetime object.
+
+    Args:
+        dt_local (datetime): A datetime object in the local timezone.
+
+    Returns:
+        datetime: A datetime object in UTC.
+    """
+    # Get the local timezone
+    local_timezone = tzlocal.get_localzone()
+
+    # Make the datetime object timezone-aware
+    dt_local = dt_local.replace(tzinfo=local_timezone)
+
+    # Convert to UTC
+    dt_utc = dt_local.astimezone(pytz.utc)
+
+    return dt_utc

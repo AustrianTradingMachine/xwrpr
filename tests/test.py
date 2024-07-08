@@ -1,47 +1,56 @@
 from config import XTB, generate_logger
 import time
+from datetime import datetime, timedelta
 
 DEMO=False
-logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTB/Logger')
+#DEMO=True
 
-#print(XTB.WRAPPER_VERSION)
-#print(XTB.API_VERSION)
+# just example how to generate alogger. Feel free to use your own logger
+logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTBpy/Logger')
+#logger=generate_logger(name="TEST",path='~/XTBpy/Logger')
+
+print(XTB.__version__)
+print(XTB.API_VERSION)
 
 
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-if False:
-    alls=XTBData.getAllSymbols()
-
-    for record in alls:
-        logger.info(record['symbol']+" "+record['categoryName']+" "+record['description'])
-
+# getting API version
 version=XTBData.getVersion()
 
-print(version)
+if version['version'] != XTB.API_VERSION:
+    print("API version is different")
 
-#th=XTBData.getTradingHours(symbols=['ETHEREUM'])
+# gettinbg all symbols
+#alls=XTBData.getAllSymbols()
 
-#print(th)
+#for record in alls:
+#    print(record['symbol']+" "+record['categoryName']+" "+record['description'])
 
-XTBData.getCandles(symbol='ETHEREUM')
+# getting chart history
+chart=XTBData.getChartRangeRequest(period='M15', symbol='EURUSD', end=datetime.now(), start=datetime.now() - timedelta(days=30))
 
-XTBData.getBalance()
+for candle in chart['rateInfos']:
+    print("open " + str(candle['open']) + " high " + str(candle['high']) + " low " + str(candle['low']) + " close " + str(candle['close']) + " volume " + str(candle['vol']) + " time " + candle['ctmString'])
 
-XTBData.getNews()
+# getting the Trading Hours
+th=XTBData.getTradingHours(symbols=['EURUSD'])
 
-#XTBData.getTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
+print(th)
 
-#XTBData.getTrades()
+# Streaming data an reading the df
+control=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
-#TBData.getTickerPrices(symbol='EURJPY')
-#XTBData.getTickerPrices(symbol='EURUSD')
+later = datetime.now() + timedelta(seconds=60*5)
+while datetime.now() < later:
+    control['lock'].acquire(blocking=True)
+    if not control['df'].empty:
+        print(control['df'])
+        control['df'] = control['df'].iloc[0:0]
+    control['lock'].release()
+    time.sleep(1)
 
-#XTBData.getProfits()
+control['thread'].join()
 
-
-
-time.sleep(60*12)
 
 XTBData.delete()
-

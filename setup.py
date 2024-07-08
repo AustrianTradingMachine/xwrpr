@@ -5,14 +5,15 @@ with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 setup(
-    name="XTB",
-    version="1.0.0",
+    name="XTBpy",
+    version="0.1.0",
+    api_version="2.5.0",
     author="Philipp Craighero",
     author_email="",
     description="A wrapper for the XTB API",
     long_description=long_description,
-    url="https://github.com/AustrianTradingMachine/XTB",
-    download_url='https://github.com/AustrianTradingMachine/XTB.git',
+    keywords=['XTB','API''trading','finance','development'],
+    url='https://github.com/AustrianTradingMachine/XTBpy',
     packages=find_packages(),
     license="The MIT License (MIT)",
     classifiers=[
@@ -27,10 +28,13 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Information Analysis",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.9',
     install_requires=[
-        'pytz',
         'pandas',
     ],
-    test_suite='tests',
+    tests_require=[
+        'pytest',
+        'pytz',
+        'tzlocal',
+    ],
 )

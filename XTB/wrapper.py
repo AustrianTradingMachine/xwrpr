@@ -3,10 +3,10 @@ import os
 import pandas as pd
 from threading import Lock
 import configparser
-import datetime
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from XTB.handler import HandlerManager
-from XTB.utils import generate_logger, calculate_timedelta
+from XTB.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
 
 
 # read api configuration
@@ -30,13 +30,13 @@ class Wrapper(HandlerManager):
         __del__(self): Destructor method that calls the delete() method.
         delete(self): Deletes the wrapper instance.
         _open_stream_channel(self, **kwargs): Opens a stream channel for data streaming.
-        getBalance(self): Retrieves the balance data.
-        getCandles(self, symbol: str): Retrieves the candle data for a specific symbol.
-        getNews(self): Retrieves the news data.
-        getProfits(self): Retrieves the profits data.
-        getTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1): Retrieves the tick prices data.
-        getTrades(self): Retrieves the trades data.
-        getTradeStatus(self): Retrieves the trade status data.
+        streamBalance(self): Retrieves the balance data.
+        streamCandles(self, symbol: str): Retrieves the candle data for a specific symbol.
+        streamNews(self): Retrieves the news data.
+        streamProfits(self): Retrieves the profits data.
+        streamTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1): Retrieves the tick prices data.
+        streamTrades(self): Retrieves the trades data.
+        streamradeStatus(self): Retrieves the trade status data.
         _open_data_channel(self, **kwargs): Opens a data channel for data retrieval.
         getAllSymbols(self): Retrieves all symbols data.
         getCalendar(self): Retrieves the calendar data.
@@ -130,11 +130,14 @@ class Wrapper(HandlerManager):
         df = pd.DataFrame()
         lock = Lock()
 
-        thread = sh.streamData(df=df, lock=lock, **kwargs)
+        control = dict()
+        control['df'] = df
+        control['lock'] = lock
+        control['thread'] = sh.streamData(df=control['df'], lock=control['lock'], **kwargs)
 
-        return df, lock, thread
+        return control
     
-    def getBalance(self):
+    def streamBalance(self):
         """
         Allows to get actual account indicators values in real-time, as soon as they are available in the system.
 
@@ -156,7 +159,7 @@ class Wrapper(HandlerManager):
         """
         return self._open_stream_channel(command="Balance")
 
-    def getCandles(self, symbol: str):
+    def streamCandles(self, symbol: str):
         """
         Subscribes for and unsubscribes from API chart candles. The interval of every candle is 1 minute. A new candle arrives every minute
 
@@ -191,7 +194,7 @@ class Wrapper(HandlerManager):
         """
         return self._open_stream_channel(command="Candles", symbol=symbol)
     
-    def getNews(self):
+    def streamNews(self):
         """
         Subscribes for and unsubscribes from news.
 
@@ -211,7 +214,7 @@ class Wrapper(HandlerManager):
         """
         return self._open_stream_channel(command="News")
 
-    def getProfits(self):
+    def streamProfits(self):
         """
         Subscribes for and unsubscribes from profits.
 
@@ -231,7 +234,7 @@ class Wrapper(HandlerManager):
         """
         return self._open_stream_channel(command="Profits")
 
-    def getTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
+    def streamTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
         """
         Establishes subscription for quotations and allows to obtain the relevant information in real-time, as soon as it is available in the system.
 
@@ -279,7 +282,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
 
-    def getTrades(self):
+    def streamTrades(self):
         """
         Establishes subscription for user trade status data and allows to obtain the relevant information in real-time, as soon as it is available in the system.
         New  are sent by streaming socket only in several cases:
@@ -356,7 +359,7 @@ class Wrapper(HandlerManager):
         """
         return self._open_stream_channel(command="Trades")
     
-    def getTradeStatus(self):
+    def streamTradeStatus(self):
         """
         Allows to get status for sent trade requests in real-time, as soon as it is available in the system.
 
@@ -537,40 +540,38 @@ class Wrapper(HandlerManager):
             vol	                float	    Volume in lots
 
         """
-        periods=[
-            "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"
-        ]
+        periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
 
         if period not in periods:
             self._logger("Invalid period. Choose from: "+", ".join(periods))
             return False
         
-        now=datetime.datetime.now()
-        now_ts = now.timestamp()
-        if period in periods[6:]:
-            limit=None
-        elif period in periods[5:]:
+        now=datetime.now()
+        now_ux= datetime_to_unixtime(now)
+        if periods[period] >= 1140:
+            limit=datetime(1900,1,1)
+        elif periods[period] >= 240:
             limit=now - relativedelta(years=13)
-        elif period in periods[3:]:
+        elif periods[period] >= 30:
             limit=now - relativedelta(months=7)
         else:
             limit=now - relativedelta(months=1)
-        limit_ts=limit.timestamp()
+        limit_ux=datetime_to_unixtime(limit)
         
         if not start:
-            start_ts=datetime.min().timestamp()
+            start_ux=datetime_to_unixtime(datetime.min)
         else:
-            start_ts=start.timestamp()
+            start_ux=datetime_to_unixtime(start)
 
-        if start_ts > now_ts:
+        if start_ux> now_ux:
             self._logger.error("Start time is greater than current time.")
             return False
 
-        if start_ts < limit_ts:
+        if start_ux< limit_ux:
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
-            start_ts=limit_ts
+            start_ux=limit_ux
 
-        return self._open_data_channel(command="ChartLastRequest", info=dict(period=period, start=start_ts, symbol=symbol))
+        return self._open_data_channel(command="ChartLastRequest", info=dict(period=periods[period], start=start_ux, symbol=symbol))
 
     def getChartRangeRequest(self, symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0):
         """
@@ -600,50 +601,48 @@ class Wrapper(HandlerManager):
             vol	                float	    Volume in lots
         
         """
-        periods=[
-            "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"
-        ]
+        periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
 
         if period not in periods:
             self._logger("Invalid period. Choose from: "+", ".join(periods))
             return False
         
-        now=datetime.datetime.now()
-        now_ts = now.timestamp()
-        if period in periods[6:]:
-            limit=None
-        elif period in periods[5:]:
+        now=datetime.now()
+        now_ux= datetime_to_unixtime(datetime.now())
+        if periods[period] >= 1140:
+            limit=datetime(1900,1,1)
+        elif periods[period] >= 240:
             limit=now - relativedelta(years=13)
-        elif period in periods[3:]:
+        elif periods[period] >= 30:
             limit=now - relativedelta(months=7)
         else:
             limit=now - relativedelta(months=1)
-        limit_ts=limit.timestamp()
+        limit_ux=datetime_to_unixtime(limit)
 
         if not start:
-            start_ts=datetime.min().timestamp()
+            start_ux=datetime_to_unixtime(datetime.min)
         else:
-            start_ts=start.timestamp()
+            start_ux=datetime_to_unixtime(start)
 
-        if start_ts < limit_ts:
+        if start_ux< limit_ux:
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
-            start_ts=limit_ts
+            start_ux=limit_ux
 
-        if start_ts > now_ts:
+        if start_ux> now_ux:
             self._logger.error("Start time is greater than current time.")
             return False
 
         if ticks == 0:
             if not end:
-                end_ts=now_ts
+                end_ux=now_ux
             else:
-                end_ts=end.timestamp()  
+                end_ux=datetime_to_unixtime(end)
                 
-            if end_ts > now_ts:
+            if end_ux> now_ux:
                 self._logger.error("End time is greater than current time.")
                 return False
 
-            if start_ts >= end_ts:
+            if start_ux>= end_ux:
                 self._logger.error("Start time is greater or equal than end time.")
                 return False
         else:
@@ -656,9 +655,9 @@ class Wrapper(HandlerManager):
                     delta = calculate_timedelta(limit,reference, period='minutes')
                 elif period in ["H1", "H4"]:
                     delta = calculate_timedelta(limit,reference, period='hours')
-                elif period is "D1":
+                elif period == "D1":
                     delta = calculate_timedelta(limit,reference, period='days')
-                elif period is "W1":
+                elif period == "W1":
                     delta = calculate_timedelta(limit,reference, period='weeks')
                 else:
                     delta = calculate_timedelta(limit,reference,period='months')
@@ -671,9 +670,9 @@ class Wrapper(HandlerManager):
                     delta = calculate_timedelta(reference, now, period='minutes')
                 elif period in ["H1", "H4"]:
                     delta = calculate_timedelta(reference, now, period='hours')
-                elif period is "D1":
+                elif period == "D1":
                     delta = calculate_timedelta(reference, now, period='days')
-                elif period is "W1":
+                elif period == "W1":
                     delta = calculate_timedelta(reference, now, period='weeks')
                 else:
                     delta = calculate_timedelta(reference, now, period='months')
@@ -682,7 +681,7 @@ class Wrapper(HandlerManager):
                     self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
                     ticks = delta
 
-        return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_ts, period=period, start=start_ts, symbol=symbol, ticks=ticks))
+        return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_ux, period=periods[period], start=start_ux, symbol=symbol, ticks=ticks))
 
     def getCommissionDef(self, symbol: str, volume: float):
         """
@@ -756,14 +755,14 @@ class Wrapper(HandlerManager):
             SELL	            1	        sell
 
         """
-        start_ts=start.timestamp()
-        end_ts=end.timestamp()
+        start_ux=datetime_to_unixtime(start)
+        end_ux=datetime_to_unixtime(end)
 
-        if start_ts > end_ts:
+        if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
             return False
 
-        return self._open_data_channel(command="IbsHistory", end=end_ts, start=start_ts)
+        return self._open_data_channel(command="IbsHistory", end=end_ux, start=start_ux)
     
     def getMarginLevel(self):
         """
@@ -827,14 +826,14 @@ class Wrapper(HandlerManager):
             title	            string      News title
             
         """
-        start_ts=start.timestamp()
-        end_ts=end.timestamp()
+        start_ux=datetime_to_unixtime(start)
+        end_ux=datetime_to_unixtime(end)
 
-        if start_ts > end_ts:
+        if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
             return False
 
-        return self._open_data_channel(command="News", end=end_ts, start=start_ts)
+        return self._open_data_channel(command="News", end=end_ux, start=start_ux)
     
     def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int):
         """
@@ -1032,11 +1031,11 @@ class Wrapper(HandlerManager):
             self._logger.error("Invalid level. Choose from: "+", ".join(levels))
             return False
         
-        if all(isinstance(item, str) for item in levels):
+        if not all(isinstance(item, str) for item in levels):
             self._logger.error("Invalid symbols. All symbols must be strings.")
             return False
         
-        timestamp = time.timestamp()
+        timestamp = datetime_to_unixtime(time)
 
         return self._open_data_channel(command="TickPrices", level=level, symbols=symbols, timestamp=timestamp)
     
@@ -1094,7 +1093,7 @@ class Wrapper(HandlerManager):
 
             
         """
-        if all(isinstance(item, int) for item in orders):
+        if not all(isinstance(item, int) for item in orders):
             self._logger.error("Invalid order. All orders must be integers.")
             return False
 
@@ -1209,14 +1208,14 @@ class Wrapper(HandlerManager):
             CREDIT	            7	        Read only
 
         """
-        start_ts = start.timestamp()
-        end_ts = end.timestamp()
+        start_ux= datetime_to_unixtime(start)
+        end_ux= datetime_to_unixtime(end)
 
-        if start_ts > end_ts:
+        if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
             return False
 
-        return self._open_data_channel(command="TradeHistory", start=start_ts, end=end_ts)
+        return self._open_data_channel(command="TradeHistory", start=start_ux, end=end_ux)
 
     def getTradingHours(self, symbols: list):
         """
@@ -1255,7 +1254,7 @@ class Wrapper(HandlerManager):
                                 7	        Sunday
             
         """
-        if all(isinstance(item, str) for item in symbols):
+        if not all(isinstance(item, str) for item in symbols):
             self._logger.error("Invalid symbols. All symbols must be strings.")
             return False
 
@@ -1334,9 +1333,9 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             return False
 
-        expiration_ts = expiration.timestamp()
+        expiration_ux= datetime_to_unixtime(expiration)
 
-        return self._open_data_channel(command="tradeTransaction", tradeTransInf=dict(cmd=cmd, customCommand=customComment, expiration=expiration_ts, offset=offset, order=order, price=price, sl=sl, symbol=symbol, tp=tp, type=type, volume=volume))
+        return self._open_data_channel(command="tradeTransaction", tradeTransInf=dict(cmd=cmd, customCommand=customComment, expiration=expiration_ux, offset=offset, order=order, price=price, sl=sl, symbol=symbol, tp=tp, type=type, volume=volume))
     
     def tradeTransactionStatus(self, order: int):
         """

@@ -844,11 +844,12 @@ class _StreamHandler(_GeneralHandler):
         self._stream_tasks[index]['lock'] = lock
         self._stream_tasks[index]['queue'] = Queue()
         self._stream_tasks[index]['thread'] = CustomThread(target=self._exchange_stream, args=(index, df, lock,), daemon=True)
+        self._stream_tasks[index]['stop'] = CustomThread(target=self._stop_task, args=(index,), daemon=True)
         self._stream_tasks[index]['thread'].start()
 
         self._logger.info("Stream started for " + pretty(command))
 
-        return CustomThread(target=self._stop_task, args=(index,), daemon=True)
+        return self._stream_tasks[index]['stop']
 
     def _start_stream(self, command: str, **kwargs):
         """
@@ -956,18 +957,17 @@ class _StreamHandler(_GeneralHandler):
 
             self._stream_tasks[index]['queue'].task_done()
 
-            lock.acquire(blocking=False)
+            if lock.acquire(blocking=False):
+                # Append the buffer DataFrame to the exchange DataFrame
+                df = pd.concat([df, buffer_df], ignore_index=True)
+                buffer_df = pd.DataFrame(columns=buffer_df.columns)
 
-            # Append the buffer DataFrame to the exchange DataFrame
-            df = pd.concat([df, buffer_df], ignore_index=True)
-            buffer_df = pd.DataFrame(columns=buffer_df.columns)
+                # Limit the DataFrame to the last 1000 rows
+                if len(df) > 1000:
+                    df = df.iloc[-1000:]
+                    df = df.reset_index(drop=True)
 
-            # Limit the DataFrame to the last 1000 rows
-            if len(df) > 1000:
-                df = df.iloc[-1000:]
-                df = df.reset_index(drop=True)
-
-            lock.release()
+                lock.release()
 
         self._logger.info("Stream stopped for " + pretty(self._stream_tasks[index]['command']))
 
