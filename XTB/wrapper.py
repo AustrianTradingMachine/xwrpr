@@ -298,40 +298,40 @@ class Wrapper(HandlerManager):
             Dictionary with the following fields:
             name	            type	    description
             close_price	            float	    Close price in base currency
-            close_time	            timestamp	Null if order is not closed
+            close_time	            timestamp	    Null if order is not closed
             closed	            boolean	    Closed
-            cmd	                    integer 	Operation code
+            cmd	                    integer 	    Operation code
             comment	            string	    Comment
             commission	            float	    Commission in account currency, null if not applicable
             customComment	    string	    The value the customer may provide in order to retrieve it later.
-            digits	            integer 	Number of decimal places
-            expiration	            timestamp	Null if order is not closed
+            digits	            integer 	    Number of decimal places
+            expiration	            timestamp	    Null if order is not closed
             margin_rate	            float	    Margin rate
-            offset	            integer 	Trailing offset
+            offset	            integer 	    Trailing offset
             open_price	            float	    Open price in base currency
-            open_time	            timestamp	Open time
-            order	            integer 	Order number for opened transaction
-            order2	            integer 	Transaction id
-            position	            integer 	Position number (if type is 0 and 2) or transaction parameter (if type is 1)
+            open_time	            timestamp	    Open time
+            order	            integer 	    Order number for opened transaction
+            order2	            integer 	    Transaction id
+            position	            integer 	    Position number (if type is 0 and 2) or transaction parameter (if type is 1)
             profit	            float	    null unless the trade is closed (type=2) or opened (type=0)
             sl	                    float	    Zero if stop loss is not set (in base currency)
             state	            string	    Trade state, should be used for detecting pending order's cancellation
             storage	            float	    Storage
             symbol	            string	    Symbol
             tp	                    float	    Zero if take profit is not set (in base currency)
-            type	            integer 	type
+            type	            integer 	    type
             volume	            float	    Volume in lots
 
         Possible values of cmd field:
             name	            value	    description
-            BUY	                0	        buy
-            SELL	            1	        sell
-            BUY_LIMIT	        2	        buy limit
-            SELL_LIMIT	        3	        sell limit
-            BUY_STOP	        4	        buy stop
-            SELL_STOP	        5	        sell stop
-            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-            CREDIT	            7	        Read only
+            BUY	                    0	            buy
+            SELL	            1	            sell
+            BUY_LIMIT	            2	            buy limit
+            SELL_LIMIT	            3	            sell limit
+            BUY_STOP	            4	            buy stop
+            SELL_STOP	            5	            sell stop
+            BALANCE	            6	            Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            CREDIT	            7	            Read only
 
         Possible values of comment field:
             - "[S/L]", then the trade was closed by stop loss
@@ -341,16 +341,16 @@ class Wrapper(HandlerManager):
 
         Possible values of state field:
             name	            value	    description
-            MODIFIED	        "Modified"	modified
-            DELETED	            "Deleted"	deleted
+            MODIFIED	            "Modified"      modified
+            DELETED	            "Deleted"       deleted
 
         Possible values of type field:
             name	            value	    description
-            OPEN	            0	        order open, used for opening orders
-            PENDING	            1	        order pending, only used in the streaming getTrades  command
-            CLOSE	            2	        order close
-            MODIFY	            3	        order modify, only used in the tradeTransaction  command
-            DELETE	            4	        order delete, only used in the tradeTransaction  command
+            OPEN	            0	            order open, used for opening orders
+            PENDING	            1	            order pending, only used in the streaming getTrades  command
+            CLOSE	            2	            order close
+            MODIFY	            3	            order modify, only used in the tradeTransaction  command
+            DELETE	            4	            order delete, only used in the tradeTransaction  command
 
         
         """
@@ -371,9 +371,9 @@ class Wrapper(HandlerManager):
             name	            type	    description
             customComment	    string	    The value the customer may provide in order to retrieve it later.
             message	            string	    Can be null
-            order	            integer 	Unique order number
+            order	            integer         Unique order number
             price	            float	    Price in base currency
-            requestStatus	    integer 	Request status code, described below
+            requestStatus	    integer 	    Request status code, described below
 
         """
         return self._open_stream_channel(command="TradeStatus")
@@ -408,54 +408,54 @@ class Wrapper(HandlerManager):
         Returns:
             Dictionary: A Dictionary containing the following fields:
             name	            type	    description
-	                            dictionary	SYMBOL_RECORD 
+	                            dictionary      SYMBOL_RECORD 
 
         Format of SYMBOL_RECORD:
             name	            type	    description
-            ask	                float	    Ask price in base currency
-            bid	                float	    Bid price in base currency
+            ask	                    float	    Ask price in base currency
+            bid	                    float	    Bid price in base currency
             categoryName	    string	    Category name
-            contractSize	    integer     Size of 1 lot
-            currency	        string	    Currency
+            contractSize	    integer         Size of 1 lot
+            currency	            string	    Currency
             currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
             currencyProfit	    string	    The currency of calculated profit
-            description	        string	    Description
-            expiration	        timestamp	Null if not applicable
-            groupName	        string	    Symbol group name
+            description	            string	    Description
+            expiration	            timestamp	    Null if not applicable
+            groupName	            string	    Symbol group name
             high	            float	    The highest price of the day in base currency
-            initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
-            instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
-            leverage	        float	    Symbol leverage
-            longOnly	        boolean	    Long only
+            initialMargin	    integer    	    Initial margin for 1 lot order, used for profit/margin calculation
+            instantMaxVolume        integer	    Maximum instant volume multiplied by 100 (in lots)
+            leverage	            float	    Symbol leverage
+            longOnly	            boolean	    Long only
             lotMax	            float	    Maximum size of trade
             lotMin	            float	    Minimum size of trade
             lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
-            low	                float	    The lowest price of the day in base currency
+            low	                    float	    The lowest price of the day in base currency
             marginHedged	    integer	    Used for profit calculation
-            marginHedgedStrong  boolean	    For margin calculation
-            marginMaintenance   integer	    For margin calculation, null if not applicable
-            marginMode	        integer	    For margin calculation
-            percentage	        float	    Percentage
+            marginHedgedStrong      boolean	    For margin calculation
+            marginMaintenance       integer	    For margin calculation, null if not applicable
+            marginMode	            integer	    For margin calculation
+            percentage	            float	    Percentage
             pipsPrecision	    integer	    Number of symbol's pip decimal places
-            precision	        integer	    Number of symbol's price decimal places
-            profitMode	        integer	    For profit calculation
+            precision	            integer	    Number of symbol's price decimal places
+            profitMode	            integer	    For profit calculation
             quoteId     	    integer	    Source of price
             shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
-            spreadRaw	        float	    The difference between raw ask and bid prices
-            spreadTable	        float	    Spread representation
-            starting	        timestamp	Null if not applicable
-            stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
-            stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
-            swap_rollover3days	integer	    timestamp when additional swap is accounted for weekend
-            swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
-            swapLong	        float	    Swap value for long positions in pips
-            swapShort	        float	    Swap value for short positions in pips
-            swapType	        integer	    Type of swap calculated
+            spreadRaw	            float	    The difference between raw ask and bid prices
+            spreadTable	            float	    Spread representation
+            starting	            timestamp	    Null if not applicable
+            stepRuleId	            integer	    Appropriate step rule ID from getStepRules  command response
+            stopsLevel	            integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
+            swap_rollover3days      integer	    timestamp when additional swap is accounted for weekend
+            swapEnable	            boolean	    Indicates whether swap value is added to position on end of day
+            swapLong	            float	    Swap value for long positions in pips
+            swapShort	            float	    Swap value for short positions in pips
+            swapType	            integer	    Type of swap calculated
             symbol	            string	    Symbol name
-            tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
-            tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
+            tickSize	            float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
+            tickValue	            float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
             time	            timestamp	Ask & bid tick time
-            timeString	        string	    Time in String
+            timeString	            string	    Time in String
             trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
             type	            integer	    Instrument class number
 
