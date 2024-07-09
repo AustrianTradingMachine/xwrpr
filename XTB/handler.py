@@ -122,6 +122,9 @@ class _GeneralHandler(Client):
             self._logger.error("Failed to send request")
             return False
         else:
+            if command == 'login':
+                request['arguments']['userId'] = '*****'
+                request['arguments']['password'] = '*****'
             self._logger.info("Sent request: " + str(req_dict))
             return True
 
