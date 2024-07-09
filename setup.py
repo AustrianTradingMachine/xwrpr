@@ -18,10 +18,10 @@ setup(
     keywords=['XTB','API''trading','finance','development'],
     url='https://github.com/AustrianTradingMachine/XTBpy',
     packages=find_packages(),
-    license="GNU General Public License v3 (GPLv3)",
+    license='GPLv3+',
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
         "Intended Audience :: Financial and Insurance Industry",
