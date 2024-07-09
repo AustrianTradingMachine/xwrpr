@@ -1,1 +1,3 @@
-include src/XTB/*.cfg
+include XTBpy/LICENSE
+include XTBpy/README.md
+include XTBpy/src/XTB/*.cfg

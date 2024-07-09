@@ -2,17 +2,16 @@ from config import XTB, generate_logger
 import time
 from datetime import datetime, timedelta
 
-DEMO=False
-#DEMO=True
+DEMO=True
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=generate_logger(name="TEST",path='/home/philipp/Trading/XTBpy/Logger')
-#logger=generate_logger(name="TEST",path='~/XTBpy/Logger')
+logger=generate_logger(name="TEST",path='~/Logger/XTBpy')
 
 print(XTB.__version__)
 print(XTB.API_VERSION)
 
 
+# Creating Wrapper
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
 # getting API version
@@ -22,10 +21,10 @@ if version['version'] != XTB.API_VERSION:
     print("API version is different")
 
 # gettinbg all symbols
-#alls=XTBData.getAllSymbols()
+alls=XTBData.getAllSymbols()
 
-#for record in alls:
-#    print(record['symbol']+" "+record['categoryName']+" "+record['description'])
+for record in alls:
+    print(record['symbol']+" "+record['categoryName']+" "+record['description'])
 
 # getting chart history
 chart=XTBData.getChartRangeRequest(period='M15', symbol='EURUSD', end=datetime.now(), start=datetime.now() - timedelta(days=30))
