@@ -4,10 +4,13 @@ from setuptools import setup, find_packages
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
+VERSION = 0.1.0
+API = 2.5.0
+
 setup(
     name="XTBpy",
-    version="0.1.0",
-    api_version="2.5.0",
+    version=VERSION,
+    api_version=API
     author="Philipp Craighero",
     author_email="",
     description="A wrapper for the XTB API",
@@ -30,9 +33,7 @@ setup(
     ],
     python_requires='>=3.9',
     install_requires=[
-        'pandas',
-    ],
-    tests_require=[
+        'pandas'>=2.*,
         'pytest',
         'pytz',
         'tzlocal',
