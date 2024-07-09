@@ -50,7 +50,7 @@ while datetime.now() < later:
     exchange['lock'].release()
     time.sleep(1)
 
-exchange['thread'].join()
+exchange['thread'].start()
 
 
 XTBData.delete()
