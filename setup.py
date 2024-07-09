@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
+import pathlib
 
-# Use a context manager for safely reading the long description
-with open('README.md', 'r', encoding='utf-8') as fh:
-    long_description = fh.read()
+here = pathlib.Path(__file__).parent.resolve()
+long_description = (here / "README.md").read_text(encoding="utf-8")
 
 VERSION = '0.1.0'
 API = '2.5.0'
@@ -15,9 +15,13 @@ setup(
     author_email="",
     description="A wrapper for the XTB API",
     long_description=long_description,
-    keywords=['XTB','API''trading','finance','development'],
+    long_description_content_type="text/markdown",
+    keywords="XTB,API,trading,finance,development",
     url='https://github.com/AustrianTradingMachine/XTBpy',
-    packages=find_packages(),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
+    python_requires=">=3.7, <4",
+    install_requires=['pandas','pytz','tzlocal'],
     license='GPLv3+',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -31,11 +35,5 @@ setup(
         "Topic :: Office/Business :: Financial :: Investment",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Information Analysis",
-    ],
-    python_requires='>=3.9',
-    install_requires=[
-        'pandas'>=2.*,
-        'pytz',
-        'tzlocal',
     ],
 )
