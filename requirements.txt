@@ -1,5 +1,3 @@
-requests
-
-pandas
+pandas>=2.*
 pytz
 tzlocal
