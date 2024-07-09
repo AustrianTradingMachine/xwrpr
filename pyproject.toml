@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="XTBpy",
-version="0.1.0",
-description="A wrapper for the XTB API",
+name="XTBpy"
+version="0.1.0"
+description="A wrapper for the XTB API"
 readme = {file = "README.md", content-type = "text/markdown"}
 authors = [{ name = "AustrianTradingMachine", email = "" }]
 license = { file = "LICENSE", text="GPLv3+" }
@@ -21,8 +21,8 @@ classifiers=[
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
-],
-keywords=["XTB","API","trading","finance","development"],
+]
+keywords=["XTB","API","trading","finance","development"]
 dependencies=[
     "pandas>=2.*",
     "pytz",
