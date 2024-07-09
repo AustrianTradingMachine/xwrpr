@@ -7,8 +7,8 @@ name="XTBpy"
 version="0.1.0"
 description="A wrapper for the XTB API"
 readme = {file = "README.md", content-type = "text/markdown"}
-authors = [{ name = "AustrianTradingMachine", email = "" }]
-license = { file = "LICENSE", text="GPLv3+" }
+authors = [{ name = "AustrianTradingMachine"}]
+license = { file = "LICENSE" }
 classifiers=[
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
@@ -24,7 +24,7 @@ classifiers=[
 ]
 keywords=["XTB","API","trading","finance","development"]
 dependencies=[
-    "pandas>=2.*",
+    "pandas>2.0.3",
     "pytz",
     "tzlocal"
     ]
