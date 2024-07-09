@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import pathlib
 import configparser
 from math import floor
 from threading import Lock
@@ -13,7 +14,8 @@ from XTB import account
 
 # read api configuration
 config = configparser.ConfigParser()
-config.read('XTB/api.cfg')
+config_path=pathlib.Path(__file__).parent.absolute()/ 'api.cfg'
+config.read(config_path)
 
 HOST=config.get('SOCKET','HOST')
 PORT_DEMO=config.getint('SOCKET','PORT_DEMO')
@@ -109,23 +111,23 @@ class _GeneralHandler(Client):
         """
         self._logger.info("Sending request ...")
 
-        req_dict = dict([('command', command)])
+        request = dict([('command', command)])
 
         if ssid is not None:
-            req_dict['streamSessionId'] = ssid
+            request['streamSessionId'] = ssid
         if arguments is not None:
-            req_dict.update(arguments)
+            request.update(arguments)
         if tag is not None:
-            req_dict['customTag'] = tag
+            request['customTag'] = tag
 
-        if not self.send(req_dict):
+        if not self.send(request):
             self._logger.error("Failed to send request")
             return False
         else:
             if command == 'login':
                 request['arguments']['userId'] = '*****'
                 request['arguments']['password'] = '*****'
-            self._logger.info("Sent request: " + str(req_dict))
+            self._logger.info("Sent request: " + str(request))
             return True
 
     def receive_response(self, data: bool = True):
@@ -751,6 +753,7 @@ class _StreamHandler(_GeneralHandler):
         # stream must be initialized right after connection is opened
         self._stream=dict()
         self._stream_tasks = dict()
+        self._stop_lock = Lock()
         self.streamData(command='KeepAlive')
         
         # start ping to keep connection open
@@ -795,7 +798,18 @@ class _StreamHandler(_GeneralHandler):
         self._logger.info("StreamHandler deleted")
         return True
         
-    def streamData(self, command: str, exchange: dict=None,**kwargs):
+    def streamData(self, command: str, exchange: dict=None, **kwargs):
+        """
+        Start streaming data from the server.
+
+        Args:
+            command (str): The command to start streaming data.
+            exchange (dict, optional): The exchange information. Defaults to None.
+            **kwargs: Additional keyword arguments for the command.
+
+        Returns:
+            bool: True if the stream was started successfully, False otherwise.
+        """
         if not self._dh._ssid:
             self._logger.error("Got no StreamSessionId from Server")
             return False
@@ -804,7 +818,7 @@ class _StreamHandler(_GeneralHandler):
             if self._stream_tasks[index]['command'] == command and self._stream_tasks[index]['kwargs'] == kwargs:
                 self._logger.warning("Stream for data already open")
                 return False
-        
+
         for tries in range(2):
             response = self._start_stream(command, **kwargs)
 
@@ -821,12 +835,12 @@ class _StreamHandler(_GeneralHandler):
             self._stream['thread'] = CustomThread(target=self._receive_stream, daemon=True)
             self._stream['thread'].start()
 
-            monitor_thread = CustomThread(target=self.thread_monitor, args=('Stream',self._stream, self._reconnect,), daemon=True)
+            monitor_thread = CustomThread(target=self.thread_monitor, args=('Stream', self._stream, self._reconnect,), daemon=True)
             monitor_thread.start()
 
         index = len(self._stream_tasks)
         self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
-        
+
         if command == 'KeepAlive':
             return True
 
@@ -916,7 +930,17 @@ class _StreamHandler(_GeneralHandler):
 
         self._logger.info("All streams stopped")
 
-    def _exchange_stream(self, index=index, exchange=exchange):
+    def _exchange_stream(self, index: int, exchange: dict):
+        """
+        Stream data from a queue and update the exchange DataFrame.
+
+        Args:
+            index (int): The index of the stream task.
+            exchange (dict): The exchange dictionary containing the DataFrame and lock.
+
+        Returns:
+            None
+        """
         buffer_df = pd.DataFrame()
         
         while self._stream_tasks[index]['run']:
@@ -944,7 +968,7 @@ class _StreamHandler(_GeneralHandler):
                     exchange['df'] = exchange['df'].iloc[-1000:]
                     exchange['df'] = exchange['df'].reset_index(drop=True)
                     
-                lock.release()
+                exchange['lock'].release()
 
         self._logger.info("Stream stopped for " + pretty(self._stream_tasks[index]['command']))
 
@@ -958,29 +982,33 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the stream task was successfully stopped, False otherwise.
         """
-        command = self._stream_tasks[index]['command']
-        arguments = self._stream_tasks[index]['arguments']
+        # Necessary if task is stopped by user(thread) and handler(delete) at the same time
+        with self._stop_lock:
+            if index in self._stream_tasks:
+                command = self._stream_tasks[index]['command']
+                arguments = self._stream_tasks[index]['arguments']
 
-        self._logger.info("Stopping stream for " + pretty(command) + " ...")
+                self._logger.info("Stopping stream for " + pretty(command) + " ...")
 
-        with self._ping_lock:
-            if not self.send_request(command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
-                self._logger.error("Failed to end stream")
+                with self._ping_lock:
+                    if not self.send_request(command='stop' + command, arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None):
+                        self._logger.error("Failed to end stream")
 
-        if command == 'KeepAlive':
-            return True
-
-        if not self._stream_tasks[index]['run']:
-            self._logger.warning("Stream task already ended")
-        else:
-            self._stream_tasks[index]['run'] = False
-
-        self._stream_tasks[index]['thread'].join()
-
-        self._stream_tasks.pop(index)
-        
-        return True
+                if command == 'KeepAlive':
+                    return True
                 
+                # KeepAlive has no thread
+                if not self._stream_tasks[index]['run']:
+                    self._logger.warning("Stream task already ended")
+                else:
+                    self._stream_tasks[index]['run'] = False
+
+                self._stream_tasks[index]['thread'].join()
+
+                del self._stream_tasks[index]
+
+                return True
+                    
     def _stop_stream(self):
         """
         Stops the stream and ends all associated tasks.

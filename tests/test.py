@@ -45,12 +45,12 @@ later = datetime.now() + timedelta(seconds=60*1)
 while datetime.now() < later:
     exchange['lock'].acquire(blocking=True)
     if not exchange['df'].empty:
-        print(exchange['df'])
+        print(exchange['df'].to_string(index=False, header=False))
         exchange['df'] = exchange['df'].iloc[0:0]
     exchange['lock'].release()
     time.sleep(1)
 
 exchange['thread'].start()
 
-
+# Close Wrapper
 XTBData.delete()

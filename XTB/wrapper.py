@@ -133,7 +133,7 @@ class Wrapper(HandlerManager):
         exchange = {'df': df, 'lock': lock}
         sh.streamData(exchange=exchange, **kwargs)
 
-        return control
+        return exchange
     
     def streamBalance(self):
         """
