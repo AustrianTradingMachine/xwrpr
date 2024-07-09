@@ -1,3 +1,42 @@
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name="XTBpy",
+version="0.1.0",
+description="A wrapper for the XTB API",
+readme = {file = "README.md", content-type = "text/markdown"}
+authors = [{ name = "AustrianTradingMachine", email = "" }]
+license = { file = "LICENSE" }
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+],
+keywords=["XTB","API","trading","finance","development"],
+dependencies=[
+    "pandas>=2.*",
+    "pytz",
+    "tzlocal"
+    ],
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/AustrianTradingMachine/XTBpy"
+
+
+
+
+
+
+
+
