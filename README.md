@@ -1,4 +1,4 @@
-XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
+XTBpy - A wrapper for the API of XTB
 =================
 
 <br/>
@@ -7,7 +7,7 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 
 <!--ts-->
 * [Features](#features)
-* [XTB resources](#xtbresources)
+* [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
     * [Commands](#commands)
@@ -15,7 +15,7 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 * [Streaming](#streaming)
      * [Commands](#commands)
      * [Example](#example)
-* [Contribution](#contribution)
+* [Contributing](#contributing)
 * [Sources](#sources)
 <!--te-->
 
