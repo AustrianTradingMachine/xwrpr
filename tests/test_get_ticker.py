@@ -41,7 +41,7 @@ XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
 # getting all symbols
 # could take some time
-symbol=XTBData.getTickPrices(level=-1, time=datetime.now()-datetime.timedelta(days=365), symbols=['EURUSD', 'GBPUSD'])
+symbol=XTBData.getTickPrices(level=-1, time=datetime.now()-timedelta(days=365), symbols=['EURUSD', 'GBPUSD'])
 
 print(symbol)
 

@@ -73,7 +73,7 @@ def Candles(later: datetime):
 
 # Defining streaming threads
 TickerThread = Thread(target=Ticker, args=(datetime.now()+timedelta(seconds=60*1),), daemon=True)
-CandlesThread = Thread(target=Candles, args=(datetime.now()++timedelta(seconds=60*1),), daemon=True)
+CandlesThread = Thread(target=Candles, args=(datetime.now()+timedelta(seconds=60*1),), daemon=True)
 
 
 # Starting streaming threads
