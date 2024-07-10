@@ -53,7 +53,7 @@ pip install XTBpy
 XTBpy includes all Data commands of the XTB API, exept
    * ```ping```
 </n>
-this command is automatically executed in the background.
+This command is automatically executed in the background.
 
 ## **Commands**
 
@@ -112,7 +112,7 @@ XTBpy includes all Streaming commands of the XTB API, exept
    * ```ping```
    * ```getKeepAlive```
 </n>
-this two commands are automatically executed in the background.
+This two commands are automatically executed in the background.
 
 Commands
 --------
