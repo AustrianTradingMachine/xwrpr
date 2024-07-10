@@ -85,7 +85,7 @@ Datetime objects, which are defined in your operating system's time zone, will b
    * ```tradeTransactionStatus(order: int)```
 
 * The return value will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
-* You will find a full documentation of all API commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+* You will find a full documentation of all API data commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
 Example
 -------
@@ -135,9 +135,9 @@ The return value will be a dictionary, containing the following elements:
    * ```thread``` (Thread): Starting the thread will terminate the stream
 
 * The header of the dataframe will contain all keys of the "data" key of the JSON response file.
-* The streamed values will be in the row of the DataFrame. Tje Dataframe will be dynamically updated by XTBpy and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can bev found at the bottom row.
-* Please see the example beliw to find out how to access the values in the DataFrame.
-* You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+* The streamed values will be in the row of the DataFrame. The Dataframe will be dynamically updated by XTBpy and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can be found at the bottom row.
+* Please see the example below to find out how to access the values in the DataFrame.
+* You will find a full documentation of all API stream commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
 Example
