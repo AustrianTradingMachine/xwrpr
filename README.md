@@ -33,7 +33,28 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 
 Example
 -------
+```python
+import XTB
+from pathlib import Path
 
+# Setting DEMO to True will use the demo account
+DEMO=False
+
+# just example how to generate alogger. Feel free to use your own logger
+logger=XTB.generate_logger(name="TEST_get_symbol",path=Path('~/Logger/XTBpy').expanduser())
+
+# Creating Wrapper
+XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+
+# getting all symbols
+# could take some time
+symbol=XTBData.getSymbol(symbol='ETHEREUM')
+
+print(symbol)
+
+# Close Wrapper
+XTBData.delete()
+```
 <br/>
 
 **Streaming Commands**
@@ -44,36 +65,39 @@ Example
 -------
 
 ```python
+import XTB
+from pathlib import Path
+import time
+from datetime import datetime, timedelta
 
+# Setting DEMO to True will use the demo account
+DEMO=False
 
+# just example how to generate alogger. Feel free to use your own logger
+logger=XTB.generate_logger(name="TEST_stream_ticker",path=Path('~/Logger/XTBpy').expanduser())
 
+# Creating Wrapper
+XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
+# Streaming data an reading the df
+exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
-import pandas as pd
-import pandas_ta as ta
+# Streaming data an reading the df
+later = datetime.now() + timedelta(seconds=60*1)
 
-df = pd.DataFrame() # Empty DataFrame
+while datetime.now() < later:
+    exchange['lock'].acquire(blocking=True)
+    if not exchange['df'].empty:
+        print(exchange['df'].to_string(index=False, header=False))
+        exchange['df'] = exchange['df'].iloc[0:0]
+    exchange['lock'].release()
+    time.sleep(1)
 
-# Load data
-df = pd.read_csv("path/to/symbol.csv", sep=",")
-# OR if you have yfinance installed
-df = df.ta.ticker("aapl")
+exchange['thread'].start()
 
-# VWAP requires the DataFrame index to be a DatetimeIndex.
-# Replace "datetime" with the appropriate column from your DataFrame
-df.set_index(pd.DatetimeIndex(df["datetime"]), inplace=True)
+# Close Wrapper
+XTBData.delete()
 
-# Calculate Returns and append to the df DataFrame
-df.ta.log_return(cumulative=True, append=True)
-df.ta.percent_return(cumulative=True, append=True)
-
-# New Columns with results
-df.columns
-
-# Take a peek
-df.tail()
-
-# vv Continue Post Processing vv
 ```
 
 <br/>
