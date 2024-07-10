@@ -30,7 +30,7 @@ DEMO=False
 
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=XTB.generate_logger(name="TEST_all_symbols",path=Path('~/Logger/XTBpy').expanduser())
+logger=XTB.generate_logger(name="TEST_get_symbol",path=Path('~/Logger/XTBpy').expanduser())
 
 
 # Creating Wrapper
@@ -39,10 +39,9 @@ XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
 # getting all symbols
 # could take some time
-alls=XTBData.getAllSymbols()
+symbol=XTBData.getSymbol(symbol='ETHEREUM')
 
-for record in alls:
-    print(record['symbol']+" "+record['categoryName']+" "+record['description'])
+print(symbol)
 
 
 # Close Wrapper
