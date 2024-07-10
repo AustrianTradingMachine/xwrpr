@@ -10,10 +10,10 @@ XTBpy - A wrapper for the API of XTB
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
-    * [Commands](#commands)
+    * [Commands](#commands-date)
     * [Example](#example)
 * [Streaming](#streaming)
-     * [Commands](#commands)
+     * [Commands](#commands-stream)
      * [Example](#example)
 * [Contributing](#contributing)
 * [Sources](#sources)
@@ -185,6 +185,8 @@ XTBData.delete()
 <br/>
 
 # **Contributing**
+
+We welcome contributions to the XTBpy project. 
 
 
 <br/>
