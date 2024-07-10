@@ -10,7 +10,7 @@ XTBpy - A wrapper for the API of XTB
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
-    * [Commands](#data-commands)
+    * [Commands](#commands)
     * [Example](#example)
 * [Streaming](#streaming)
      * [Commands](#streaming-commands)
@@ -98,8 +98,8 @@ Datetime objects, which are defined in your operating system's time zone, will b
 * The return value will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
 * You will find a full documentation of all API data commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
-Example
--------
+# **Example**
+
 The following example will show how to retrieve data with XTBpy.
 You will find this example also in tests/test_get_symbol.py
 
