@@ -186,8 +186,7 @@ XTBData.delete()
 
 # **Contributing**
 
-We welcome contributions to the XTBpy project. 
-
+Improvements to the XTBpy project are welcome, whether it's a request, a suggestion, or a bug report. Just reach out!
 
 <br/>
 
