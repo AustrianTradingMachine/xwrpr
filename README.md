@@ -33,7 +33,12 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 
 You can install the XTB API Python Wrapper via pip:
 ```bash
-pip install xtb-api-wrapper
+pip install XTBpy
+```
+
+You can install the XTB API Python Wrapper via pip:
+```bash
+pip install XTBpy
 ```
 
 # **Documentation**
@@ -50,7 +55,9 @@ this command is automatically executed by XTBpy
 
 ## **Commands**
 
-In the following all available data commands are listed.
+All available data commands are listed below.
+When commands have time as an argument, the time is entered as a ```datetime``` object.
+Datetime objects, which are typically in your operating system's time zone, are automatically converted to a UTC-UX timestamp, which is required by the XTB API.
 
 * ```getAllSymbols()```
 * ```getCalendar()```
