@@ -50,15 +50,15 @@ pip install XTBpy
 
 # **Data**
 
-XTBpy includes all Data commands, exept
+XTBpy includes all Data commands of the XTB API, exept
    * ```ping```
 </n>
-this command is automatically executed in the background
+this command is automatically executed in the background.
 
 ## **Commands**
 
 All available data commands are listed below.
-When commands have a time valur as an argument, the time must br entered as a ```datetime``` object.
+When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
 Datetime objects, which are typically in your operating system's time zone, are automatically converted (by XTBpy) to a UTC-UX timestamp which is required by the XTB API.
 
    * ```getAllSymbols()```
@@ -84,8 +84,8 @@ Datetime objects, which are typically in your operating system's time zone, are 
    * ```tradeTransaction(cmd: int, customComment: str, expiration: datetime, offset: int, order: int, price: float, sl: float, symbol: str, tp: float, type: int, volume: float)```
    * ```tradeTransactionStatus(order: int)```
 
-* The return valur will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
-* You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+* The return value will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
+* You will find a full documentation of all API commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
 Example
 -------
@@ -94,13 +94,6 @@ You will find this example also in tests/test_get_symbol.py
 
 ```python
 import XTB
-from pathlib import Path
-
-# Setting DEMO to True will use the demo account
-DEMO=False
-
-# just example how to generate alogger. Feel free to use your own logger
-logger=XTB.generate_logger(name="TEST_get_symbol",path=Path('~/Logger/XTBpy').expanduser())
 
 # Creating Wrapper
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
@@ -110,14 +103,12 @@ symbol=XTBData.getSymbol(symbol='ETHEREUM')
 
 print(symbol)
 
-# Close Wrapper
-XTBData.delete()
 ```
 <br/>
 
 # **Streaming**
 
-XTBpy includes all Streaming commands, exept
+XTBpy includes all Streaming commands of the XTB API, exept
    * ```ping```
    * ```KeepAlive```
 </n>
@@ -127,8 +118,8 @@ Commands
 --------
 All available streaming commands are listed below.
 Unlike the official API streaming commands like get*Command*,
-The streaming commands in XTBpy are called stream*Command*.
-This was necessary due to the double naming by the official API.
+the streaming commands in XTBpy are called stream*Command*.
+This was necessary due to double naming of certain commands by the official API.
 
    * ```streamBalance()```
    * ```streamCandles(symbol: str)```
