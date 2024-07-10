@@ -7,6 +7,7 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 
 <!--ts-->
 * [Features](#features)
+* [XTB resources](#xtbresources)
 * [Installation](#installation)
 * [Data](#data)
     * [Commands](#commands)
@@ -29,6 +30,11 @@ If you want to contribute please switch to the section
 
 <br/>
 
+# **XTB resources**
+[XTB](https://www.xtb.com/)
+[xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+
+
 # **Installation**
 
 You can install the XTB API Python Wrapper via pip:
@@ -37,8 +43,8 @@ pip install XTBpy
 ```
 
 * After installation a file ```.XTBpy/user.ini``` is created in your home directory
-* To acess the XTB API, you must enter your userId and your password for [XTB](https://www.xtb.com/) in ```user.ini```
-* Please ensure that no other person has access to your login details
+* To get accesd to your XTB account via XTBpy, you must enter your login data in ```user.ini```
+* Please ensure that no other person has access to your data
 
 <br/>
 
@@ -47,13 +53,13 @@ pip install XTBpy
 XTBpy includes all Data commands, exept
    * ```ping```
 </n>
-this command is automatically executed by XTBpy
+this command is automatically executed in the background
 
 ## **Commands**
 
 All available data commands are listed below.
-When commands have time as an argument, the time is entered as a ```datetime``` object.
-Datetime objects, which are typically in your operating system's time zone, are automatically converted to a UTC-UX timestamp, which is required by the XTB API.
+When commands have a time valur as an argument, the time must br entered as a ```datetime``` object.
+Datetime objects, which are typically in your operating system's time zone, are automatically converted (by XTBpy) to a UTC-UX timestamp which is required by the XTB API.
 
    * ```getAllSymbols()```
    * ```getCalendar()```
@@ -78,12 +84,12 @@ Datetime objects, which are typically in your operating system's time zone, are 
    * ```tradeTransaction(cmd: int, customComment: str, expiration: datetime, offset: int, order: int, price: float, sl: float, symbol: str, tp: float, type: int, volume: float)```
    * ```tradeTransactionStatus(order: int)```
 
-* The return will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the JSON response file.
+* The return valur will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
 * You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
 Example
 -------
-the following example will show how to stream data with XTBpy.
+the following example will show how to retrieve data with XTBpy.
 You will find this example also in tests/test_get_symbol.py
 
 ```python
@@ -115,13 +121,13 @@ XTBpy includes all Streaming commands, exept
    * ```ping```
    * ```KeepAlive```
 </n>
-this two commands are automatically executed by XTBpy
+this two commands are automatically executed in the background
 
 Commands
 --------
 All available streaming commands are listed below.
-Unlike the official streaming commands called get_Command_,
-The streaming commands in XTBpy are called stream_Command_.
+Unlike the official API streaming commands like get*Command*,
+The streaming commands in XTBpy are called stream*Command*.
 This was necessary due to the double naming by the official API.
 
    * ```streamBalance()```
@@ -132,13 +138,14 @@ This was necessary due to the double naming by the official API.
    * ```streamTrades()```
    * ```streamTradeStatus()```
 
-The return will be a dictionary, containing the following elements:
+The return value will be a dictionary, containing the following elements:
    * ```df``` (pandas.DataFrame): The DataFrame to store the streamed data.
    * ```lock``` (threading.Lock): A lock object for synchronization of DataFrame Access.
    * ```thread``` (Thread): Starting the Thread will terminate the stream
 
 * The header of the dataframe will contain all keys of the "data" key of the JSON response file.
-* The streamed values will be in the row of the dataframe.
+* The streamed values will be in the row of the DataFrame. Tje Dataframe will be dynamically updated by XTBpy and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can bev found at the bottom row.
+* Please see the example beliw to find out how to access the values in the DataFrame.
 * You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
@@ -184,7 +191,7 @@ XTBData.delete()
 ```
 <br/>
 
-# **Contribution**
+# **Contributing**
 
 
 <br/>
