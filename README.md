@@ -35,8 +35,7 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 **Documentation**
 ===================
 
-For detailed documentation on all available methods and parameters, refer to the API Documentation.
-<br/>
+You find the official documentation of the XTB API under: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) 
 
 **Data Commands**
 ===================
@@ -69,27 +68,39 @@ XTBData.delete()
 
 **Streaming Commands**
 ===================
+XTBpy includes all Streaming commands, exept
+* ping
+* KeepAlive
+this two commands are automatically executed by XTBpy
 
 Commands
 --------
-The Documetation of all Commands can be read in the official API documentation (#sources) at 6.Available streaming commands
-* streamBalance
-* streamCandles
-* streamNews
-* streamProfits
-* streamTickPrices
-* streamTrade
-* streamTradeStatus
+In the following all available streaming commands are listed.
+In contrast to the officiall streaming commands which ar called get/Command/,
+the streaming commands in XTBpy are called stream/Command/.
+This was necessary becous of double Naming from the official API.
 
-*
+* streamBalance()
+* streamCandles(symbol: str)
+* streamNews()
+* streamProfits()
+* streamTickPrices(symbol: str, minArrivalTime: int, maxLevel: int=1)
+* streamTrades()
+* streamTradeStatus()
 
-*
+The return will be a dictionary, containing the following elements:
+   * df (pandas.DataFrame): The DataFrame to store the streamed data.
+   * lock (threading.Lock): A lock object for synchronization of DataFrame Access.
+   * thread (Thread): Starting the Thread will terminate the stream
 
-
-
+The header of the dataframe will contain all keys of the  "data" key of the JSON response file.
+The streamed values will be in the row of the dataframe.
+For pandas DataFrame doku see here: [Pandas](https://pandas.pydata.org/) 
 
 Example
 -------
+the following example will show how to stream data with XTBpy.
+You will find this example also in tests/test_stream_ticker.py
 
 ```python
 import XTB
@@ -132,6 +143,6 @@ XTBData.delete()
 <br />
 
 # **Sources**
-[XTB](https://www.xtb.com/) | [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) 
+[XTB](https://www.xtb.com/) | [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) | [Pandas](https://pandas.pydata.org/) 
 
 <br/>
