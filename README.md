@@ -44,8 +44,8 @@ XTBpy includes all Data commands, exept
 </n>
 this command is automatically executed by XTBpy
 
-Commands
---------
+## **Commands**
+
 In the following all available data commands are listed.
 
 * ```getAllSymbols()```
