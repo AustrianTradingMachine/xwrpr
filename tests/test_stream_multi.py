@@ -32,7 +32,7 @@ from datetime import datetime, timedelta
 DEMO=False
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=XTB.generate_logger(name="TEST",path=Path('~/Logger/XTBpy').expanduser())
+logger=XTB.generate_logger(name="TEST_stream_multi",path=Path('~/Logger/XTBpy').expanduser())
 
 
 # Creating Wrapper
