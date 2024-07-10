@@ -8,7 +8,6 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 <!--ts-->
 * [Features](#features)
 * [Installation](#installation)
-* [Documentation](#documentation)
 * [Data](#data)
     * [Commands](#commands)
     * [Example](#example)
@@ -35,11 +34,6 @@ You can install the XTB API Python Wrapper via pip:
 ```bash
 pip install XTBpy
 ```
-
-# **Documentation**
-===================
-
-You find the official documentation of the XTB API under: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) 
 
 # **Data**
 
