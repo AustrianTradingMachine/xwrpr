@@ -10,10 +10,10 @@ XTBpy - A wrapper for the API of XTB
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
-    * [Commands](#commands)
+    * [Commands](#data-commands)
     * [Example](#example)
 * [Streaming](#streaming)
-     * [Commands](#commands-stream)
+     * [Commands](#streaming-commands)
      * [Example](#example)
 * [Contributing](#contributing)
 * [Sources](#sources)
@@ -66,7 +66,7 @@ XTBpy includes all Data commands of the XTB API, exept
 </n>
 This command is automatically executed in the background.
 
-## Data Commands **Commands**
+## **Commands**
 
 All available data commands are listed below.
 When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
