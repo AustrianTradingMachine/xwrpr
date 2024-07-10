@@ -39,9 +39,44 @@ You find the official documentation of the XTB API under: [xAPI Protocol Documen
 
 **Data Commands**
 ===================
+XTBpy includes all Data commands, exept
+* ping
+</n>
+this command is automatically executed by XTBpy
+Commands
+--------
+In the following all available streaming commands are listed.
+
+* getAllSymbols()
+* getCalendar()
+* getChartLastRequest(symbol: str, period: str, start: datetime=None)
+* getChartRangeRequest(symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0)
+* getCommissionDef(symbol: str, volume: float)
+* getCurrentUserData()
+* getIbsHistory(start: datetime, end: datetime)
+* getMarginLevel()
+* getMarginTrade(symbol: str, volume: float)
+* getNews(start: datetime, end: datetime)
+* getProfitCalculation(symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int)
+* getServerTime()
+* getStepRules()
+* getSymbol(symbol: str)
+* getTickPrices(symbols: list, time: datetime, level: int=-1)
+* getTradeRecords(orders: list)
+* getTrades(openedOnly: bool)
+* getTradeHistory(start: datetime, end: datetime)
+* getTradingHours(symbols: list)
+* getVersion()
+* tradeTransaction(cmd: int, customComment: str, expiration: datetime, offset: int, order: int, price: float, sl: float, symbol: str, tp: float, type: int, volume: float)
+* tradeTransactionStatus(order: int)
+
+The return will always be a dictionary with the key-value pairs of the "returnData" key of the JSON response file.
 
 Example
 -------
+the following example will show how to stream data with XTBpy.
+You will find this example also in tests/test_get_symbol.py
+
 ```python
 import XTB
 from pathlib import Path
@@ -94,7 +129,7 @@ The return will be a dictionary, containing the following elements:
    * lock (threading.Lock): A lock object for synchronization of DataFrame Access.
    * thread (Thread): Starting the Thread will terminate the stream
 
-The header of the dataframe will contain all keys of the  "data" key of the JSON response file.
+The header of the dataframe will contain all keys of the "data" key of the JSON response file.
 The streamed values will be in the row of the dataframe.
 For pandas DataFrame doku see here: [Pandas](https://pandas.pydata.org/) 
 
