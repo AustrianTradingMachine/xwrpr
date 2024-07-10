@@ -21,49 +21,30 @@
 #
 ###########################################################################
 
-from config import XTB, generate_logger
+import XTB
+from pathlib import Path
 import time
 from datetime import datetime, timedelta
 
+
+# Setting DEMO to True will use the demo account
 DEMO=True
 
-# just example how to generate alogger. Feel free to use your own logger
-logger=generate_logger(name="TEST",path='~/Logger/XTBpy')
 
-print(XTB.__version__)
-print(XTB.API_VERSION)
+# just example how to generate alogger. Feel free to use your own logger
+logger=XTB.generate_logger(name="TEST",path=Path('~/Logger/XTBpy'))
 
 
 # Creating Wrapper
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-# getting API version
-version=XTBData.getVersion()
-
-if version['version'] != XTB.API_VERSION:
-    print("API version is different")
-
-# gettinbg all symbols
-alls=XTBData.getAllSymbols()
-
-for record in alls:
-    print(record['symbol']+" "+record['categoryName']+" "+record['description'])
-
-# getting chart history
-chart=XTBData.getChartRangeRequest(period='M15', symbol='EURUSD', end=datetime.now(), start=datetime.now() - timedelta(days=30))
-
-for candle in chart['rateInfos']:
-    print("open " + str(candle['open']) + " high " + str(candle['high']) + " low " + str(candle['low']) + " close " + str(candle['close']) + " volume " + str(candle['vol']) + " time " + candle['ctmString'])
-
-# getting the Trading Hours
-th=XTBData.getTradingHours(symbols=['EURUSD'])
-
-print(th)
 
 # Streaming data an reading the df
 exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
+# Streaming data an reading the df
 later = datetime.now() + timedelta(seconds=60*1)
+
 while datetime.now() < later:
     exchange['lock'].acquire(blocking=True)
     if not exchange['df'].empty:

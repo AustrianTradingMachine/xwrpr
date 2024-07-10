@@ -21,9 +21,29 @@
 #
 ###########################################################################
 
-from XTB.wrapper import Wrapper
-from XTB.utils import generate_logger
+import XTB
+from pathlib import Path
 
-API_VERSION = '2.5.0'
-__version__ = '0.1.0'
-__all__ = ['Wrapper', 'generate_logger', 'API_VERSION']
+
+# Setting DEMO to True will use the demo account
+DEMO=True
+
+
+# just example how to generate alogger. Feel free to use your own logger
+logger=XTB.generate_logger(name="TEST",path=Path('~/Logger/XTBpy'))
+
+
+# Creating Wrapper
+XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+
+
+# getting all symbols
+# could take some time
+alls=XTBData.getAllSymbols()
+
+for record in alls:
+    print(record['symbol']+" "+record['categoryName']+" "+record['description'])
+
+
+# Close Wrapper
+XTBData.delete()

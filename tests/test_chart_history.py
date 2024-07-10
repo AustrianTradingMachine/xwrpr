@@ -21,9 +21,29 @@
 #
 ###########################################################################
 
-from XTB.wrapper import Wrapper
-from XTB.utils import generate_logger
+import XTB
+from pathlib import Path
+from datetime import datetime, timedelta
 
-API_VERSION = '2.5.0'
-__version__ = '0.1.0'
-__all__ = ['Wrapper', 'generate_logger', 'API_VERSION']
+
+# Setting DEMO to True will use the demo account
+DEMO=True
+
+
+# just example how to generate alogger. Feel free to use your own logger
+logger=XTB.generate_logger(name="TEST",path=Path('~/Logger/XTBpy'))
+
+
+# Creating Wrapper
+XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+
+
+# getting chart history
+chart=XTBData.getChartRangeRequest(period='M15', symbol='EURUSD', end=datetime.now(), start=datetime.now() - timedelta(days=30))
+
+for candle in chart['rateInfos']:
+    print("open " + str(candle['open']) + " high " + str(candle['high']) + " low " + str(candle['low']) + " close " + str(candle['close']) + " volume " + str(candle['vol']) + " time " + candle['ctmString'])
+
+
+# Close Wrapper
+XTBData.delete()
