@@ -37,8 +37,8 @@ class CustomBuildPy(build_py):
         
         target_config_dir.mkdir(parents=True, exist_ok=True)
         
-        shutil.copy2(source_config_path, target_config_path)
-        print(f'Configuration file created at {target_config_path}')
+        if not target_config_path.exists():
+            shutil.copy2(source_config_path, target_config_path)
 
         # Run the standard install process
         build_py.run(self)
