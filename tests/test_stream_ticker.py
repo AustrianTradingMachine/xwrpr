@@ -26,7 +26,6 @@ from pathlib import Path
 import time
 from datetime import datetime, timedelta
 
-
 # Setting DEMO to True will use the demo account
 DEMO=False
 
@@ -43,7 +42,7 @@ XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
 
 # Streaming data an reading the df
-later = datetime.now() + timedelta(seconds=60*1)
+later = datetime.now() + timedelta(seconds=30)
 
 while datetime.now() < later:
     exchange['lock'].acquire(blocking=True)

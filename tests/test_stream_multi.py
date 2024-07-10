@@ -70,10 +70,11 @@ def Candles(later: datetime):
 
     exchange['thread'].start()
 
+end = datetime.now() + timedelta(seconds=30)
 
 # Defining streaming threads
-TickerThread = Thread(target=Ticker, args=(datetime.now()+timedelta(seconds=60*1),), daemon=True)
-CandlesThread = Thread(target=Candles, args=(datetime.now()+timedelta(seconds=60*1),), daemon=True)
+TickerThread = Thread(target=Ticker, args=(end,), daemon=True)
+CandlesThread = Thread(target=Candles, args=(end,), daemon=True)
 
 
 # Starting streaming threads

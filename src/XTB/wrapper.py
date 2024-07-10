@@ -143,7 +143,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         """
         sh = self.provide_StreamHandler()
@@ -167,7 +167,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe: 
             name	            type	    description
@@ -192,7 +192,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe: 
             name	            type	    description
@@ -224,7 +224,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe: 
             name	            type	    description
@@ -244,7 +244,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe: 
             name	            type	    description
@@ -269,7 +269,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe:
             name	            type	    description
@@ -317,7 +317,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe:
             Dictionary with the following fields:
@@ -389,7 +389,7 @@ class Wrapper(HandlerManager):
             A dictionary, containing the following elements:
                 - df (pandas.DataFrame): The DataFrame to store the streamed data.
                 - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Startin the Thread will terminate the stream
+                - thread (Thread): Starting the Thread will terminate the stream
 
         Format of Dataframe:
             Dictionary with the following fields:
