@@ -36,11 +36,6 @@ You can install the XTB API Python Wrapper via pip:
 pip install XTBpy
 ```
 
-You can install the XTB API Python Wrapper via pip:
-```bash
-pip install XTBpy
-```
-
 # **Documentation**
 ===================
 
