@@ -2,6 +2,8 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
+#    XTBpy, a wrapper for the API of XTB (https://www.xtb.com)
+#
 #    Copyright (C) 2024  Philipp Craighero
 #
 #    This program is free software: you can redistribute it and/or modify
