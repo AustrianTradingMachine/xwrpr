@@ -8,6 +8,7 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 <!--ts-->
 * [Features](#features)
 * [Installation](#installation)
+* [Documentation](#documentation)
 * [Data Commands](#data_commands)
     * [Commands](#commands)
     * [Example](#example)
@@ -29,7 +30,12 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 
 **Installation**
 ===================
+<br/>
 
+**Documentation**
+===================
+
+For detailed documentation on all available methods and parameters, refer to the API Documentation.
 <br/>
 
 **Data Commands**
@@ -67,13 +73,13 @@ XTBData.delete()
 Commands
 --------
 The Documetation of all Commands can be read in the official API documentation (#sources) at 6.Available streaming commands
-*streamBalance
-*streamCandles
-*streamNews
-*streamProfits
-*streamTickPrices
-*streamTrade
-*streamTradeStatus
+* streamBalance
+* streamCandles
+* streamNews
+* streamProfits
+* streamTickPrices
+* streamTrade
+* streamTradeStatus
 
 *
 
