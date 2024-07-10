@@ -59,7 +59,7 @@ this command is automatically executed in the background.
 
 All available data commands are listed below.
 When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
-Datetime objects, which are typically in your operating system's time zone, are automatically converted (by XTBpy) to a UTC-UX timestamp which is required by the XTB API.
+Datetime objects, which are defined in your operating system's time zone, will be automatically converted to a UTC-UX timestamp which is required by the XTB API.
 
    * ```getAllSymbols()```
    * ```getCalendar()```
