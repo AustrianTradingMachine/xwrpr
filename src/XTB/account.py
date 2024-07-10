@@ -21,13 +21,58 @@
 #
 ###########################################################################
 
-import os
+from pathlib import Path
+import configparser
 
-userid_real = os.getenv('XTB_USERNAME')
-userid_demo = os.getenv('XTB_USERNAME_DEMO')
-password = os.getenv('XTB_PASSWORD')
+def _get_config(value: str):
+    """
+    Retrieves the value of a configuration key from the user.ini file.
 
-env_vars = [userid_real, userid_demo, password]
+    Args:
+        value (str): The key to retrieve the value for.
 
-if None in env_vars or "" in env_vars:
-    raise ValueError("Please set the environment variables XTB_USERNAME, XTB_USERNAME_DEMO and XTB_PASSWORD")
+    Returns:
+        str: The value associated with the specified key.
+
+    Raises:
+        FileNotFoundError: If the configuration file is not found.
+        KeyError: If the specified key is not found in the configuration file.
+    """
+    config_path = Path('~/.XTB').parent.absolute() / 'user.ini'
+
+    if not config_path.exists():
+        raise FileNotFoundError(f'Configuration file not found at {config_path}')
+    
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    try:
+        return config['USER'][value]
+    except KeyError:
+        raise KeyError(f'Key {value} not found in configuration file')
+
+def get_userId(demo: bool):
+    """
+    Get the user ID based on the demo flag.
+
+    Parameters:
+    - demo (bool): Flag indicating whether the user is in demo mode or not.
+
+    Returns:
+    - str: The user ID based on the demo flag.
+    """
+    if demo:
+        userId = _get_config('DEMO_ID')
+    else:
+        userId = _get_config('REAL_ID')
+
+    return userId
+
+def get_password():
+    """
+    Retrieves the password from the configuration file.
+
+    Returns:
+        str: The password stored in the configuration file.
+    """
+    return _get_config('PASSWORD')

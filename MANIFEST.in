@@ -20,7 +20,7 @@
 ###########################################################################
 
 
-include XTBpy/LICENSE
-include XTBpy/README.md
-include XTB/*.cfg
-include XTBpy/src/XTB/*.cfg
+include LICENSE
+include README.md
+include *.ini
+include src/XTB/*.ini

@@ -24,7 +24,7 @@
 import os
 import logging
 import time
-import pathlib
+from pathlib import Path
 import configparser
 from math import floor
 from threading import Lock
@@ -32,12 +32,12 @@ from queue import Queue, Empty
 import pandas as pd
 from XTB.client import Client
 from XTB.utils import pretty ,generate_logger, CustomThread
-from XTB import account
+from XTB.account import get_userId, get_password
 
 
 # read api configuration
 config = configparser.ConfigParser()
-config_path=pathlib.Path(__file__).parent.absolute()/ 'api.cfg'
+config_path=Path(__file__).parent.absolute()/ 'api.ini'
 config.read(config_path)
 
 HOST=config.get('SOCKET','HOST')
@@ -60,7 +60,6 @@ class _GeneralHandler(Client):
         _logger (logging.Logger): The logger instance.
         _host (str): The host address.
         _port (int): The port number.
-        _userid (str): The user ID.
         _stream (bool): A flag indicating whether to use streaming.
         _encrypted (bool): A flag indicating whether the connection is encrypted.
         _interval (float): The interval between sending requests.
@@ -79,14 +78,13 @@ class _GeneralHandler(Client):
         stop_ping: Stops the ping process.
     """
 
-    def __init__(self, host: str, port: int, userid: str, stream: bool, logger=None):
+    def __init__(self, host: str, port: int, stream: bool, logger=None):
         """
         Initializes the Handler object.
 
         Args:
             host (str): The host address.
             port (int): The port number.
-            userid (str): The user ID.
             stream (bool): Indicates whether to use streaming or not.
             logger (logging.Logger, optional): The logger object. Defaults to None.
         
@@ -103,7 +101,6 @@ class _GeneralHandler(Client):
 
         self._host=host
         self._port=port
-        self._userid=userid
         self._stream=stream
 
         self._encrypted=True
@@ -382,14 +379,12 @@ class _DataHandler(_GeneralHandler):
         self._host=HOST
         if self._demo:
             self._port=PORT_DEMO
-            self._userid=account.userid_demo
         else:
             self._port=PORT_REAL
-            self._userid=account.userid_real
 
         self._logger.info("Creating DataHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, stream = False, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, stream = False, logger=self._logger)
         
         self._stream_handlers=[]
         self._reconnect_lock=Lock()
@@ -451,7 +446,7 @@ class _DataHandler(_GeneralHandler):
             return False
             
         with self._ping_lock:
-            if not self.send_request(command='login', arguments={'arguments': {'userId': self._userid, 'password': account.password}}):
+            if not self.send_request(command='login', arguments={'arguments': {'userId': get_userId(self._demo), 'password': get_password()}}):
                 self._logger.error("Log in failed")
                 return False
             
@@ -756,14 +751,12 @@ class _StreamHandler(_GeneralHandler):
         self._host = HOST
         if self._demo:
             self._port = PORT_DEMO_STREAM
-            self._userid = account.userid_demo
         else:
             self._port = PORT_REAL_STREAM
-            self._userid = account.userid_real
 
         self._logger.info("Creating StreamHandler ...")
 
-        super().__init__(host=self._host, port=self._port, userid=self._userid, stream=True, logger=self._logger)
+        super().__init__(host=self._host, port=self._port, stream=True, logger=self._logger)
 
         self._dh = dataHandler
         self._dh._attach_stream_handler(self)

@@ -21,32 +21,26 @@
 #
 ###########################################################################
 
-import os
 from setuptools.command.install import install
 from setuptools import setup, find_packages
 from pathlib import Path
+import shutil
 
 
 class CustomInstall(install):
-    """
-    Custom installation class that extends the functionality of the base `install` class.
-    This class creates a custom installation process for the XTBpy package.
-    """
     def run(self):
-        # Call the superclass run method
+        # Run the standard install process
         install.run(self)
         
-        # Define the configuration directory and file paths
-        config_dir = os.path.expanduser('~/.XTBpy')
-        config_file_path = os.path.join(config_dir, 'user.cfg')
+        source_config_path = Path(__file__).parent / 'user.ini'
         
-        # Ensure the configuration directory exists
-        os.makedirs(config_dir, exist_ok=True)
+        target_config_dir = Path.home() / '.XTBpy'
+        target_config_path = target_config_dir / 'user.ini'
         
-        # Check if the config file already exists to avoid overwriting
-        if not os.path.exists(config_file_path):
-            with open(config_file_path, 'w') as config_file:
-                config_file.write("# Your default configuration\n")
+        target_config_dir.mkdir(parents=True, exist_ok=True)
+        
+        shutil.copy2(source_config_path, target_config_path)
+        print(f'Configuration file created at {target_config_path}')
 
 
 this_directory = Path(__file__).parent

@@ -25,6 +25,7 @@ import logging
 import os
 import pandas as pd
 from threading import Lock
+from pathlib import Path
 import configparser
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -34,7 +35,8 @@ from XTB.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
 
 # read api configuration
 config = configparser.ConfigParser()
-config.read('XTB/api.cfg')
+config_path=Path(__file__).parent.absolute()/ 'api.ini'
+config.read(config_path)
 
 SEND_INTERVAL=config.getint('CONNECTION','SEND_INTERVAL')
 
