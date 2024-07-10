@@ -98,7 +98,7 @@ Datetime objects, which are defined in your operating system's time zone, will b
 * The return value will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
 * You will find a full documentation of all API data commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
-# **Example**
+## **Example**
 
 The following example will show how to retrieve data with XTBpy.
 You will find this example also in tests/test_get_symbol.py
@@ -125,8 +125,8 @@ XTBpy includes all Streaming commands of the XTB API, exept
 </n>
 This two commands are automatically executed in the background.
 
-Commands
---------
+## **Commands**
+
 All available streaming commands are listed below.
 Unlike the official API streaming commands like get*Command*,
 the streaming commands in XTBpy are called stream*Command*.
@@ -151,7 +151,7 @@ The return value will be a dictionary, containing the following elements:
 * You will find a full documentation of all API stream commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
-## Streaming Commands **Commands**
+## **Example**
 
 The following example will show how to stream data with XTBpy.
 You will find this example also in tests/test_stream_ticker.py
