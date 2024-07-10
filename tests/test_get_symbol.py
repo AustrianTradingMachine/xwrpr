@@ -37,8 +37,7 @@ logger=XTB.generate_logger(name="TEST_get_symbol",path=Path('~/Logger/XTBpy').ex
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
 
-# getting all symbols
-# could take some time
+# getting data for the symbols
 symbol=XTBData.getSymbol(symbol='ETHEREUM')
 
 print(symbol)
