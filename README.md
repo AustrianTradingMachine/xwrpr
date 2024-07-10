@@ -40,7 +40,7 @@ You find the official documentation of the XTB API under: [xAPI Protocol Documen
 **Data Commands**
 ===================
 XTBpy includes all Data commands, exept
-* ping
+* ```ping```
 </n>
 this command is automatically executed by XTBpy
 
@@ -105,8 +105,8 @@ XTBData.delete()
 **Streaming Commands**
 ===================
 XTBpy includes all Streaming commands, exept
-* ping
-* KeepAlive
+* ```ping```
+* ```KeepAlive```
 </n>
 this two commands are automatically executed by XTBpy
 
@@ -132,7 +132,9 @@ The return will be a dictionary, containing the following elements:
 
 The header of the dataframe will contain all keys of the "data" key of the JSON response file.
 The streamed values will be in the row of the dataframe.
+
 You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+
 For pandas DataFrame doku see here: [Pandas](https://pandas.pydata.org/) 
 
 Example
