@@ -92,8 +92,7 @@ logger=XTB.generate_logger(name="TEST_get_symbol",path=Path('~/Logger/XTBpy').ex
 # Creating Wrapper
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
 
-# getting all symbols
-# could take some time
+# getting data for the symbols
 symbol=XTBData.getSymbol(symbol='ETHEREUM')
 
 print(symbol)
@@ -118,13 +117,13 @@ In contrast to the officiall streaming commands which ar called get_Command_,
 the streaming commands in XTBpy are called stream_Command_.
 This was necessary becous of double Naming from the official API.
 
-* streamBalance()
-* streamCandles(symbol: str)
-* streamNews()
-* streamProfits()
-* streamTickPrices(symbol: str, minArrivalTime: int, maxLevel: int=1)
-* streamTrades()
-* streamTradeStatus()
+*```python streamBalance()```
+*``` streamCandles(symbol: str)```
+* ```streamNews()```
+* ```streamProfits()```
+* ```streamTickPrices(symbol: str, minArrivalTime: int, maxLevel: int=1)```
+*``` streamTrades()```
+* ```streamTradeStatus()```
 
 The return will be a dictionary, containing the following elements:
    * df (pandas.DataFrame): The DataFrame to store the streamed data.
