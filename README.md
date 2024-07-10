@@ -10,11 +10,11 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 * [Installation](#installation)
 * [Documentation](#documentation)
 * [Data](#data)
-    * [Commands](#commands_data)
-    * [Example](#example_data)
+    * [Commands](#commands)
+    * [Example](#example)
 * [Streaming](#streaming)
-     * [Commands](#commands-stream)
-     * [Example](#example-stream)
+     * [Commands](#commands)
+     * [Example](#example)
 * [Data Commands](#data_commands)
 * [Sources](#sources)
 <!--te-->
@@ -29,8 +29,12 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 <br/>
 
 # **Installation**
-===================
-<br/>
+
+
+You can install the XTB API Python Wrapper via pip:
+```bash
+pip install xtb-api-wrapper
+```
 
 # **Documentation**
 ===================
