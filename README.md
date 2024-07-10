@@ -31,6 +31,7 @@ Please consider that XTBpy is still in Alpha stage and needs mor development to 
 
 # **XTB resources**
 [XTB](https://www.xtb.com/)
+</n>
 [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
 
