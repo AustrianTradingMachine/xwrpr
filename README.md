@@ -38,7 +38,6 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 You find the official documentation of the XTB API under: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) 
 
 # **Data**
-===================
 
 XTBpy includes all Data commands, exept
 * ```ping```
@@ -104,7 +103,7 @@ XTBData.delete()
 <br/>
 
 # **Streaming**
-===================
+
 XTBpy includes all Streaming commands, exept
 * ```ping```
 * ```KeepAlive```
