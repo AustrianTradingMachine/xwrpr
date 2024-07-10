@@ -71,13 +71,14 @@ XTBData.delete()
 XTBpy includes all Streaming commands, exept
 * ping
 * KeepAlive
+</n>
 this two commands are automatically executed by XTBpy
 
 Commands
 --------
 In the following all available streaming commands are listed.
-In contrast to the officiall streaming commands which ar called get/Command/,
-the streaming commands in XTBpy are called stream/Command/.
+In contrast to the officiall streaming commands which ar called get_Command_,
+the streaming commands in XTBpy are called stream_Command_.
 This was necessary becous of double Naming from the official API.
 
 * streamBalance()
