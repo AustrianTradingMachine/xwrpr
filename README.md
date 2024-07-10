@@ -38,6 +38,7 @@ pip install XTBpy
 
 * After installation a file ```.XTBpy/user.ini``` is created in your home directory
 * To acess the XTB API, you must enter your userId and your password for [XTB](https://www.xtb.com/) in ```user.ini```
+* Please ensure that no other person has access to your login details
 
 <br/>
 
