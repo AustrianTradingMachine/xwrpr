@@ -36,8 +36,8 @@ You can install the XTB API Python Wrapper via pip:
 pip install XTBpy
 ```
 
-* After installation a file ```user.ini``` is created in your home directory
-* To acess the XTB API, you must enter your userId and your password for [XTB](https://www.xtb.com/)
+* After installation a file ```.XTBpy/user.ini``` is created in your home directory
+* To acess the XTB API, you must enter your userId and your password for [XTB](https://www.xtb.com/) in ```user.ini```
 
 <br/>
 
