@@ -21,17 +21,15 @@
 #
 ###########################################################################
 
-from setuptools.command.install import install
+# https://docs.python.org/3.11/distutils/apiref.html
+from setuptools.command.build_py import build_py
 from setuptools import setup, find_packages
 from pathlib import Path
 import shutil
 
 
-class CustomInstall(install):
+class CustomBuildPy(build_py):
     def run(self):
-        # Run the standard install process
-        install.run(self)
-        
         source_config_path = Path(__file__).parent / 'user.ini'
         
         target_config_dir = Path.home() / '.XTBpy'
@@ -41,6 +39,9 @@ class CustomInstall(install):
         
         shutil.copy2(source_config_path, target_config_path)
         print(f'Configuration file created at {target_config_path}')
+
+        # Run the standard install process
+        build_py.run(self)
 
 
 this_directory = Path(__file__).parent
@@ -54,6 +55,6 @@ setup(
         'XTBpy': ['config/user.cfg']
         },
     cmdclass={
-        'install': CustomInstall,
-    }
+        'build_py': CustomBuildPy,
+        },
 )
