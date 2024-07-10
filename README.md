@@ -110,7 +110,7 @@ print(symbol)
 
 XTBpy includes all Streaming commands of the XTB API, exept
    * ```ping```
-   * ```KeepAlive```
+   * ```getKeepAlive```
 </n>
 this two commands are automatically executed in the background
 
