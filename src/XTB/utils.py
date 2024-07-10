@@ -60,7 +60,8 @@ def generate_logger(name: str, stream_level: str = None, file_level: str = None,
             except Exception as e:
                 raise ValueError(f"Could not create the directory {path}. Error: {e}")
 
-        file_handler = logging.FileHandler(path + "/" + name + ".log")
+        log_file_path = path / f"{name}.log"
+        file_handler = logging.FileHandler(log_file_path)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(_validate_level(file_level, default="debug"))
         logger.addHandler(file_handler)

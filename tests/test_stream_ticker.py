@@ -28,11 +28,11 @@ from datetime import datetime, timedelta
 
 
 # Setting DEMO to True will use the demo account
-DEMO=True
+DEMO=False
 
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=XTB.generate_logger(name="TEST",path=Path('~/Logger/XTBpy'))
+logger=XTB.generate_logger(name="TEST",path=Path('~/Logger/XTBpy').expanduser())
 
 
 # Creating Wrapper

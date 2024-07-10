@@ -38,7 +38,8 @@ def _get_config(value: str):
         FileNotFoundError: If the configuration file is not found.
         KeyError: If the specified key is not found in the configuration file.
     """
-    config_path = Path('~/.XTB').parent.absolute() / 'user.ini'
+    dir_path = Path('~/.XTBpy').expanduser()
+    config_path = dir_path / 'user.ini'
 
     if not config_path.exists():
         raise FileNotFoundError(f'Configuration file not found at {config_path}')

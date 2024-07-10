@@ -42,7 +42,7 @@ classifiers=[
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
-]
+    ]
 keywords=["XTB","API","trading","finance","development"]
 dependencies=[
     "pandas>2.0.3",
@@ -53,3 +53,13 @@ requires-python = ">=3.9"
 
 [project.urls]
 Homepage = "https://github.com/AustrianTradingMachine/XTBpy"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    ]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+    ]
