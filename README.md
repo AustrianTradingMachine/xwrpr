@@ -10,7 +10,7 @@ XTBpy - A wrapper for the API of XTB
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
-    * [Commands](#commands-date)
+    * [Commands](#commands)
     * [Example](#example)
 * [Streaming](#streaming)
      * [Commands](#commands-stream)
@@ -66,7 +66,7 @@ XTBpy includes all Data commands of the XTB API, exept
 </n>
 This command is automatically executed in the background.
 
-## **Commands**
+## Data Commands **Commands**
 
 All available data commands are listed below.
 When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
@@ -151,8 +151,8 @@ The return value will be a dictionary, containing the following elements:
 * You will find a full documentation of all API stream commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
-Example
--------
+## Streaming Commands **Commands**
+
 The following example will show how to stream data with XTBpy.
 You will find this example also in tests/test_stream_ticker.py
 
