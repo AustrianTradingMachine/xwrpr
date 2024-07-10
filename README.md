@@ -32,7 +32,7 @@ XTBpy - A wrapper for the API of XTB
 * **Dynamic DataFrames**: Streaming data managed in dynamically updated Pandas DataFrames.
 * **Thread-Safe Access**: Synchronization of DataFrame access using threading locks.
 * **Extensive Examples**: Sample code provided for both data retrieval and streaming.
-  * **Extensive Documentation**: Full documentation of all API data and streaming commands.
+* **Extensive Documentation**: Full documentation of all API data and streaming commands.
 
 
 ## **Caution**
