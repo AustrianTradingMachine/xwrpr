@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; py-indent-offset:4 -*-
-########################################################################
+###########################################################################
+#
 #    XTBpy a wrapper for the XTB API
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -16,7 +17,8 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-########################################################################
+#
+###########################################################################
 
 import logging
 import os
