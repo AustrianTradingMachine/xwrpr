@@ -22,7 +22,7 @@
 ###########################################################################
 
 import logging
-import os
+from pathlib import Path
 import threading
 import re
 import datetime
@@ -31,7 +31,7 @@ import tzlocal
 from dateutil.relativedelta import relativedelta
 
 
-def generate_logger(name: str, stream_level: str = None, file_level: str = None, path: str = None):
+def generate_logger(name: str, stream_level: str = None, file_level: str = None, path: Path = None):
     """
     Generate a logger with the specified name and configuration.
 
@@ -54,9 +54,9 @@ def generate_logger(name: str, stream_level: str = None, file_level: str = None,
     logger.addHandler(console_handler)
 
     if path is not None:
-        if not os.path.exists(path):
+        if not path.exists():
             try:
-                os.makedirs(path)
+                path.mkdir(parents=True)
             except Exception as e:
                 raise ValueError(f"Could not create the directory {path}. Error: {e}")
 

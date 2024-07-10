@@ -21,7 +21,6 @@
 #
 ###########################################################################
 
-import os
 import logging
 import time
 from pathlib import Path
@@ -97,7 +96,7 @@ class _GeneralHandler(Client):
             
             self._logger = logger
         else:
-            self._logger=generate_logger(name='GeneralHandler', path=os.path.join(os.getcwd(), "logs"))
+            self._logger=generate_logger(name='GeneralHandler', path=Path.cwd() / "logs")
 
         self._host=host
         self._port=port
@@ -372,7 +371,7 @@ class _DataHandler(_GeneralHandler):
             
             self._logger = logger
         else:
-            self._logger=generate_logger(name='DataHandler', path=os.path.join(os.getcwd(), "logs"))
+            self._logger=generate_logger(name='DataHandler', path=Path.cwd() / "logs")
 
         self._demo=demo
 
@@ -744,7 +743,7 @@ class _StreamHandler(_GeneralHandler):
             
             self._logger = logger
         else:
-            self._logger = generate_logger(name='StreamHandler', path=os.path.join(os.getcwd(), "logs"))
+            self._logger = generate_logger(name='StreamHandler', path=Path.cwd() / "logs")
 
         self._demo = demo
 
@@ -1173,7 +1172,7 @@ class HandlerManager():
             
             self._logger = logger
         else:
-            self._logger=generate_logger(name='HandlerManager', path=os.path.join(os.getcwd(), "logs"))
+            self._logger=generate_logger(name='HandlerManager', path=Path.cwd() / "logs")
 
         self._handlers = {'data': {}, 'stream': {}}
         self._max_streams=floor(1000/SEND_INTERVAL)

@@ -22,7 +22,6 @@
 ###########################################################################
 
 import logging
-import os
 import pandas as pd
 from threading import Lock
 from pathlib import Path
@@ -96,7 +95,7 @@ class Wrapper(HandlerManager):
             
             self._logger = logger.getChild('Wrp')
         else:
-            self._logger=generate_logger(name='Wrp', path=os.path.join(os.getcwd(), "logs"))
+            self._logger=generate_logger(name='Wrp', path=Path.cwd() / "logs")
 
         self._logger.info("Initializing wrapper")
 

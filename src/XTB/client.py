@@ -25,7 +25,7 @@ import socket
 import ssl
 import time
 import select
-import os
+from pathlib import Path
 import logging
 import json
 from XTB.utils import generate_logger
@@ -92,7 +92,7 @@ class Client():
             
             self._logger = logger
         else:
-            self._logger = generate_logger(name='Client', path=os.path.join(os.getcwd(), "logs"))
+            self._logger = generate_logger(name='Client', path=Path.cwd() / "logs")
         
         self._host = host
         self._port = port
