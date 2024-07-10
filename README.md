@@ -78,8 +78,8 @@ Datetime objects, which are typically in your operating system's time zone, are 
 * ```tradeTransaction(cmd: int, customComment: str, expiration: datetime, offset: int, order: int, price: float, sl: float, symbol: str, tp: float, type: int, volume: float)```
 * ```tradeTransactionStatus(order: int)```
 
-*The return will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the JSON response file.
-*You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+* The return will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the JSON response file.
+* You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
 Example
 -------
@@ -137,10 +137,10 @@ The return will be a dictionary, containing the following elements:
    * ```lock``` (threading.Lock): A lock object for synchronization of DataFrame Access.
    * ```thread``` (Thread): Starting the Thread will terminate the stream
 
-*The header of the dataframe will contain all keys of the "data" key of the JSON response file.
-*The streamed values will be in the row of the dataframe.
-*You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
-*The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
+* The header of the dataframe will contain all keys of the "data" key of the JSON response file.
+* The streamed values will be in the row of the dataframe.
+* You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+* The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
 Example
 -------
