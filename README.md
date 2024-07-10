@@ -39,6 +39,7 @@ You find the official documentation of the XTB API under: [xAPI Protocol Documen
 
 # **Data**
 ===================
+
 XTBpy includes all Data commands, exept
 * ```ping```
 </n>
