@@ -112,7 +112,7 @@ XTBpy includes all Streaming commands of the XTB API, exept
    * ```ping```
    * ```getKeepAlive```
 </n>
-this two commands are automatically executed in the background
+this two commands are automatically executed in the background.
 
 Commands
 --------
@@ -130,9 +130,9 @@ This was necessary due to double naming of certain commands by the official API.
    * ```streamTradeStatus()```
 
 The return value will be a dictionary, containing the following elements:
-   * ```df``` (pandas.DataFrame): The DataFrame to store the streamed data.
-   * ```lock``` (threading.Lock): A lock object for synchronization of DataFrame Access.
-   * ```thread``` (Thread): Starting the Thread will terminate the stream
+   * ```df``` (pandas.DataFrame): A DataFrame that contains the stream data.
+   * ```lock``` (threading.Lock): A lock object for synchronization of the DataFrame access.
+   * ```thread``` (Thread): Starting the thread will terminate the stream
 
 * The header of the dataframe will contain all keys of the "data" key of the JSON response file.
 * The streamed values will be in the row of the DataFrame. Tje Dataframe will be dynamically updated by XTBpy and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can bev found at the bottom row.
