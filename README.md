@@ -43,6 +43,7 @@ XTBpy includes all Data commands, exept
 * ping
 </n>
 this command is automatically executed by XTBpy
+
 Commands
 --------
 In the following all available streaming commands are listed.
