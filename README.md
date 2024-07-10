@@ -46,7 +46,7 @@ this command is automatically executed by XTBpy
 
 Commands
 --------
-In the following all available streaming commands are listed.
+In the following all available data commands are listed.
 
 * getAllSymbols()
 * getCalendar()
@@ -72,6 +72,7 @@ In the following all available streaming commands are listed.
 * tradeTransactionStatus(order: int)
 
 The return will always be a dictionary with the key-value pairs of the "returnData" key of the JSON response file.
+You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
 Example
 -------
@@ -132,6 +133,7 @@ The return will be a dictionary, containing the following elements:
 
 The header of the dataframe will contain all keys of the "data" key of the JSON response file.
 The streamed values will be in the row of the dataframe.
+You will find a full documentation of all commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 For pandas DataFrame doku see here: [Pandas](https://pandas.pydata.org/) 
 
 Example
