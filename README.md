@@ -14,26 +14,32 @@ XTBpy - A wrapper for the API of XTB (https://www.xtb.com)
 * [Streaming](#streaming)
      * [Commands](#commands)
      * [Example](#example)
-* [Data Commands](#data_commands)
+* [Contribution](#contribution)
 * [Sources](#sources)
 <!--te-->
 
 <br/>
 
 # **Features**
-
 * 
-
+ 
+## **Caution**
+Please consider that XTBpy is still in Alpha stage and needs mor development to run stable and reliant.
+If you want to contribute please switch to the section
 
 <br/>
 
 # **Installation**
 
-
 You can install the XTB API Python Wrapper via pip:
 ```bash
 pip install XTBpy
 ```
+
+* After installation a file ```user.ini``` is created in your home directory
+* To acess the XTB API, you must enter your userId and your password for [XTB](https://www.xtb.com/)
+
+<br/>
 
 # **Data**
 
@@ -175,6 +181,10 @@ exchange['thread'].start()
 XTBData.delete()
 
 ```
+<br/>
+
+# **Contribution**
+
 
 <br/>
 
