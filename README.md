@@ -89,7 +89,7 @@ Datetime objects, which are typically in your operating system's time zone, are 
 
 Example
 -------
-the following example will show how to retrieve data with XTBpy.
+The following example will show how to retrieve data with XTBpy.
 You will find this example also in tests/test_get_symbol.py
 
 ```python
@@ -142,20 +142,11 @@ The return value will be a dictionary, containing the following elements:
 
 Example
 -------
-the following example will show how to stream data with XTBpy.
+The following example will show how to stream data with XTBpy.
 You will find this example also in tests/test_stream_ticker.py
 
 ```python
 import XTB
-from pathlib import Path
-import time
-from datetime import datetime, timedelta
-
-# Setting DEMO to True will use the demo account
-DEMO=False
-
-# just example how to generate alogger. Feel free to use your own logger
-logger=XTB.generate_logger(name="TEST_stream_ticker",path=Path('~/Logger/XTBpy').expanduser())
 
 # Creating Wrapper
 XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
