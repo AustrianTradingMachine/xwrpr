@@ -151,7 +151,7 @@ This was necessary due to double naming of certain commands by the official API.
    * ```streamTrades()```
    * ```streamTradeStatus()```
 
-The return value will be a dictionary, containing the following elements:
+* The return value will be a dictionary, containing the following elements:
    * ```df``` (pandas.DataFrame): A DataFrame that contains the stream data.
    * ```lock``` (threading.Lock): A lock object for synchronization of the DataFrame access.
    * ```thread``` (Thread): Starting the thread will terminate the stream.
