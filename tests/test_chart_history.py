@@ -31,7 +31,7 @@ DEMO=False
 
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=xtbwrp.generate_logger(name="TEST_chart_history",path=Path('~/Logger/xtbwrpy').expanduser())
+logger=xtbwrp.generate_logger(name="TEST_chart_history",path=Path('~/Logger/xtbwrp').expanduser())
 
 
 # Creating Wrapper

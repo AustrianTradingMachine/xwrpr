@@ -1053,7 +1053,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Invalid level. Choose from: "+", ".join(levels))
             return False
         
-        if not all(isinstance(item, str) for item in levels):
+        if not all(isinstance(item, str) for item in symbols):
             self._logger.error("Invalid symbols. All symbols must be strings.")
             return False
         
