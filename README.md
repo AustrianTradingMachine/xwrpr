@@ -7,15 +7,15 @@ XTBpy - A wrapper for the API of XTB
 
 <!--ts-->
 * [Features](#features)
-   * [API-Version](#api-version)
-   * [Caution](#caution)
+* [API-Version](#api-version)
+* [Caution](#caution)
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
-* [Data](#data)
-    * [Commands](#commands-data)
+* [Data Commands](#data-commands)
+    * [List of Commands](#list-of-commands-data)
     * [Example](#example-data)
-* [Streaming](#streaming)
-     * [Commands](#commands-stream)
+* [Streaming Commands](#streaming-commands)
+     * [List of Commands](#list-of-commands-stream)
      * [Example](#example-stream)
 * [Contributing](#contributing)
 * [License](#license)
@@ -37,11 +37,11 @@ XTBpy - A wrapper for the API of XTB
 * **Examples**: Sample code provided for both data retrieval and streaming.
 * **Documentation**: Full documentation of all API data and streaming commands.
 
-## **API-Version**
+# **API-Version**
 XTBpy relies on the API Version 2.5.0
 
 
-## <span style="color:red">**Caution**</span>
+# <span style="color:red">**Caution**</span>
 <span style="color:red">Please consider that XTBpy is still in Alpha stage and needs more development to run stable and reliant.</span>
 
 <br/>
@@ -66,14 +66,14 @@ pip install XTBpy
 
 <br/>
 
-# **Data**
+# **Data Commands**
 
 XTBpy includes all Data commands of the XTB API exept:
    * ```ping```
 </n>
 This command is automatically executed in the background.
 
-## **Commands** <a name="commands-data"></a>
+## **List of Commands** <a name="commands-data"></a>
 
 * All available data commands are listed below with their Input arguments and format.
 
@@ -134,7 +134,7 @@ print(symbol)
 
 <br/>
 
-# **Streaming**
+# **Streaming Commands**
 
 XTBpy includes all Streaming commands of the XTB API exept:
    * ```ping```
@@ -142,7 +142,7 @@ XTBpy includes all Streaming commands of the XTB API exept:
 </n>
 This two commands are automatically executed in the background.
 
-## **Commands** <a name="commands-stream"></a>
+## **List of Commands** <a name="commands-stream"></a>
 
 Unlike the official API, where streaming commands are named get *Command* , the XTBpy library
 uses the stream *Command* naming convention. This change was necessary to avoid conflicts
@@ -218,6 +218,10 @@ You should have received a copy of the GNU General Public License
 <br/>
 
 # **Sources**
-[XTB](https://www.xtb.com/) | [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) | [xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip) | [Pandas](https://pandas.pydata.org/) | [GNU GPL 3](https://www.gnu.org/licenses/)
+* [XTB](https://www.xtb.com/)
+* [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+* [xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip)
+* [Pandas](https://pandas.pydata.org/)
+* [GNU GPL 3](https://www.gnu.org/licenses/)
 
 <br/>
