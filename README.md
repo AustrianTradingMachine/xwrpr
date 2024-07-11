@@ -138,10 +138,11 @@ This two commands are automatically executed in the background.
 
 ## **Commands**
 
-All available streaming commands are listed below with their Input arguments and format.
 Unlike the official API streaming commands like get*Command*,
 the streaming commands in XTBpy are called stream*Command*.
 This was necessary due to double naming of certain commands by the official API.
+
+*All available streaming commands are listed below with their Input arguments and format.
 
    * ```streamBalance()```
    * ```streamCandles(symbol: str)```
