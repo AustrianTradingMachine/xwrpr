@@ -144,9 +144,9 @@ This two commands are automatically executed in the background.
 
 ## **Commands** <a name="commands-stream"></a>
 
-Unlike the official API streaming commands like get*Command*,
-the streaming commands in XTBpy are called stream*Command*.
-This was necessary due to double naming of certain commands by the official API.
+Unlike the official API, where streaming commands are named get *Command* , the XTBpy library
+uses the stream *Command* naming convention. This change was necessary to avoid conflicts
+caused by the official API's duplicate command names.
 
 * All available streaming commands are listed below with their Input arguments and format.
 
