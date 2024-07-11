@@ -29,9 +29,9 @@ from math import floor
 from threading import Lock
 from queue import Queue, Empty
 import pandas as pd
-from XTB.client import Client
-from XTB.utils import pretty ,generate_logger, CustomThread
-from XTB.account import get_userId, get_password
+from XTBpy.client import Client
+from XTBpy.utils import pretty ,generate_logger, CustomThread
+from XTBpy.account import get_userId, get_password
 
 
 # read api configuration

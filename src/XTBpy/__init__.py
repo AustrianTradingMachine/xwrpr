@@ -21,8 +21,8 @@
 #
 ###########################################################################
 
-from XTB.wrapper import Wrapper
-from XTB.utils import generate_logger
+from XTBpy.wrapper import Wrapper
+from XTBpy.utils import generate_logger
 
 API_VERSION = '2.5.0'
 __version__ = '0.1.0'

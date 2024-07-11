@@ -28,7 +28,7 @@ import select
 from pathlib import Path
 import logging
 import json
-from XTB.utils import generate_logger
+from XTBpy.utils import generate_logger
 
 class Client():
     """

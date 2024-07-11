@@ -21,7 +21,7 @@
 #
 ###########################################################################
 
-import XTB
+import XTBpy
 from pathlib import Path
 
 
@@ -30,17 +30,17 @@ DEMO=False
 
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=XTB.generate_logger(name="TEST_check_user",path=Path('~/Logger/XTBpy').expanduser())
+logger=XTBpy.generate_logger(name="TEST_check_user",path=Path('~/Logger/XTBpy').expanduser())
 
 
 # Creating Wrapper
-XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+XTBData=XTBpy.Wrapper(demo=DEMO, logger=logger)
 
 
 # getting API version
 version=XTBData.getVersion()
 
-if version['version'] != XTB.API_VERSION:
+if version['version'] != XTBpy.API_VERSION:
     print("API version is different")
 else:
     print("API version is correct")

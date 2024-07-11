@@ -28,8 +28,8 @@ from pathlib import Path
 import configparser
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from XTB.handler import HandlerManager
-from XTB.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
+from XTBpy.handler import HandlerManager
+from XTBpy.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
 
 
 # read api configuration
