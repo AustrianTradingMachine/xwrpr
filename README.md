@@ -54,15 +54,15 @@ You can install the XTB API Python Wrapper via pip:
 pip install XTBpy
 ```
 
-* After installation a file ```.XTBpy/user.ini``` is created in your home directory
-* To get accesd to your XTB account via XTBpy, you must enter your login data in ```user.ini```
-* Please ensure that no other person has access to your data
+* After installation a file ```.XTBpy/user.ini``` is created in your home directory.
+* To get accesd to your XTB account via XTBpy, you must enter your login data in ```user.ini```.
+* Please ensure that no other person has access to your data.
 
 <br/>
 
 # **Data**
 
-XTBpy includes all Data commands of the XTB API, exept
+XTBpy includes all Data commands of the XTB API, exept:
    * ```ping```
 </n>
 This command is automatically executed in the background.
@@ -102,7 +102,7 @@ Datetime objects, which are defined in your operating system's time zone, will b
 ## **Example**
 
 The following example will show how to retrieve data with XTBpy.
-You will find this example also in tests/test_get_symbol.py
+You will find this example also in tests/test_get_symbol.py.
 
 ```python
 import XTB
@@ -120,7 +120,7 @@ print(symbol)
 
 # **Streaming**
 
-XTBpy includes all Streaming commands of the XTB API, exept
+XTBpy includes all Streaming commands of the XTB API, exept:
    * ```ping```
    * ```getKeepAlive```
 </n>
@@ -144,7 +144,7 @@ This was necessary due to double naming of certain commands by the official API.
 The return value will be a dictionary, containing the following elements:
    * ```df``` (pandas.DataFrame): A DataFrame that contains the stream data.
    * ```lock``` (threading.Lock): A lock object for synchronization of the DataFrame access.
-   * ```thread``` (Thread): Starting the thread will terminate the stream
+   * ```thread``` (Thread): Starting the thread will terminate the stream.
 
 * The header of the dataframe will contain all keys of the "data" key of the JSON response file.
 * The streamed values will be in the row of the DataFrame. The Dataframe will be dynamically updated by XTBpy and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can be found at the bottom row.
