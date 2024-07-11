@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    XTBpy, a wrapper for the API of XTB (https://www.xtb.com)
+#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    XTBpy, a wrapper for the API of XTB (https://www.xtb.com)
+#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -21,8 +21,8 @@
 #
 ###########################################################################
 
-from XTBpy.wrapper import Wrapper
-from XTBpy.utils import generate_logger
+from xtbwrp.wrapper import Wrapper
+from xtbwrp.utils import generate_logger
 
 API_VERSION = '2.5.0'
 __version__ = '0.1.0'

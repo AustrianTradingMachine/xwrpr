@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    XTBpy, a wrapper for the API of XTB (https://www.xtb.com)
+#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -29,9 +29,9 @@ from math import floor
 from threading import Lock
 from queue import Queue, Empty
 import pandas as pd
-from XTBpy.client import Client
-from XTBpy.utils import pretty ,generate_logger, CustomThread
-from XTBpy.account import get_userId, get_password
+from xtbwrp.client import Client
+from xtbwrp.utils import pretty ,generate_logger, CustomThread
+from xtbwrp.account import get_userId, get_password
 
 
 # read api configuration

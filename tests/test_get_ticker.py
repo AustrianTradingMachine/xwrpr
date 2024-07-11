@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    XTBpy, a wrapper for the API of XTB (https://www.xtb.com)
+#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -21,7 +21,7 @@
 #
 ###########################################################################
 
-import XTBpy
+import xtbwrp
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -32,11 +32,11 @@ DEMO=False
 
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=XTBpy.generate_logger(name="TEST_get_ticker",path=Path('~/Logger/XTBpy').expanduser())
+logger=xtbwrp.generate_logger(name="TEST_get_ticker",path=Path('~/Logger/xtbwrp').expanduser())
 
 
 # Creating Wrapper
-XTBData=XTBpy.Wrapper(demo=DEMO, logger=logger)
+XTBData=xtbwrp.Wrapper(demo=DEMO, logger=logger)
 
 
 # getting all symbols
