@@ -76,7 +76,7 @@ When commands have a time value as an argument, the time must be entered as a ``
 Datetime objects, which are defined in your operating system's time zone, will be automatically converted to a UTC-UX timestamp which is required by the XTB API.
 
 ### Period
-When commands have a period value as an argumentt must pe passes as a item if the following string :
+When commands include a period value as an argument, it must be passed as an item of the following string.
 ```"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"```
 
    * ```getAllSymbols()```
