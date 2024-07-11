@@ -63,22 +63,14 @@ pip install XTBpy
 
 # **Data**
 
-XTBpy includes all Data commands of the XTB API, exept:
+XTBpy includes all Data commands of the XTB API exept:
    * ```ping```
 </n>
 This command is automatically executed in the background.
 
 ## **Commands**
 
-All available data commands are listed below with their Input arguments and format. For simplicity certain argument formats differ from the original API commands:
-
-### Datetime
-When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
-Datetime objects, which are defined in your operating system's time zone, will be automatically converted to a UTC-UX timestamp which is required by the XTB API.
-
-### Period
-When commands include a period value as an argument, it must be passed as an item of the following string.
-```"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"```
+All available data commands are listed below with their Input arguments and format.
 
    * ```getAllSymbols()```
    * ```getCalendar()```
@@ -106,6 +98,16 @@ When commands include a period value as an argument, it must be passed as an ite
 * The return value will always be a ```dict``` (dictionary) with the key-value pairs of the "returnData" key of the API JSON response file.
 * You will find a full documentation of all API data commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 
+* For simplicity certain argument formats differ from the original API commands:
+
+### Datetime
+When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
+Datetime objects, which are defined in your operating system's time zone, will be automatically converted to a UTC-UX timestamp which is required by the XTB API.
+
+### Period
+When commands include a period value as an argument, it must be passed as an item of the following string.
+```"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"```
+
 ## **Example**
 
 The following example will show how to retrieve data with XTBpy.
@@ -127,7 +129,7 @@ print(symbol)
 
 # **Streaming**
 
-XTBpy includes all Streaming commands of the XTB API, exept:
+XTBpy includes all Streaming commands of the XTB API exept:
    * ```ping```
    * ```getKeepAlive```
 </n>
