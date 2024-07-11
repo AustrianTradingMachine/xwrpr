@@ -82,7 +82,12 @@ TickerThread.start()
 CandlesThread.start()
 
 
+time.sleep(60)
 
+
+# Joining streaming threads
+TickerThread.join()
+CandlesThread.join()
 
 
 # Close Wrapper
