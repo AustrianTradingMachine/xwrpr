@@ -7,6 +7,8 @@ XTBpy - A wrapper for the API of XTB
 
 <!--ts-->
 * [Features](#features)
+   * [API-Version](#api-version)
+   * [Caution](#ccaution)
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
@@ -34,6 +36,11 @@ XTBpy - A wrapper for the API of XTB
 * **Thread-Safe Access**: Synchronization of DataFrame access using threading locks.
 * **Examples**: Sample code provided for both data retrieval and streaming.
 * **Documentation**: Full documentation of all API data and streaming commands.
+
+
+
+## **API-Version**
+XTBpy relies on the API Version 2.5.0
 
 
 ## **Caution**
