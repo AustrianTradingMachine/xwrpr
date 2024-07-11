@@ -12,11 +12,11 @@ XTBpy - A wrapper for the API of XTB
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
-    * [Commands](#commands)
-    * [Example](#example)
+    * [Commands](#commands-data)
+    * [Example](#example-data)
 * [Streaming](#streaming)
-     * [Commands](#streaming-commands)
-     * [Example](#example)
+     * [Commands](#commands-stream)
+     * [Example](#example-stream)
 * [Contributing](#contributing)
 * [License](#license)
 * [Sources](#sources)
@@ -75,7 +75,7 @@ XTBpy includes all Data commands of the XTB API exept:
 </n>
 This command is automatically executed in the background.
 
-## **Commands**
+## **Commands** <a name="commands-data"></a>
 
 * All available data commands are listed below with their Input arguments and format.
 
@@ -116,7 +116,7 @@ Datetime objects, which are defined in your operating system's time zone, will b
 When commands include a period value as an argument, it must be passed as an item of the following string.
 ```"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"```
 
-## **Example**
+## **Example** <a name="example-data"></a>
 
 The following example will show how to retrieve data with XTBpy.
 You will find this example also in tests/test_get_symbol.py.
@@ -143,7 +143,7 @@ XTBpy includes all Streaming commands of the XTB API exept:
 </n>
 This two commands are automatically executed in the background.
 
-## **Commands**
+## **Commands** <a name="commands-stream"></a>
 
 Unlike the official API streaming commands like get*Command*,
 the streaming commands in XTBpy are called stream*Command*.
@@ -170,7 +170,7 @@ This was necessary due to double naming of certain commands by the official API.
 * You will find a full documentation of all API stream commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
-## **Example**
+## **Example** <a name="example-stream"></a>
 
 The following example will show how to stream data with XTBpy.
 You will find this example also in tests/test_stream_ticker.py
