@@ -214,7 +214,7 @@ Improvements to the XTBpy project are welcome, whether it's a request, a suggest
 XTBpy uses the GNU GENERAL PUBLIC LICENSE Version 3
 
 You should have received a copy of the GNU General Public License
-    along with this program.  If not, see [GNU GPL 3](https://www.gnu.org/licenses/
+    along with this program.  If not, see [GNU GPL 3](https://www.gnu.org/licenses/)
 <br/>
 
 # **Sources**
