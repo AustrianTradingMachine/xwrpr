@@ -8,7 +8,7 @@ XTBpy - A wrapper for the API of XTB
 <!--ts-->
 * [Features](#features)
    * [API-Version](#api-version)
-   * [Caution](#ccaution)
+   * [Caution](#caution)
 * [XTB-resources](#xtb-resources)
 * [Installation](#installation)
 * [Data](#data)
