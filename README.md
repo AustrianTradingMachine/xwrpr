@@ -208,6 +208,7 @@ XTBData.delete()
 # **Contributing**
 
 Improvements to the XTBpy project are welcome, whether it's a request, a suggestion, or a bug report. Just reach out!
+Visit also the Giuthub repository of XTBpy: [Github](https://github.com/AustrianTradingMachine/XTBpy)
 
 <br/>
 
@@ -233,6 +234,6 @@ You should have received a copy of the GNU General Public License
 * [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * [xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip)
 * [Pandas](https://pandas.pydata.org/)
+* [Github](https://github.com/AustrianTradingMachine/XTBpy)
 * [GNU GPL 3](https://www.gnu.org/licenses/)
-
 <br/>
