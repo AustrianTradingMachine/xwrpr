@@ -41,7 +41,7 @@ XTBpy - A wrapper for the API of XTB
 XTBpy relies on the API Version 2.5.0
 
 
-## <span style="color:red">P**Caution**</span>
+## <span style="color:red">**Caution**</span>
 <span style="color:red">Please consider that XTBpy is still in Alpha stage and needs more development to run stable and reliant.</span>
 
 <br/>
