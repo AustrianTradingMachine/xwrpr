@@ -126,7 +126,7 @@ You will find this example also in tests/test_get_symbol.py.
 import xtbwrp
 
 # Creating Wrapper
-XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+XTBData=xtbwrp.Wrapper(demo=DEMO, logger=logger)
 
 # getting data for the symbols
 symbol=XTBData.getSymbol(symbol='ETHEREUM')
@@ -181,7 +181,7 @@ You will find this example also in tests/test_stream_ticker.py
 import xtbwrp
 
 # Creating Wrapper
-XTBData=XTB.Wrapper(demo=DEMO, logger=logger)
+XTBData=xtbwrp.Wrapper(demo=DEMO, logger=logger)
 
 # Streaming data an reading the df
 exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
