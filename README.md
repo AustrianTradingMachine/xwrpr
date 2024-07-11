@@ -32,8 +32,8 @@ XTBpy - A wrapper for the API of XTB
 * **Streaming Support**: Includes all streaming commands of the XTB API.
 * **Dynamic DataFrames**: Streaming data managed in dynamically updated Pandas DataFrames.
 * **Thread-Safe Access**: Synchronization of DataFrame access using threading locks.
-* **Extensive Examples**: Sample code provided for both data retrieval and streaming.
-* **Extensive Documentation**: Full documentation of all API data and streaming commands.
+* **Examples**: Sample code provided for both data retrieval and streaming.
+* **Documentation**: Full documentation of all API data and streaming commands.
 
 
 ## **Caution**
@@ -203,11 +203,10 @@ Improvements to the XTBpy project are welcome, whether it's a request, a suggest
 XTBpy uses the GNU GENERAL PUBLIC LICENSE Version 3
 
 You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+    along with this program.  If not, see [GNU GPL 3](https://www.gnu.org/licenses/
 <br/>
 
 # **Sources**
-[XTB](https://www.xtb.com/) | [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) | [Pandas](https://pandas.pydata.org/) 
+[XTB](https://www.xtb.com/) | [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/) | [xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip) | [Pandas](https://pandas.pydata.org/) | [GNU GPL 3](https://www.gnu.org/licenses/)
 
 <br/>
