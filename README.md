@@ -16,6 +16,7 @@ XTBpy - A wrapper for the API of XTB
      * [Commands](#streaming-commands)
      * [Example](#example)
 * [Contributing](#contributing)
+* [License](#license)
 * [Sources](#sources)
 <!--te-->
 
@@ -194,6 +195,15 @@ XTBData.delete()
 # **Contributing**
 
 Improvements to the XTBpy project are welcome, whether it's a request, a suggestion, or a bug report. Just reach out!
+
+<br/>
+
+# **License**
+
+XTBpy uses the GNU GENERAL PUBLIC LICENSE Version 3
+
+You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 <br/>
 
