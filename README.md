@@ -70,9 +70,9 @@ This command is automatically executed in the background.
 
 ## **Commands**
 
-All available data commands are listed below with their Input arguments and format.
+* All available data commands are listed below with their Input arguments and format.
 
-   ** ```getAllSymbols()```
+   * ```getAllSymbols()```
    * ```getCalendar()```
    * ```getChartLastRequest(symbol: str, period: str, start: datetime=None)```
    * ```getChartRangeRequest(symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0)```
