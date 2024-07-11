@@ -29,7 +29,7 @@ XTBpy - A wrapper for the API of XTB
  * **Comprehensive Data Commands**: Supports all data commands of the XTB API.
 * **Automatic Background Tasks**: Ping command automatically executed in the background.
 * **User-Friendly Installation**: Easy installation via pip.
-* **Secure Configuration**: User credentials stored in `.ini` file with access restrictions of the home directories.
+* **Secure Configuration**: User credentials stored in `.ini` file with access restrictions of your home directory.
 * **Time Zone Handling**: Automatic conversion of local time to UTC-UX timestamps.
 * **Streaming Support**: Includes all streaming commands of the XTB API.
 * **Dynamic DataFrames**: Streaming data managed in dynamically updated Pandas DataFrames.
