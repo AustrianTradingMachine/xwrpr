@@ -37,7 +37,7 @@ XTBpy - A wrapper for the API of XTB
 
 
 ## **Caution**
-Please consider that XTBpy is still in Alpha stage and needs mor development to run stable and reliant.
+Please consider that XTBpy is still in Alpha stage and needs more development to run stable and reliant.
 
 <br/>
 
