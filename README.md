@@ -42,8 +42,11 @@ Please consider that XTBpy is still in Alpha stage and needs mor development to 
 
 # **XTB resources**
 [XTB](https://www.xtb.com/)
-</n>
+<n/>
 [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
+<n/>
+[xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip)
+
 
 
 # **Installation**
