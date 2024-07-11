@@ -37,8 +37,6 @@ XTBpy - A wrapper for the API of XTB
 * **Examples**: Sample code provided for both data retrieval and streaming.
 * **Documentation**: Full documentation of all API data and streaming commands.
 
-
-
 ## **API-Version**
 XTBpy relies on the API Version 2.5.0
 
@@ -53,7 +51,7 @@ Please consider that XTBpy is still in Alpha stage and needs more development to
 * [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * [xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip)
 
-
+<br/>
 
 # **Installation**
 
@@ -133,6 +131,7 @@ symbol=XTBData.getSymbol(symbol='ETHEREUM')
 print(symbol)
 
 ```
+
 <br/>
 
 # **Streaming**
@@ -215,6 +214,7 @@ XTBpy uses the GNU GENERAL PUBLIC LICENSE Version 3
 
 You should have received a copy of the GNU General Public License
     along with this program.  If not, see [GNU GPL 3](https://www.gnu.org/licenses/)
+
 <br/>
 
 # **Sources**
