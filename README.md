@@ -69,9 +69,15 @@ This command is automatically executed in the background.
 
 ## **Commands**
 
-All available data commands are listed below.
+All available data commands are listed below with their Input arguments and format. For simplicity certain argument formats differ from the original API commands:
+
+### Datetime
 When commands have a time value as an argument, the time must be entered as a ```datetime``` object.
 Datetime objects, which are defined in your operating system's time zone, will be automatically converted to a UTC-UX timestamp which is required by the XTB API.
+
+### Period
+When commands have a period value as an argumentt must pe passes as a item if the following string :
+```"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"```
 
    * ```getAllSymbols()```
    * ```getCalendar()```
@@ -128,7 +134,7 @@ This two commands are automatically executed in the background.
 
 ## **Commands**
 
-All available streaming commands are listed below.
+All available streaming commands are listed below with their Input arguments and format.
 Unlike the official API streaming commands like get*Command*,
 the streaming commands in XTBpy are called stream*Command*.
 This was necessary due to double naming of certain commands by the official API.
