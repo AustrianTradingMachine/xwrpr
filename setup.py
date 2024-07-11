@@ -52,8 +52,8 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={
-        'xtbwrp: ['config/user.cfg']
-        },
+        'xtbwrp': ['user.ini','src/xtbwrp/api.ini']
+    },
     cmdclass={
         'build_py': CustomBuildPy,
         },
