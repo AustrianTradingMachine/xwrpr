@@ -18,7 +18,7 @@ XTBpy - A wrapper for the API of XTB
      * [List of Commands](#list-of-commands-stream)
      * [Example](#example-stream)
 * [Contributing](#contributing)
-* [License](#license)
+* [Disclaimer](#disclaimer)
 * [Sources](#sources)
 <!--te-->
 
@@ -37,9 +37,12 @@ XTBpy - A wrapper for the API of XTB
 * **Examples**: Sample code provided for both data retrieval and streaming.
 * **Documentation**: Full documentation of all API data and streaming commands.
 
+<br/>
+
 # **API-Version**
 XTBpy relies on the API Version 2.5.0
 
+<br/>
 
 # <span style="color:red">**Caution**</span>
 <span style="color:red">Please consider that XTBpy is still in Alpha stage and needs more development to run stable and reliant.</span>
@@ -73,7 +76,7 @@ XTBpy includes all Data commands of the XTB API exept:
 </n>
 This command is automatically executed in the background.
 
-## **List of Commands** <a name="commands-data"></a>
+## **List of Commands** <a name="list-of-commands-data"></a>
 
 * All available data commands are listed below with their Input arguments and format.
 
@@ -142,7 +145,7 @@ XTBpy includes all Streaming commands of the XTB API exept:
 </n>
 This two commands are automatically executed in the background.
 
-## **List of Commands** <a name="commands-stream"></a>
+## **List of Commands** <a name="list-of-commands-stream"></a>
 
 Unlike the official API, where streaming commands are named get *Command* , the XTBpy library
 uses the stream *Command* naming convention. This change was necessary to avoid conflicts
@@ -208,9 +211,17 @@ Improvements to the XTBpy project are welcome, whether it's a request, a suggest
 
 <br/>
 
-# **License**
+# **Disclaimer**
 
-XTBpy uses the GNU GENERAL PUBLIC LICENSE Version 3
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
     along with this program.  If not, see [GNU GPL 3](https://www.gnu.org/licenses/)
