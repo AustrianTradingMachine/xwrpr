@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
+#    xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -24,7 +24,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="xtbwrp"
+name="xwrpr"
 version="0.1.0"
 description="A wrapper for the XTB API"
 readme = {file = "README.md", content-type = "text/markdown"}
@@ -52,7 +52,7 @@ dependencies=[
 requires-python = ">=3.9"
 
 [project.urls]
-Homepage = "https://github.com/AustrianTradingMachine/xtbwrp"
+Homepage = "https://github.com/AustrianTradingMachine/xwrpr"
 
 [project.optional-dependencies]
 dev = [

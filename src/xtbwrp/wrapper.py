@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
+#    xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -28,8 +28,8 @@ from pathlib import Path
 import configparser
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from xtbwrp.handler import HandlerManager
-from xtbwrp.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
+from xwrpr.handler import HandlerManager
+from xwrpr.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
 
 
 # read api configuration

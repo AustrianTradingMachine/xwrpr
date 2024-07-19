@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
+#    xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -21,7 +21,7 @@
 #
 ###########################################################################
 
-import xtbwrp
+import xwrpr
 from pathlib import Path
 from threading import Thread
 import time
@@ -32,11 +32,11 @@ from datetime import datetime, timedelta
 DEMO=False
 
 # just example how to generate alogger. Feel free to use your own logger
-logger=xtbwrp.generate_logger(name="TEST_stream_multi",path=Path('~/Logger/xtbwrp').expanduser())
+logger=xwrpr.generate_logger(name="TEST_stream_multi",path=Path('~/Logger/xwrpr').expanduser())
 
 
 # Creating Wrapper
-XTBData=xtbwrp.Wrapper(demo=DEMO, logger=logger)
+XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
 
 
 # Target function for Ticker

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
+#    xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -38,7 +38,7 @@ def _get_config(value: str):
         FileNotFoundError: If the configuration file is not found.
         KeyError: If the specified key is not found in the configuration file.
     """
-    dir_path = Path('~/.xtbwrp').expanduser()
+    dir_path = Path('~/.xwrpr').expanduser()
     config_path = dir_path / 'user.ini'
 
     if not config_path.exists():

@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
+#    xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -23,4 +23,4 @@
 include LICENSE
 include README.md
 include *.ini
-include src/xtbwrp/*.ini
+include src/xwrpr/*.ini

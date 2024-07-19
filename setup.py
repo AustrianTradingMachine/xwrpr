@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 ###########################################################################
 #
-#    xtbwrp - A wrapper for the API of XTB (https://www.xtb.com)
+#    xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 #
 #    Copyright (C) 2024  Philipp Craighero
 #
@@ -32,7 +32,7 @@ class CustomBuildPy(build_py):
     def run(self):
         source_config_path = Path(__file__).parent / 'user.ini'
         
-        target_config_dir = Path.home() / '.xtbwrp'
+        target_config_dir = Path.home() / '.xwrpr'
         target_config_path = target_config_dir / 'user.ini'
         
         target_config_dir.mkdir(parents=True, exist_ok=True)
@@ -52,7 +52,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={
-        'xtbwrp': ['user.ini','src/xtbwrp/api.ini']
+        'xwrpr': ['user.ini','src/xwrpr/api.ini']
     },
     cmdclass={
         'build_py': CustomBuildPy,

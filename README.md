@@ -1,4 +1,4 @@
-xtbwrp - A wrapper for the API of XTB
+xwrpr - A wrapper for the API of XTB
 =================
 
 <br/>
@@ -40,12 +40,12 @@ xtbwrp - A wrapper for the API of XTB
 <br/>
 
 # **API-Version**
-xtbwrp relies on the API Version 2.5.0
+xwrpr relies on the API Version 2.5.0
 
 <br/>
 
 # <span style="color:red">**Caution**</span>
-<span style="color:red">Please consider that xtbwrp is still in Alpha stage and needs more development to run stable and reliant.</span>
+<span style="color:red">Please consider that xwrpr is still in Alpha stage and needs more development to run stable and reliant.</span>
 
 <br/>
 
@@ -60,18 +60,18 @@ xtbwrp relies on the API Version 2.5.0
 
 You can install the XTB API Python Wrapper via pip:
 ```bash
-pip install xtbwrp
+pip install xwrpr
 ```
 
-* After installation a file ```.xtbwrp/user.ini``` is created in your home directory.
-* To get accesd to your XTB account via xtbwrp, you must enter your login data in ```user.ini```.
+* After installation a file ```.xwrpr/user.ini``` is created in your home directory.
+* To get accesd to your XTB account via xwrpr, you must enter your login data in ```user.ini```.
 * Please ensure that no other person has access to your data.
 
 <br/>
 
 # **Data Commands**
 
-xtbwrp includes all Data commands of the XTB API exept:
+xwrpr includes all Data commands of the XTB API exept:
    * ```ping```
 </n>
 This command is automatically executed in the background.
@@ -119,14 +119,14 @@ When commands include a period value as an argument, it must be passed as an ite
 
 ## **Example** <a name="example-data"></a>
 
-The following example will show how to retrieve data with xtbwrp.
+The following example will show how to retrieve data with xwrpr.
 You will find this example also in tests/test_get_symbol.py.
 
 ```python
-import xtbwrp
+import xwrpr
 
 # Creating Wrapper
-XTBData=xtbwrp.Wrapper(demo=DEMO, logger=logger)
+XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
 
 # getting data for the symbols
 symbol=XTBData.getSymbol(symbol='ETHEREUM')
@@ -139,7 +139,7 @@ print(symbol)
 
 # **Streaming Commands**
 
-xtbwrp includes all Streaming commands of the XTB API exept:
+xwrpr includes all Streaming commands of the XTB API exept:
    * ```ping```
    * ```getKeepAlive```
 </n>
@@ -147,7 +147,7 @@ This two commands are automatically executed in the background.
 
 ## **List of Commands** <a name="list-of-commands-stream"></a>
 
-Unlike the official API, where streaming commands are named get *Command* , the xtbwrp library
+Unlike the official API, where streaming commands are named get *Command* , the xwrpr library
 uses the stream *Command* naming convention. This change was necessary to avoid conflicts
 caused by the official API's duplicate command names.
 
@@ -167,21 +167,21 @@ caused by the official API's duplicate command names.
    * ```thread``` (Thread): Starting the thread will terminate the stream.
 
 * The header of the dataframe will contain all keys of the "data" key of the JSON response file.
-* The streamed values will be in the row of the DataFrame. The Dataframe will be dynamically updated by xtbwrp and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can be found at the bottom row.
+* The streamed values will be in the row of the DataFrame. The Dataframe will be dynamically updated by xwrpr and has a maximum of 1000 rows. Older values will be deleted from the DataFrame. The newest values can be found at the bottom row.
 * Please see the example below to find out how to access the values in the DataFrame.
 * You will find a full documentation of all API stream commands here: [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * The Pandas DataFrame documentation can be found here: [Pandas](https://pandas.pydata.org/) 
 
 ## **Example** <a name="example-stream"></a>
 
-The following example will show how to stream data with xtbwrp.
+The following example will show how to stream data with xwrpr.
 You will find this example also in tests/test_stream_ticker.py
 
 ```python
-import xtbwrp
+import xwrpr
 
 # Creating Wrapper
-XTBData=xtbwrp.Wrapper(demo=DEMO, logger=logger)
+XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
 
 # Streaming data an reading the df
 exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
@@ -207,8 +207,8 @@ XTBData.delete()
 
 # **Contributing**
 
-Improvements to the xtbwrp project are welcome, whether it's a request, a suggestion, or a bug report. Just reach out!
-Visit also the Giuthub repository of xtbwrp: [Github](https://github.com/AustrianTradingMachine/xtbwrp)
+Improvements to the xwrpr project are welcome, whether it's a request, a suggestion, or a bug report. Just reach out!
+Visit also the Giuthub repository of xwrpr: [Github](https://github.com/AustrianTradingMachine/xwrpr)
 
 <br/>
 
@@ -234,6 +234,6 @@ You should have received a copy of the GNU General Public License
 * [xAPI Protocol Documentation](http://developers.xstore.pro/documentation/)
 * [xAPIConnector](http://developers.xstore.pro/public/files/xAPI25-XTB-python.zip)
 * [Pandas](https://pandas.pydata.org/)
-* [Github](https://github.com/AustrianTradingMachine/xtbwrp)
+* [Github](https://github.com/AustrianTradingMachine/xwrpr)
 * [GNU GPL 3](https://www.gnu.org/licenses/)
 <br/>
