@@ -101,9 +101,7 @@ class Client():
         Raises:
             ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
-
         
-
         if logger:
             # Check if the logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
