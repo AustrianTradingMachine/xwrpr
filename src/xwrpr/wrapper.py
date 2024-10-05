@@ -78,7 +78,13 @@ class Wrapper(HandlerManager):
         getStepRules(self): Retrieves the step rules data.
     """
 
-    def __init__(self, demo: bool=True, logger=None) -> None:
+    def __init__(self,
+        demo: bool=True,
+        logger=None,
+
+        username: str=None,
+        password: str=None
+    ) -> None:
         """
         Initializes the wrapper object.
 
