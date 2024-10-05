@@ -28,6 +28,7 @@ from pathlib import Path
 import configparser
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from queue import Queue
 from xwrpr.handler import HandlerManager
 from xwrpr.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
 
@@ -154,7 +155,10 @@ class Wrapper(HandlerManager):
         df = pd.DataFrame()
         lock = Lock()
 
-        exchange = {'df': df, 'lock': lock}
+        exchange = {
+            'df': df,
+            'queue': Queue()
+            }
         sh.streamData(exchange=exchange, **kwargs)
 
         return exchange

@@ -67,7 +67,22 @@ class Client():
 
     """
 
-    def __init__(self, host: str, port: int, encrypted: bool, timeout: float, stream: bool, interval: float=0.5, max_fails: int=10, bytes_out: int=1024, bytes_in: int=1024, logger=None):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        
+        encrypted: bool,
+        timeout: float,
+        stream: bool,
+        
+        interval: float=0.5,
+        max_fails: int=10,
+        bytes_out: int=1024,
+        bytes_in: int=1024,
+        
+        logger=None
+    ) -> None:
         """
         Initializes a new instance of the Client class.
 
@@ -86,6 +101,7 @@ class Client():
         Raises:
             ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
+
         if logger:
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
@@ -115,80 +131,109 @@ class Client():
         self._stream = stream
         self._decoder=json.JSONDecoder()
 
-    def check(self, mode: str):
+    def check(self, mode: str) -> None:
         """
         Check the socket for readability, writability, or errors.
 
         Args:
-            mode (str): The mode to check. Valid values are 'basic', 'readable', or 'writable'.
-
-        Returns:
-            bool: True if the socket is in the desired state, False otherwise.
+            mode (str): The mode to check for. Can be one of 'basic', 'readable', or 'writable'.
 
         Raises:
-            ValueError: If an unknown mode value is provided.
-
+            ValueError: If the mode argument is not one of 'basic', 'readable', or 'writable'.
+            Exception: If there is an error checking the socket.
         """
+
         try:
-            # Use select to check for readability, writability, and errors
             if mode == 'basic':
-                _, _, errored = select.select([], [], [self._socket], 0)
+                # Check if the socket is in an error state
+                _, _, errored = select.select(
+                    rlist = [],
+                    wlist = [],
+                    xlist = [self._socket],
+                    timeout = 0
+                )
                 if self._socket in errored:
-                    return False
-                return True
+                    raise Exception("Socket error")
             elif mode == 'readable':
-                readable, _, _ = select.select([self._socket], [], [], 0)
-                if self._socket in readable:
-                    return True
-                return False
+                # Check if the socket is readable
+                readable, _, _ = select.select(
+                    rlist = [self._socket],
+                    wlist = [],
+                    xlist = [],
+                    timeout = 0
+                )
+                if self._socket not in readable:
+                    raise Exception("Socket not readable")
             elif mode == 'writable':
-                _, writable, _ = select.select([], [self._socket], [], 0)
-                if self._socket in writable:
-                    return True
-                return False
+                # Check if the socket is writable
+                _, writable, _ = select.select(
+                    rlist = [],
+                    wlist = [self._socket],
+                    xlist = [],
+                    timeout = 0
+                )
+                if self._socket not in writable:
+                    raise Exception("Socket not writable")
             else:
                 raise ValueError("Error: unknown mode value")
         except Exception as e:
-            self._logger.error("In check method: %s" % str(e))
-            return False
+            self._logger.error("Error in check method: %s" % str(e))
+            raise Exception("Error in check method") from e
 
-    def create(self):
+    def create(self) -> None:
         """
         Creates a socket connection.
 
-        Returns:
-            bool: True if the socket connection is successfully created, False otherwise.
+        Raises:
+            Exception: If there is an error creating the socket.
         """
+
         self._logger.info("Creating socket ...")
 
         try:
-            avl_addresses=socket.getaddrinfo(self._host, self._port, socket.AF_UNSPEC, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+            # Get address info from the socket
+            avl_addresses=socket.getaddrinfo(
+                host = self._host,
+                port = self._port,
+                family = socket.AF_UNSPEC,
+                type = socket.SOCK_STREAM,
+                proto = socket.IPPROTO_TCP
+            )
         except socket.error as e:
             self._logger.error("Failed to query socket info: %s" % str(e))
-            return False
+            raise Exception("Failed to query socket info") from e
 
+        # Log the available addresses
         self._logger.info(f"{len(avl_addresses)} addresses found")
 
         tried_addresses = []
-        while len(tried_addresses) < len(avl_addresses):
-            # Always tries those  adresses first that did not fail
+        connected = False
+        while len(tried_addresses) < len(avl_addresses) and not connected:
+            # Always tries those adresses first that did not fail
+            # if all adresses failed, it tries all adresses again
             if len(self._used_addresses)+len(tried_addresses) < len(avl_addresses):
                 for address in avl_addresses:
+                    # Check if the address has not been tried before
                     if address[4] not in tried_addresses and address[4] not in self._used_addresses:
                         tried_addresses.append(address)
                         break
             else:
                 for address in avl_addresses:
+                    # Check if the address has not been tried before
                     if address[4] not in tried_addresses:
                         tried_addresses.append(address)
                         break
-                        
+
+            # Extract the address info         
             self._family, self._socktype, self._proto, self._cname, self._sockaddr = tried_addresses[-1]
-            if self._family == socket.AF_INET: # For IPv4
+            if self._family == socket.AF_INET:
+                # For IPv4 sockedadress consists of (ip, port)
                 self._ip_address, self._port = self._sockaddr
-            elif self._family == socket.AF_INET6: # For IPv6
+            elif self._family == socket.AF_INET6:
+                # For IPv6 sockedadress consists of (ip, port, flowinfo, scopeid)
                 self._ip_address, self._port, self._flowinfo, self._scopeid = self._sockaddr 
 
+            # Log the selected socket
             self._logger.info(
                 "Selected socket:\nFamily: %s\nSocket Type: %s\nProtocol: %s\nCanonical Name: %s\nIP-address: %s\nPort: %s",
                 self._family, self._socktype, self._proto, self._cname, self._ip_address, self._port
@@ -198,97 +243,138 @@ class Client():
             time.sleep(self._interval)
 
             try:
-                self._socket = socket.socket(self._family, self._socktype, self._proto)
+                # Create the socket
+                self._socket = socket.socket(
+                    family = self._family,
+                    type = self._socktype,
+                    proto = self._proto
+                )
             except socket.error as e:
                 self._logger.error("Failed to create socket: %s" % str(e))
+                # Try the next address
                 continue
+
+            # Log the created socket
             self._logger.info("Socket created")
 
+            # If the connection is ssl encrypted
             if self._encrypted:
                 try:
+                    # Wrap the socket with SSL
                     context = ssl.create_default_context()
-                    self._socket=context.wrap_socket(self._socket, server_hostname=self._host)
+                    self._socket=context.wrap_socket(
+                        sock = self._socket,
+                        server_hostname=self._host)
                 except socket.error as e:
                     self._logger.error("Failed to wrap socket: %s" % str(e))
+                    # Try the next address
                     continue
                 self._logger.info("Socket wrapped")
 
-            self._socket.setblocking(self._blocking)
+            # Set the socket to non-blocking mode
+            self._socket.setblocking(flag = self._blocking)
 
-            # safe used address
+            # Add the address to the list of used addresses
             self._used_addresses.append(self._sockaddr)
 
-            return True
+            # Connection successful
+            connected = True
 
         self._used_addresses=[]
         
         self._logger.error("All attempts to create socket failed")
-        return False
+        raise Exception("All attempts to create socket failed")
 
-    def open(self):
+    def open(self) -> None:
         """
         Opens a connection to the server.
 
-        Returns:
-            bool: True if the connection is successfully opened, False otherwise.
+        Raises:
+            Exception: If there is an error opening the connection.
         """
+
+        # Log the opening of the connection
         self._logger.info("Opening connection ...")
 
-        if not self.check(mode='basic'):
+        try:
+            # Check if the socket is in a basic state
+            self.check(mode='basic')
+        except Exception as e:
             self._logger.error("Socket failed. Try to create again")
-            if not self.create():
-                return False
-                
-        for _ in range(self._max_fails):
+            # Create a new socket
+            self.create()
+    
+        # Try to connect to the server
+        for fails in range(self._max_fails):
             try:
                 if self._timeout:
-                    self._socket.settimeout(self._timeout)
+                    # Set the timeout for the socket
+                    self._socket.settimeout(value = self._timeout)
+                # Connect to the server
                 self._socket.connect((self._sockaddr))
-            except socket.error as e:
-                self._logger.error("Socket error: %s" % str(e))
-                # For request limitation
-                time.sleep(self._interval)
-                continue
-            self._logger.info("Socket connected")
-            return True
-        return False
+            except Exception as e:
+                self._logger.error("Error connecting to socket: %s" % str(e))
 
-    def send(self, msg):
+                if fails < self._max_fails - 1:
+                    # For request limitation
+                    time.sleep(self._interval)
+                    # Try again
+                    continue
+                else:
+                    # Max fails reached
+                    self._logger.error("Max fails reached")
+                    raise Exception("Max fails reached") from e
+            break
+
+        # Log the connection status
+        self._logger.info("Socket connected")
+
+    def send(self, msg: str) -> None:
         """
         Sends a message over the socket connection.
 
         Args:
-            msg (str): The message to be sent.
+            msg (str): The message to send.
 
-        Returns:
-            bool: True if the message was sent successfully, False otherwise.
+        Raises:
+            Exception: If there is an error sending the message.
         """
+
+        # Log the sending of the message
         self._logger.info("Sending message ...")
 
-        msg =  json.dumps(msg)
-        msg = msg.encode("utf-8")
+        try:
+            msg =  json.dumps(msg)
+            msg = msg.encode("utf-8")
+        except json.JSONDecodeError as e:
+            self._logger.error("Error dumping message: %s" % str(e))
+            raise Exception("Error dumping message") from e
+        except Exception as e:
+            self._logger.error("Error during encoding message: %s" % str(e))
+            raise Exception("Error during encoding message") from e
+        
         send_msg = 0
         while send_msg < len(msg):
             package_size = min(self._bytes_out, len(msg) - send_msg)
             try:
-                if self.check(mode='writable'):
-                    send_msg += self._socket.send(msg[send_msg:send_msg + package_size])
-                else:
-                    self._logger.error("Connection to socket broken")
-                    return False
+                # Check if the socket is writable
+                self.check(mode='writable')
+
+                # Send the message
+                send_msg += self._socket.send(msg[send_msg:send_msg + package_size])
             except Exception as e:
                 self._logger.error("Error sending message: %s" % str(e))
-                return False
+                raise Exception("Error sending message") from e
             
             # For request limitation
             time.sleep(self._interval)
 
+        # Log that the message was sent
         self._logger.info("Message sent")
-        return True
 
-    def receive(self):
+    def receive(self) -> str:
         """
-        Receive a message from the socket.
+        Receives a message from the socket.
 
         Returns:
             str: The received message.
@@ -296,25 +382,28 @@ class Client():
         Raises:
             Exception: If there is an error receiving the message.
         """
+
+        # Log the receiving of the message
         self._logger.info("Receiving message ...")
 
+        # Initialize the full message and buffer
         full_msg = ''
         buffer=''
 
-        # No request limitation necessary
         while True:
             try:
                 # No check for readability because big Messages could fail
                 msg = self._socket.recv(self._bytes_in).decode("utf-8")
             except Exception as e:
                 self._logger.error("Error receiving message: %s" % str(e))
-                return False
+                raise Exception("Error receiving message") from e
 
-            # fill buffer with recieved data package
+            # Fill buffer with recieved data package
             buffer += msg
 
-            # thanks to the JSON format we can easily check if the message is complete
+            # Thanks to the JSON format we can easily check if the message is complete
             try:
+                # Try to decode the buffer
                 full_msg, pos = self._decoder.raw_decode(buffer)
                 if pos == len(buffer):
                     # Entire buffer has been successfully decoded
@@ -328,11 +417,17 @@ class Client():
                 # Continue receiving data if JSON is not yet complete
                 # No output of error message because error is necessary
                 continue
+            except Exception as e:
+                self._logger.error("Error decoding message: %s" % str(e))
+                raise Exception("Error decoding message") from e
 
+        # Log that the message was received
         self._logger.info("Message received")
+
+        # Return the full message
         return full_msg
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Clean up resources and close the connection.
 
@@ -343,54 +438,56 @@ class Client():
         """
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """
         Closes the connection and releases the socket.
 
-        Returns:
-            bool: True if the connection was successfully closed, False otherwise.
         """
-        # no false return function must run through
-
+       
+        # Log the closing of the connection
         self._logger.info("Closing connection ...")
 
+        # Check if the socket is in a basic state
         if self._socket.fileno() != -1:
             try:
+                # Close the connection
                 self._socket.shutdown(socket.SHUT_RDWR)
                 self._logger.info("Connections closed")
             except Exception as e:
+                 # For graceful shutdown no error message is allowed
                 self._logger.error("Error shutting down socket: %s" % str(e))
             finally:
+                # Close the socket
                 self._socket.close()
-                self._used_addresses.pop() #stable sockets are relieved
+                # Because the socked showed stable behavior,
+                # the address is removed from the list of used addresses
+                self._used_addresses.pop() 
                 self._logger.info("Socket closed")
-                return True
         else:
             self._logger.warning("Socket is already closed")
-            return True
         
-    def get_host(self):
+    def get_host(self) -> str:
         return self._host
     
-    def set_host(self, host):
+    def set_host(self, host) -> None:
         raise AttributeError("Cannot set read-only attribute 'host'")
     
-    def get_port(self):
+    def get_port(self) -> int:
         return self._port
     
-    def set_port(self, port):
+    def set_port(self, port) -> None:
         raise AttributeError("Cannot set read-only attribute 'port'")
 
-    def get_encrypted(self):
+    def get_encrypted(self) -> bool:
         return self._encrypted
 
-    def set_encrypted(self, encrypted):
+    def set_encrypted(self, encrypted) -> None:
         raise AttributeError("Cannot set read-only attribute 'encrypted'")
     
-    def get_timeout(self):
+    def get_timeout(self) -> float:
         return self._timeout
     
-    def set_timeout(self, timeout):
+    def set_timeout(self, timeout) -> None:
         self._timeout = timeout
         self._socket.settimeout(timeout)
         
@@ -399,31 +496,32 @@ class Client():
         else:
             self._blocking=True
 
-    def get_interval(self):
+    def get_interval(self) -> float:
         return self._interval
 
-    def set_interval(self, interval):
+    def set_interval(self, interval) -> None:
         self._interval = interval
 
-    def get_max_fails(self):
+    def get_max_fails(self) -> int:
         return self._max_fails
 
-    def set_max_fails(self, max_fails):
+    def set_max_fails(self, max_fails) -> None:
         self._max_fails = max_fails
 
-    def get_bytes_out(self):
+    def get_bytes_out(self) -> int:
         return self._bytes_out
 
-    def set_bytes_out(self, bytes_out):
+    def set_bytes_out(self, bytes_out) -> None:
         self._bytes_out = bytes_out
 
-    def get_bytes_in(self):
+    def get_bytes_in(self) -> int:
         return self._bytes_in
 
-    def set_bytes_in(self, bytes_in):
+    def set_bytes_in(self, bytes_in) -> None:
         self._bytes_in = bytes_in
 
     
+    # Properties
     host = property(get_host, set_host, doc='read only property socket host')
     port = property(get_port, set_port, doc='read only property socket port')
     encrypted = property(get_encrypted, set_encrypted, doc='read only property socket encryption')
