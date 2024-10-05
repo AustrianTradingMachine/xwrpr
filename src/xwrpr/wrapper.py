@@ -88,18 +88,23 @@ class Wrapper(HandlerManager):
                 If not provided, a new logger will be created. Defaults to None.
 
         """
+
         self._demo=demo
 
         if logger:
+            # check if logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
             
+            # Use the provided logger and create a child logger
             self._logger = logger.getChild('Wrp')
         else:
+            # Create a new logger
             self._logger=generate_logger(name='Wrp', path=Path.cwd() / "logs")
 
-        self._logger.info("Initializing wrapper")
+        self._logger.info("Initializing wrapper ...")
 
+        # Initialize the HandlerManager
         super().__init__(demo=self._demo, logger = self._logger)
 
         self._deleted=False

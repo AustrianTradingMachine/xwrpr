@@ -102,6 +102,8 @@ class Client():
             ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
 
+        
+
         if logger:
             # Check if the logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
@@ -112,6 +114,8 @@ class Client():
         else:
             # Generate a new logger
             self._logger = generate_logger(name='Client', path=Path.cwd() / "logs")
+
+        self._logger.info("Initializing the client ...")
         
         self._host = host
         self._port = port
@@ -138,6 +142,8 @@ class Client():
 
         # Initialize the JSON decoder
         self._decoder=json.JSONDecoder()
+
+        self._logger.info("Client initialized")
 
     def check(self, mode: str) -> None:
         """
@@ -262,7 +268,6 @@ class Client():
                 # Try the next address
                 continue
 
-            # Log the created socket
             self._logger.info("Socket created")
 
             # If the connection is ssl encrypted
@@ -277,6 +282,7 @@ class Client():
                     self._logger.error("Failed to wrap socket: %s" % str(e))
                     # Try the next address
                     continue
+
                 self._logger.info("Socket wrapped")
 
             # Set the socket to non-blocking mode
@@ -290,6 +296,7 @@ class Client():
 
         self._used_addresses=[]
         
+        # If all attempts to create the socket failed raise an exception
         self._logger.error("All attempts to create socket failed")
         raise Exception("All attempts to create socket failed")
 
@@ -301,7 +308,6 @@ class Client():
             Exception: If there is an error opening the connection.
         """
 
-        # Log the opening of the connection
         self._logger.info("Opening connection ...")
 
         try:
@@ -329,13 +335,12 @@ class Client():
                     # Try again
                     continue
                 else:
-                    # Max fails reached
+                    # If max fails reached raise an exception
                     self._logger.error("Max fails reached")
                     raise Exception("Max fails reached") from e
             break
 
-        # Log the connection status
-        self._logger.info("Socket connected")
+        self._logger.info("Connection opened")
 
     def send(self, msg: str) -> None:
         """
@@ -348,10 +353,10 @@ class Client():
             Exception: If there is an error sending the message.
         """
 
-        # Log the sending of the message
         self._logger.info("Sending message ...")
 
         try:
+            # Convert the message to bytes
             msg =  json.dumps(msg)
             msg = msg.encode("utf-8")
         except json.JSONDecodeError as e:
@@ -377,7 +382,6 @@ class Client():
             # For request limitation
             time.sleep(self._interval)
 
-        # Log that the message was sent
         self._logger.info("Message sent")
 
     def receive(self) -> str:
@@ -391,7 +395,6 @@ class Client():
             Exception: If there is an error receiving the message.
         """
 
-        # Log the receiving of the message
         self._logger.info("Receiving message ...")
 
         # Initialize the full message and buffer
@@ -429,7 +432,6 @@ class Client():
                 self._logger.error("Error decoding message: %s" % str(e))
                 raise Exception("Error decoding message") from e
 
-        # Log that the message was received
         self._logger.info("Message received")
 
         # Return the full message
@@ -452,7 +454,6 @@ class Client():
 
         """
        
-        # Log the closing of the connection
         self._logger.info("Closing connection ...")
 
         # Check if the socket is in a basic state
