@@ -110,6 +110,11 @@ class Wrapper(HandlerManager):
 
         self._logger.info("Initializing wrapper ...")
 
+        # Check if username and password are provided
+        if not username or not password:
+            self._logger.error("Username and password must be provided.")
+            return False
+
         # Initialize the HandlerManager
         super().__init__(demo=self._demo, logger = self._logger)
 
