@@ -22,8 +22,7 @@
 ###########################################################################
 
 from xwrpr.wrapper import Wrapper
-from xwrpr.utils import generate_logger
 
 API_VERSION = '2.5.0'
-__version__ = '0.1.0'
-__all__ = ['Wrapper', 'generate_logger', 'API_VERSION']
+__version__ = '0.2.0'
+__all__ = ['Wrapper', 'API_VERSION']

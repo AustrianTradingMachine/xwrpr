@@ -24,7 +24,7 @@
 from pathlib import Path
 import configparser
 
-def _get_config(value: str):
+def _get_config(value: str) -> str:
     """
     Retrieves the value of a configuration key from the user.ini file.
 
@@ -52,7 +52,7 @@ def _get_config(value: str):
     except KeyError:
         raise KeyError(f'Key {value} not found in configuration file')
 
-def get_userId(demo: bool):
+def get_userId(demo: bool) -> str:
     """
     Get the user ID based on the demo flag.
 
@@ -69,7 +69,7 @@ def get_userId(demo: bool):
 
     return userId
 
-def get_password():
+def get_password() -> str:
     """
     Retrieves the password from the configuration file.
 

@@ -103,11 +103,14 @@ class Client():
         """
 
         if logger:
+            # Check if the logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
             
+            # Use the provided logger
             self._logger = logger
         else:
+            # Generate a new logger
             self._logger = generate_logger(name='Client', path=Path.cwd() / "logs")
         
         self._host = host
@@ -116,12 +119,15 @@ class Client():
         self._timeout = timeout
         
         if timeout:
+            # If timeout is set, the socket should be non-blocking
             self._blocking = False
         else:
+            # If timeout is not set, the socket should be blocking
             self._blocking = True
             
         self._used_addresses = []
 
+        # Create the socket
         self.create()
 
         self._interval = interval
@@ -129,6 +135,8 @@ class Client():
         self._bytes_out = bytes_out
         self._bytes_in = bytes_in
         self._stream = stream
+
+        # Initialize the JSON decoder
         self._decoder=json.JSONDecoder()
 
     def check(self, mode: str) -> None:
