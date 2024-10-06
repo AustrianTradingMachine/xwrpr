@@ -42,22 +42,13 @@ class Client():
     _encrypted (bool): Indicates whether the connection should be encrypted.
     _timeout (float): The timeout value for the connection.
     _blocking (bool): Indicates whether the connection is blocking.
-    _addresses (dict): A dictionary of addresses that have been used.
-    _address_key (str): The key of the current address.
     _interval (float): The interval between requests in seconds.
     _max_fails (int): The maximum number of consecutive failed requests before giving up.
     _bytes_out (int): The maximum number of bytes to send in each request.
     _bytes_in (int): The maximum number of bytes to receive in each response.
     _decoder (json.JSONDecoder): The JSON decoder instance.
-    _family (int): The address family.
-    _socktype (int): The socket type.
-    _proto (int): The protocol.
-    _cname (str): The canonical name.
-    _sockaddr (tuple): The socket address.
-    _ip_address (str): The IP address.
-    _port (int): The port number.
-    _flowinfo (int): The flow information.
-    _scopeid (int): The scope ID.
+    _addresses (dict): A dictionary of addresses that have been used.
+    _address_key (str): The key of the current address.
     _socket (socket): The socket connection.
 
     Methods:
@@ -233,30 +224,33 @@ class Client():
         
         for address in avl_addresses:
             # Extract the address info         
-            self._family, self._socktype, self._proto, self._cname, self._sockaddr = address
-            self._flowinfo, self._scopeid = None, None
-            if self._family == socket.AF_INET:
+            family, socktype, proto, cname, sockaddr = address
+            flowinfo, scopeid = None, None
+            if family == socket.AF_INET:
                 # For IPv4 sockedadress consists of (ip, port)
-                self._ip_address, self._port = self._sockaddr
-            elif self._family == socket.AF_INET6:
+                ip_address, port = sockaddr
+            elif family == socket.AF_INET6:
                 # For IPv6 sockedadress consists of (ip, port, flowinfo, scopeid)
-                self._ip_address, self._port, self._flowinfo, self._scopeid = self._sockaddr 
+                ip_address, port, flowinfo, scopeid = sockaddr 
 
             # Log adress
+            self._logger.debug("Available address:")
             self._logger.debug(
-                "Available address:\nFamily: %s\nSocket Type: %s\nProtocol: %s\nCanonical Name: %s\nIP-address: %s\nPort: %s",
-                self._family, self._socktype, self._proto, self._cname, self._ip_address, self._port
+                "\nFamily: %s\nSocket Type: %s\nProtocol: %s\nCanonical Name: %s\nIP-address: %s\nPort: %s",
+                family, socktype, proto, cname, ip_address, port
             )
+            if family == socket.AF_INET6:
+                self._logger.debug("Flow Info: %s\nScope ID: %s", flowinfo, scopeid)
 
             # Create a key for the address
-            address_key = f"{self._family}__{self._socktype}__{self._proto}"
+            address_key = f"{family}__{socktype}__{proto}"
             self._addresses[address_key] = {
                 'retries': 0,
                 'last_atempt': time.time(),
                 'last_error': None,
-                'family': self._family,
-                'socktype': self._socktype,
-                'proto': self._proto,
+                'family': family,
+                'socktype': socktype,
+                'proto': proto,
             }
                 
     def create(self, excluded_errors: List[str] = []) -> None:
