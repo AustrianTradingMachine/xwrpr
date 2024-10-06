@@ -77,7 +77,7 @@ class _GeneralHandler(Client):
         stop_ping: Stops the ping process.
     """
 
-    def __init__(self, host: str, port: int, stream: bool, logger=None):
+    def __init__(self, host: str, port: int, logger=None) -> None:
         """
         Initializes the Handler object.
 
@@ -91,29 +91,49 @@ class _GeneralHandler(Client):
             ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
         if logger:
+            # Check if the logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
                 raise ValueError("The logger argument must be an instance of logging.Logger.")
             
+            # Use the provided logger
             self._logger = logger
         else:
+            # Generate a new logger
             self._logger=generate_logger(name='GeneralHandler', path=Path.cwd() / "logs")
+
+        self._logger.info("Initializing GeneralHandler ...")
 
         self._host=host
         self._port=port
-        self._stream=stream
 
+        # Set the connection parameters
         self._encrypted=True
         self._interval=SEND_INTERVAL/1000
         self._max_fails=MAX_CONNECTION_FAILS
         self._bytes_out=MAX_SEND_DATA
         self._bytes_in=MAX_RECIEVE_DATA
 
-        super().__init__(host=self._host, port=self._port,  encrypted=self._encrypted, timeout=None, interval=self._interval, max_fails=self._max_fails, bytes_out=self._bytes_out, bytes_in=self._bytes_in, stream = self._stream, logger=self._logger)
+        # Iinitialize the Client instance
+        super().__init__(
+            host=self._host,
+            port=self._port, 
 
-        self._call_reconnect=None
-        
+            encrypted=self._encrypted,
+            timeout=None,
+
+            interval=self._interval,
+            max_fails=self._max_fails,
+            bytes_out=self._bytes_out,
+            bytes_in=self._bytes_in,
+
+            logger=self._logger
+        )
+
+        # Initialize the ping dictionary and lock
         self._ping=dict()
         self._ping_lock = Lock()
+
+        self._logger.info("GeneralHandler initialized")
     
     def send_request(self, command: str, ssid: str = None, arguments: dict = None, tag: str = None):
         """
