@@ -28,6 +28,7 @@ import select
 from pathlib import Path
 import logging
 import json
+from typing import List
 from xwrpr.utils import generate_logger
 
 class Client():
@@ -41,7 +42,7 @@ class Client():
     _encrypted (bool): Indicates whether the connection should be encrypted.
     _timeout (float): The timeout value for the connection.
     _blocking (bool): Indicates whether the connection is blocking.
-    _used_addresses (list): A list of addresses that have been used.
+    _used_addresses (dict): A dictionary of addresses that have been used.
     _interval (float): The interval between requests in seconds.
     _max_fails (int): The maximum number of consecutive failed requests before giving up.
     _bytes_out (int): The maximum number of bytes to send in each request.
@@ -191,27 +192,46 @@ class Client():
 
             # Check the results
             if mode == 'basic' and self._socket in errored:
+                self._logger.error("Socket error")
+                # Log the failure cause
+                self._used_addresses[self.socket_key]['last_error'] = 'check'
                 raise Exception("Socket error")
             if mode == 'readable' and self._socket not in readable:
+                self._logger.debug("Socket not readable")
                 raise Exception("Socket not readable")
             if mode == 'writable' and self._socket not in writable:
+                self._logger.debug("Socket not writable")
                 raise Exception("Socket not writable")
         except Exception as e:
             self._logger.error("Error in check method: %s" % str(e))
             raise Exception("Error in check method") from e
 
-    def create(self) -> None:
+    def create(self, excluded_errorors: List[str] = []) -> None:
         """
         Creates a socket connection.
 
-        This method retrieves address info, creates a socket, and, if encrypted, wraps the socket in SSL.
-        It attempts to create a socket from the available address list and retries on failure.
+        Args:
+            excluded_errorors (List[str], optional): A list of error values to exclude from retrying. Defaults to [].
 
         Raises:
-            Exception: If no available addresses are found or if the socket creation fails after retries.
+            ValueError: If the excluded_errorors list contains an unknown error value.
+            Exception: If there is an error creating the socket.
         """
 
+
         self._logger.info("Creating socket ...")
+
+        # List of possible error values
+        possible_errorors = ['create', 'wrap', 'connect', 'check']
+
+        # Fill the excluded_errorors list with all possible error values
+        if 'all' in excluded_errorors:
+            excluded_errorors = possible_errorors
+
+        # Check if the excluded_errorors list is valid
+        for error in excluded_errorors:
+            if error not in possible_errorors:
+                raise ValueError("Unknown error value")
 
         # Check for existing socket
         if hasattr(self, '_socket'):
@@ -244,21 +264,14 @@ class Client():
         try:
             # Try to create the socket
             tried_addresses = []
-            connected = False
-            while len(tried_addresses) < number_of_avl_addresses and not connected:
+            created = False
+            while len(tried_addresses) < number_of_avl_addresses and not created:
                 # Always tries those adresses first that have not been used before
-                if len(self._used_addresses)+len(tried_addresses) < number_of_avl_addresses:
-                    for address in avl_addresses:
-                        # Check if the address has not been tried before
-                        if address[4] not in tried_addresses and address[4] not in self._used_addresses:
-                            tried_addresses.append(address)
-                            break
-                else:
-                    for address in avl_addresses:
-                        # Check if the address has not been tried before
-                        if address[4] not in tried_addresses:
-                            tried_addresses.append(address)
-                            break
+                for address in avl_addresses:
+                    # Check if the address has not been tried before
+                    if address[4] not in tried_addresses:
+                        tried_addresses.append(address)
+                        break
 
                 # Extract the address info         
                 self._family, self._socktype, self._proto, self._cname, self._sockaddr = tried_addresses[-1]
@@ -286,9 +299,16 @@ class Client():
                         'last_atempt': time.time(),
                         'last_error': None
                     }
+                else:
+                    # Check if address meets criteria for retry
+                    if self._used_addresses[self.socket_key]['last_error'] in excluded_errorors:
+                        self._logger.debug("Address excluded from retry")
+                        # Try the next address
+                        continue
 
-                # Add the address to the list of used addresses
-                self._used_addresses.append(self._sockaddr)
+                    # If the address has been tried before
+                    self._used_addresses[self.socket_key]['retries'] += 1
+                    self._used_addresses[self.socket_key]['last_atempt'] = time.time()
 
                 try:
                     # Create the socket
@@ -299,8 +319,10 @@ class Client():
                     )
                 except socket.error as e:
                     self._logger.error("Failed to create socket: %s" % str(e))
+                    # Log the failure cause
+                    self._used_addresses[self.socket_key]['last_error'] = 'create'
                     # Close the socket if it is not stable
-                    self.close(stable = False)
+                    self.close()
                     # Try the next address
                     continue
 
@@ -318,8 +340,10 @@ class Client():
                             server_hostname=self._host)
                     except socket.error as e:
                         self._logger.error("Failed to wrap socket: %s" % str(e))
+                        # Log the failure cause
+                        self._used_addresses[self.socket_key]['last_error'] = 'wrap'
                         # Close the socket if it is not stable
-                        self.close(stable = False)
+                        self.close()
                         # Try the next address
                         continue
 
@@ -333,19 +357,18 @@ class Client():
                     # a timout exeption immediately
                     self._socket.settimeout(value = self._timeout)
 
-                # Connection successful
-                connected = True
+                # Socket successfully created
+                created = True
 
-            self._used_addresses=[]
-            
             # If all attempts to create the socket failed raise an exception
-            self._logger.error("All attempts to create socket failed")
-            raise Exception("All attempts to create socket failed")
+            if not created:
+                self._logger.error("All attempts to create socket failed")
+                raise Exception("All attempts to create socket failed")
         except Exception as e:
             self._logger.error("Error creating socket: %s" % str(e))
             raise Exception("Error creating socket") from e
 
-    def open(self) -> None:
+    def open(self, recreate: bool = True) -> None:
         """
         Opens a connection to the server.
 
@@ -365,39 +388,53 @@ class Client():
             # Pass if the socket is not connected
             pass
 
-        try:
-            # Check if the socket is in a basic state
-            self.check(mode='basic')
-        except Exception as e:
-            self._logger.error("Error checking socket: %s" % str(e))
-            # Close the connection if it is not stable
-            self.close(stable = False)
-            # Try to create a new socket
-            self._logger.error("Try to create a new socket")
-            self.create()
+        # Loop until the connection is established
+        # or an error occurs
+        connected = False
+        while not connected:
+            try:
+                # Check if the socket is in a basic state
+                self.check(mode='basic')
+            except Exception as e:
+                self._logger.error("Error checking socket: %s" % str(e))
+                # Close the connection if it is not stable
+                self.close(stable = False)
+                if recreate:
+                    # Try to create a new socket
+                    self._logger.error("Try to create a new socket")
+                    self.create(excluded_errorors=['all'])
 
-        try:
-            # Try to connect to the server
-            for attempt in range(1, self._max_fails + 1):
-                try:
-                    # Connect to the server
-                    self._socket.connect(self._sockaddr)
-                    # Exit loop if connection is successful
-                    break  
-                except (socket.error, InterruptedError) as e:
-                    self._logger.error("Error connecting to socket (%d/%d): %s" % (attempt, self._max_fails, str(e)))
-                    
-                    if attempt < self._max_fails:
-                        # For request limitation
-                        time.sleep(self._interval)
-                    else:
-                        # If max fails reached raise an exception
-                        self._logger.error("Max fails reached. Unable to open connection.")
-                        raise Exception("Max fails reached. Unable to connect to server.") from e
-        except Exception as e:
-            self._logger.error("Error connecting to socket: %s" % str(e))
-            # Close the connection if it is not stable
-            self.close(stable = False)
+            try:
+                # Try to connect to the server
+                for attempt in range(1, self._max_fails + 1):
+                    try:
+                        # Connect to the server
+                        self._socket.connect(self._sockaddr)
+                        # Exit loop if connection is successful
+                        break  
+                    except (socket.error, InterruptedError) as e:
+                        self._logger.error("Error connecting to socket (%d/%d): %s" % (attempt, self._max_fails, str(e)))
+                        
+                        if attempt < self._max_fails:
+                            # For request limitation
+                            time.sleep(self._interval)
+                        else:
+                            # If max fails reached raise an exception
+                            self._logger.error("Max fails reached. Unable to open connection.")
+                            raise Exception("Max fails reached. Unable to connect to server.") from e
+            except Exception as e:
+                self._logger.error("Error connecting to socket: %s" % str(e))
+                # Log the failure cause
+                self._used_addresses[self.socket_key]['last_error'] = 'connect'
+                # Close the connection if it is not stable
+                self.close(stable = False)
+                if recreate:
+                    # Try to create a new socket
+                    self._logger.error("Try to create a new socket")
+                    self.create(excluded_errorors=['all'])
+
+            # Connection successful
+            connected = True
 
         self._logger.info("Connection opened")
 
@@ -557,37 +594,34 @@ class Client():
         """
         self.close()
 
-    def close(self, stable: bool = True) -> None:
+    def close(self) -> None:
         """
         Closes the connection and releases the socket.
 
+        Raises:
+            None: If there is an error closing the connection.
         """
        
-        self._logger.info("Closing connection ...")
-
-        try:
-            # Check if the socket is in a basic state
-            if self._socket.fileno() != -1:
-                try:
-                    # Close the connection
-                    self._socket.shutdown(socket.SHUT_RDWR)
-                    self._logger.info("Connections closed")
-                except OSError as e:
-                    # For graceful shutdown no error message is allowed
-                    self._logger.debug("Error shutting down socket: %s" % str(e))
-                finally:
-                    # Close the socket
-                    self._socket.close()
-                    self._logger.info("Socket closed")
-            else:
-                self._logger.warning("Socket is already closed")
-        except Exception as e:
-            self._logger.debug("Error closing connection: %s" % str(e))
-        finally:
-            if stable:
-                # Because the socked showed stable behavior,
-                # the address is removed from the list of used addresses
-                self._used_addresses.pop() 
+        # Check if the socket is in a basic state
+        if self._socket.fileno() != -1:
+            try:
+                self._logger.info("Closing connection ...")
+                # Close the connection
+                self._socket.shutdown(socket.SHUT_RDWR)
+                self._logger.info("Connections closed")
+            except OSError as e:
+                # For graceful shutdown no error message is allowed
+                self._logger.debug("Error closing connection: %s" % str(e))
+            
+            try:
+                self._logger.info("Closing socket ...")
+                # Close the socket
+                self._socket.close()
+                self._logger.info("Socket closed")
+            except OSError as e:
+                self._logger.error("Error closing socket: %s" % str(e))
+        else:
+            self._logger.warning("Connection and socket already closed")
         
     def get_host(self) -> str:
         return self._host
