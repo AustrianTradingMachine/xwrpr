@@ -199,7 +199,7 @@ class Client():
             self._logger.error("Error in check method: %s" % str(e))
             raise Exception("Error in check method") from e
         
-    def _get_adresses(self):
+    def _get_adresses(self) -> None:
         try:
             # Get address info from the socket
             avl_addresses=socket.getaddrinfo(
@@ -251,6 +251,7 @@ class Client():
                 'family': family,
                 'socktype': socktype,
                 'proto': proto,
+                'sockaddr': sockaddr
             }
                 
     def create(self, excluded_errors: List[str] = []) -> None:
@@ -306,9 +307,9 @@ class Client():
                 try:
                     # Create the socket
                     self._socket = socket.socket(
-                        family = self._family,
-                        type = self._socktype,
-                        proto = self._proto
+                        family = self._addresses[self.address_key]['family'],
+                        type = self._addresses[self.address_key]['type'],
+                        proto = self._addresses[self.address_key]['proto'],
                     )
                 except socket.error as e:
                     self._logger.error("Failed to create socket: %s" % str(e))
@@ -390,7 +391,7 @@ class Client():
                 for attempt in range(1, self._max_fails + 1):
                     try:
                         # Connect to the server
-                        self._socket.connect(self._sockaddr)
+                        self._socket.connect(self._addresses[self.address_key]['sockaddr'])
                         # Exit loop if connection is successful
                         break  
                     except (socket.error, InterruptedError) as e:
