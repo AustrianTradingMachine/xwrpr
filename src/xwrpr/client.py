@@ -35,12 +35,18 @@ class Client():
     The Client class provides a simple interface for creating and managing
 
     Attributes:
+    _logger (logging.Logger): The logger instance to use for logging.
     _host (str): The host address to connect to.
     _port (int): The port number to connect to.
     _encrypted (bool): Indicates whether the connection should be encrypted.
     _timeout (float): The timeout value for the connection.
     _blocking (bool): Indicates whether the connection is blocking.
     _used_addresses (list): A list of addresses that have been used.
+    _interval (float): The interval between requests in seconds.
+    _max_fails (int): The maximum number of consecutive failed requests before giving up.
+    _bytes_out (int): The maximum number of bytes to send in each request.
+    _bytes_in (int): The maximum number of bytes to receive in each response.
+    _decoder (json.JSONDecoder): The JSON decoder instance.
     _family (int): The address family.
     _socktype (int): The socket type.
     _proto (int): The protocol.
@@ -48,14 +54,9 @@ class Client():
     _sockaddr (tuple): The socket address.
     _ip_address (str): The IP address.
     _port (int): The port number.
+    _flowinfo (int): The flow information.
+    _scopeid (int): The scope ID.
     _socket (socket): The socket connection.
-    _interval (float): The interval between requests in seconds.
-    _max_fails (int): The maximum number of consecutive failed requests before giving up.
-    _bytes_out (int): The maximum number of bytes to send in each request.
-    _bytes_in (int): The maximum number of bytes to receive in each response.
-    _stream (bool): Indicates whether to use a streaming connection.
-    _decoder (json.JSONDecoder): The JSON decoder instance.
-    _logger (logging.Logger): The logger instance to use for logging.
 
     Methods:
         check: Check the socket for readability, writability, or errors.
@@ -64,6 +65,23 @@ class Client():
         send: Sends a message over the socket connection.
         receive: Receives a message from the socket.
         close: Closes the connection and releases the socket.
+        get_host: Returns the host address.
+        set_host: Sets the host address.
+        get_port: Returns the port number.
+        set_port: Sets the port number.
+        get_encrypted: Returns the encrypted flag.
+        set_encrypted: Sets the encrypted flag.
+
+        get_timeout: Returns the timeout value.
+        set_timeout: Sets the timeout value.
+        get_interval: Returns the interval value.
+        set_interval: Sets the interval value.
+        get_max_fails: Returns the max fails value.
+        set_max_fails: Sets the max fails value.
+        get_bytes_out: Returns the bytes out value.
+        set_bytes_out: Sets the bytes out value.
+        get_bytes_in: Returns the bytes in value.
+        set_bytes_in: Sets the bytes
 
     """
 
@@ -74,7 +92,6 @@ class Client():
         
         encrypted: bool,
         timeout: float,
-        stream: bool,
         
         interval: float=0.5,
         max_fails: int=10,
@@ -101,7 +118,9 @@ class Client():
         Raises:
             ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
+
         
+
         if logger:
             # Check if the logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
@@ -136,7 +155,6 @@ class Client():
         self._max_fails = max_fails
         self._bytes_out = bytes_out
         self._bytes_in = bytes_in
-        self._stream = stream
 
         # Initialize the JSON decoder
         self._decoder=json.JSONDecoder()
@@ -216,7 +234,7 @@ class Client():
             raise Exception("Failed to query socket info") from e
 
         # Log the available addresses
-        self._logger.info(f"{len(avl_addresses)} addresses found")
+        self._logger.debug(f"{len(avl_addresses)} addresses found")
 
         tried_addresses = []
         connected = False
@@ -246,7 +264,7 @@ class Client():
                 self._ip_address, self._port, self._flowinfo, self._scopeid = self._sockaddr 
 
             # Log the selected socket
-            self._logger.info(
+            self._logger.debug(
                 "Selected socket:\nFamily: %s\nSocket Type: %s\nProtocol: %s\nCanonical Name: %s\nIP-address: %s\nPort: %s",
                 self._family, self._socktype, self._proto, self._cname, self._ip_address, self._port
             )
@@ -270,6 +288,8 @@ class Client():
 
             # If the connection is ssl encrypted
             if self._encrypted:
+                self._logger.info("Wrapping socket ...")
+                
                 try:
                     # Wrap the socket with SSL
                     context = ssl.create_default_context()
