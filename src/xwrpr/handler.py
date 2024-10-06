@@ -29,7 +29,7 @@ from math import floor
 from threading import Lock
 from queue import Queue, Empty
 import pandas as pd
-from xwrpr.client import Client
+from xwrpr.socket_client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password
 

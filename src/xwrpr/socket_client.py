@@ -31,6 +31,7 @@ import json
 from typing import List
 from xwrpr.utils import generate_logger
 
+
 class Client():
     """
     The Client class provides a simple interface for creating and managing
@@ -75,7 +76,6 @@ class Client():
         set_bytes_out: Sets the bytes out value.
         get_bytes_in: Returns the bytes in value.
         set_bytes_in: Sets the bytes
-
     """
 
     def __init__(
@@ -594,7 +594,6 @@ class Client():
         This method is automatically called when the object is about to be destroyed.
         It ensures that any open connections are closed properly and any resources
         are released.
-
         """
         self.close()
 
