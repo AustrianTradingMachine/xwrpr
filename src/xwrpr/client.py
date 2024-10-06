@@ -196,7 +196,7 @@ class Client():
                 self._logger.debug("Socket not writable")
                 raise Exception("Socket not writable")
         except Exception as e:
-            self._logger.error("Error in check method: %s" % str(e))
+            self._logger.error(f"Error in check method: {e}")
             raise Exception("Error in check method") from e
         
     def _get_addresses(self) -> None:
@@ -367,7 +367,7 @@ class Client():
                 self._logger.error("All attempts to create socket failed")
                 raise Exception("All attempts to create socket failed")
         except Exception as e:
-            self._logger.error("Error creating socket: %s" % str(e))
+            self._logger.error(f"Error creating socket: {e}")
             raise Exception("Error creating socket") from e
 
     def open(self, recreate: bool = True) -> None:
@@ -405,17 +405,17 @@ class Client():
                         # Exit loop if connection is successful
                         break  
                     except (socket.error, InterruptedError) as e:
-                        self._logger.error("Error connecting to socket (%d/%d): %s" % (attempt, self._max_fails, str(e)))
+                        self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
                         
                         if attempt < self._max_fails:
                             # For request limitation
                             time.sleep(self._interval)
                         else:
                             # If max fails reached raise an exception
-                            self._logger.error("Max fails reached. Unable to open connection: %s" % str(e))
+                            self._logger.error(f"Max fails reached. Unable to connect to server: {e}")
                             raise Exception("Max fails reached. Unable to connect to server.") from e
             except Exception as e:
-                self._logger.error("Error connecting to socket: %s" % str(e))
+                self._logger.error(f"Error opening connection: {e}")
                 # Log the failure cause
                 self._addresses[self.address_key]['last_error'] = 'connect'
                 # Close the connection if it is not stable
@@ -446,13 +446,13 @@ class Client():
             msg =  json.dumps(msg)
             msg = msg.encode("utf-8")
         except json.JSONDecodeError as e:
-            self._logger.error("Error dumping message: %s" % str(e))
+            self._logger.error(f"Error dumping message: {e}")
             raise Exception("Error dumping message") from e
         except UnicodeEncodeError as e:
-            self._logger.error("Error encoding message: %s" % str(e))
+            self._logger.error(f"Error encoding message: {e}")
             raise Exception("Error encoding message") from e
         except Exception as e:
-            self._logger.error("Error during converting message: %s" % str(e))
+            self._logger.error(f"Error during converting message: {e}")
             raise Exception("Error during converting message") from e
         
         # Check if the socket is in blocking mode
@@ -480,10 +480,10 @@ class Client():
                     self.check(mode='writable')
                 else:
                     # For blocking mode, raise an exception
-                    self._logger.error("Unexpected BlockingIOError in blocking socket mode: %s" % str(e))
+                    self._logger.error(f"Unexpected BlockingIOError in blocking socket mode: {e}")
                     raise Exception("Unexpected BlockingIOError in blocking socket mode") from e
             except Exception as e:
-                self._logger.error("Error sending message: %s" % str(e))
+                self._logger.error(f"Error sending message: {e}")
                 socket_status = ''
                 try:
                     self.check(mode='basic')
@@ -519,7 +519,7 @@ class Client():
         while True:
             try:
                 # No check for readability because big Messages could fail
-                #TCP/IP streams don't guarantee that the message will arrive in one complete chunk.
+                # TCP/IP streams don't guarantee that the message will arrive in one complete chunk.
                 # A large JSON file might be broken into several smaller packets. Using select()
                 # to check readability could cause to read a partial message before the rest of
                 # the packets arrive. If you then stop reading or assume the message is complete,
@@ -528,12 +528,13 @@ class Client():
                 # Receive the message
                 msg = self._socket.recv(self._bytes_in)
 
+                # Check if the message is empty
                 if not msg:
-                    # Only a finished message can break the loop
-                    pass
+                    raise ValueError("No message received")
 
                 # Convert the message to a string
                 msg = msg.decode("utf-8")
+                self._logger.debug(f"Received message chunk of size {len(msg)} bytes")
             except BlockingIOError as e:
                 if not blocking:
                     # Check if the socket is ready for reading
@@ -546,17 +547,17 @@ class Client():
                     self._logger.error("Unexpected BlockingIOError in blocking socket mode")
                     raise Exception("Unexpected BlockingIOError in blocking socket mode") from e
             except UnicodeDecodeError as e:
-                self._logger.error("Error decoding message: %s" % str(e))
+                self._logger.error(f"Error decoding message: {e}")
                 raise Exception("Error decoding message") from e
             except Exception as e:
-                self._logger.error("Error receiving message: %s" % str(e))
-                socket_failed = ''
+                self._logger.error(f"Error receiving message: {e}")
+                socket_status = ''
                 try:
                     self.check(mode='basic')
-                except Exception:
-                    socket_failed = 'Socket failed'
-                    self._logger.error("Socket failed")
-                raise Exception(f"Error receiving message. {socket_failed}") from e
+                except Exception as check_error:
+                    socket_status = 'Socket failed'
+                    self._logger.error(f"Socket failed: {check_error}")
+                raise Exception(f"Error receiving message. {socket_status}") from e
 
             # Fill buffer with recieved data package
             buffer += msg
@@ -578,7 +579,7 @@ class Client():
                 # No output of error message because error is necessary
                 continue
             except Exception as e:
-                self._logger.error("Error decoding message: %s" % str(e))
+                self._logger.error(f"Error decoding message: {e}")
                 raise Exception("Error decoding message") from e
 
         self._logger.info("Message received")
