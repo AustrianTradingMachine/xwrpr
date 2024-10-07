@@ -43,14 +43,16 @@ class Client():
     _port (int): The port number to connect to.
     _encrypted (bool): Indicates whether the connection should be encrypted.
     _timeout (float): The timeout value for the connection.
-    _blocking (bool): Indicates whether the connection is blocking.
     _interval (float): The interval between requests in seconds.
     _max_fails (int): The maximum number of consecutive failed requests before giving up.
     _bytes_out (int): The maximum number of bytes to send in each request.
     _bytes_in (int): The maximum number of bytes to receive in each response.
-    _decoder (json.JSONDecoder): The JSON decoder instance.
-    _addresses (dict): A dictionary of addresses that have been used.
+    _blocking (bool): Indicates whether the connection is blocking.
     _lock (threading.Lock): A lock for thread safety.
+    _decoder (json.JSONDecoder): The JSON decoder instance.
+    _wait (float): The wait time for connection requests.
+    _addresses (dict): A dictionary of available addresses for the socket connection.
+
     _address_key (str): The key of the current address.
     _socket (socket): The socket connection.
 
@@ -131,31 +133,35 @@ class Client():
         self._port = port
         self._encrypted = encrypted
         self._timeout = timeout
-        
+        self._interval = interval
+        self._max_fails = max_fails
+        self._bytes_out = bytes_out
+        self._bytes_in = bytes_in
+
         # If timeout is set, the socket should be non-blocking
         # Sockets in blocking mode has to wait indefinitely for an event
         if self._timeout:
             self._blocking = False
         else:
             self._blocking = True
-            
-        # List of used addresses
-        self._addresses = {}
 
         # Lock for thread safety
         self._lock = Lock()
 
-        # Create the socket
-        self._get_addresses()
-        self.create()
-
-        self._interval = interval
-        self._max_fails = max_fails
-        self._bytes_out = bytes_out
-        self._bytes_in = bytes_in
-
         # Initialize the JSON decoder
         self._decoder=json.JSONDecoder()
+
+        # Wait time for connection requests
+        self._wait = 0.5
+
+        # A dictionary of available addresses for the socket connection.
+        self._addresses = {}
+
+        # Get the available addresses
+        self._get_addresses()
+       
+        # Create the socket
+        self.create()
 
         self._logger.info("Client initialized")
 
@@ -314,9 +320,6 @@ class Client():
                     # Get the next address
                     self.address_key = avl_addresses.pop(0)
 
-                    # For request limitation
-                    time.sleep(self._interval)
-
                     # If the address has been tried before
                     self._addresses[self.address_key]['retries'] += 1
                     self._addresses[self.address_key]['last_atempt'] = time.time()
@@ -421,7 +424,7 @@ class Client():
                             
                             if attempt < self._max_fails:
                                 # For request limitation
-                                time.sleep(self._interval)
+                                time.sleep(self._wait)
                             else:
                                 # If max fails reached raise an exception
                                 self._logger.error(f"Max fails reached. Unable to connect to server: {e}")

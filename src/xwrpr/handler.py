@@ -84,7 +84,6 @@ class _GeneralHandler(Client):
         Args:
             host (str): The host address.
             port (int): The port number.
-            stream (bool): Indicates whether to use streaming or not.
             logger (logging.Logger, optional): The logger object. Defaults to None.
         
         Raises:
@@ -107,24 +106,20 @@ class _GeneralHandler(Client):
         self._port=port
 
         # Set the connection parameters
-        self._encrypted=True
         self._interval=SEND_INTERVAL/1000
-        self._max_fails=MAX_CONNECTION_FAILS
-        self._bytes_out=MAX_SEND_DATA
-        self._bytes_in=MAX_RECIEVE_DATA
 
         # Iinitialize the Client instance
         super().__init__(
             host=self._host,
             port=self._port, 
 
-            encrypted=self._encrypted,
+            encrypted=True,
             timeout=None,
 
             interval=self._interval,
-            max_fails=self._max_fails,
-            bytes_out=self._bytes_out,
-            bytes_in=self._bytes_in,
+            max_fails=MAX_CONNECTION_FAILS,
+            bytes_out=MAX_SEND_DATA,
+            bytes_in=MAX_RECIEVE_DATA,
 
             logger=self._logger
         )
@@ -135,7 +130,7 @@ class _GeneralHandler(Client):
 
         self._logger.info("GeneralHandler initialized")
     
-    def send_request(self, command: str, ssid: str = None, arguments: dict = None, tag: str = None):
+    def send_request(self, command: str, ssid: str = None, arguments: dict = None, tag: str = None) -> None:
         """
         Sends a request to the server.
 
@@ -148,26 +143,37 @@ class _GeneralHandler(Client):
         Returns:
             bool: True if the request was sent successfully, False otherwise.
         """
-        self._logger.info("Sending request ...")
+        try:
+            self._logger.info("Sending request ...")
 
-        request = dict([('command', command)])
+            # Every request must at least contain the command
+            request = {'command': command}
 
-        if ssid is not None:
-            request['streamSessionId'] = ssid
-        if arguments is not None:
-            request.update(arguments)
-        if tag is not None:
-            request['customTag'] = tag
+            # Add the stream session ID, arguments, and custom tag to the request
+            if ssid is not None:
+                # For stream commands the stream session ID is required
+                request['streamSessionId'] = ssid
+            if arguments is not None:
+                # Some commands require additional arguments
+                request.update(arguments)
+            if tag is not None:
+                # Tags ar always optional and can be used for debugging
+                # The response will contain the same tag
+                request['customTag'] = tag
 
-        if not self.send(request):
-            self._logger.error("Failed to send request")
-            return False
-        else:
+            # Send the request to the server
+            self.send(request)
+
+            # For the login command, the user ID and password are masked
             if command == 'login':
                 request['arguments']['userId'] = '*****'
                 request['arguments']['password'] = '*****'
+
             self._logger.info("Sent request: " + str(request))
-            return True
+        except Exception as e:
+            self._logger.error(f"Failed to send request: {e}")
+            raise Exception("Failed to send request") from e
+
 
     def receive_response(self, data: bool = True):
         """
