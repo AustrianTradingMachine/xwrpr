@@ -95,7 +95,7 @@ class Client():
         bytes_out: int=1024,
         bytes_in: int=1024,
         
-        logger=None
+        logger: logging.Logger=None
     ) -> None:
         """
         Initializes a new instance of the Client class.

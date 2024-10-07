@@ -29,6 +29,7 @@ from math import floor
 from threading import Lock
 from queue import Queue, Empty
 import pandas as pd
+from typing import Union
 from xwrpr.client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password
@@ -77,7 +78,12 @@ class _GeneralHandler(Client):
         stop_ping: Stops the ping process.
     """
 
-    def __init__(self, host: str, port: int, logger=None) -> None:
+    def __init__(
+            self,
+            host: str,
+            port: int,
+            logger: logging.Logger = None
+        ) -> None:
         """
         Initializes the Handler object.
 
@@ -89,6 +95,7 @@ class _GeneralHandler(Client):
         Raises:
             ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
+
         if logger:
             # Check if the logger is an instance of logging.Logger
             if not isinstance(logger, logging.Logger):
@@ -130,7 +137,13 @@ class _GeneralHandler(Client):
 
         self._logger.info("GeneralHandler initialized")
     
-    def send_request(self, command: str, ssid: str = None, arguments: dict = None, tag: str = None) -> None:
+    def send_request(
+        self,
+        command: str,
+        ssid: str = None,
+        arguments: dict = None,
+        tag: str = None
+        ) -> None:
         """
         Sends a request to the server.
 
@@ -146,6 +159,7 @@ class _GeneralHandler(Client):
         Returns:
             None
         """
+
         try:
             self._logger.info("Sending request ...")
 
@@ -215,17 +229,23 @@ class _GeneralHandler(Client):
                     raise Exception("Response corrupted")
 
                 if not response['status']:
+                    # If the status is False, the response contains an error code and description
                     self._logger.error("Request failed")
                     self._logger.error(response['errorCode'])
                     self._logger.error(response['errorDescr'])
-                    raise Exception("Request failed")
+                    raise Exception("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
 
             return response
         except Exception as e:
             self._logger.error(f"Failed to receive response: {e}")
             raise Exception("Failed to receive response") from e
     
-    def thread_monitor(self, name: str, thread_data: dict, reconnect=None) -> None:
+    def thread_monitor(
+        self,
+        name: str,
+        thread_data: dict,
+        reconnect: callable = None
+    ) -> None:
         """
         Monitors the specified thread and handles reconnection if necessary.
 
@@ -285,29 +305,55 @@ class _GeneralHandler(Client):
             self._logger.error(f"Failed to monitor thread: {e}")
             raise Exception("Failed to monitor thread") from e
 
-    def start_ping(self, handler):
+    def start_ping(
+        self,
+        handler: Union['_DataHandler', '_StreamHandler']
+    ) -> None:
         """
         Starts the ping functionality.
 
         Args:
-            handler: The handler object.
+            handler (_DataHandler or _StreamHandler): The handler instance.
 
-        Returns:
-            bool: True if the ping is started successfully, False otherwise.
+        Raises:
+            Exception: If the ping fails to start.
         """
-        self._logger.info("Starting ping ...")
 
-        self._ping['run'] = True
-        self._ping['thread'] = CustomThread(target=self._send_ping, args=(handler,self._ping), daemon=True)
-        self._ping['thread'].start()
-        self._logger.info("Ping started")
+        try:
+            self._logger.info("Starting ping ...")
 
-        monitor_thread = CustomThread(target=self.thread_monitor, args=('Ping', self._ping, handler._reconnect,), daemon=True)
-        monitor_thread.start()
+            # Set the run flag for the ping on true
+            self._ping['run'] = True
+            # Create a new thread for the ping
+            self._ping['thread'] = CustomThread(
+                target=self._send_ping,
+                args=(handler,self._ping),
+                daemon=True
+            )
+            self._ping['thread'].start()
 
-        return True
+            self._logger.info("Ping started")
 
-    def _send_ping(self, handler, thread_data):
+
+            self._logger.info("Starting ping monitor ...")
+
+            # Start the thread monitor for the ping thread
+            monitor_thread = CustomThread(
+                target=self.thread_monitor,
+                args=('Ping', self._ping, handler._reconnect,),
+                daemon=True)
+            monitor_thread.start()
+
+            self._logger.info("Ping monitor started")
+        except Exception as e:
+            self._logger.error(f"Failed to start ping: {e}")
+            raise Exception("Failed to start ping") from e
+
+    def _send_ping(
+        self,
+        handler: Union['_DataHandler', '_StreamHandler'],
+        thread_data: dict
+        ) -> None:
         """
         Sends ping requests to the server.
 
@@ -353,27 +399,34 @@ class _GeneralHandler(Client):
 
         self._logger.info("Ping stopped")
 
-    def stop_ping(self):
+    def stop_ping(self) -> None:
         """
         Stops the ping process.
 
         Returns:
             bool: True if the ping process was stopped successfully, False otherwise.
         """
-        self._logger.info("Stopping ping ...")
+        try:
+            self._logger.info("Stopping ping ...")
 
-        if not self._ping:
-            self._logger.error("Ping never started")
-            return False
-            
-        if not self._ping['run']:
-            self._logger.warning("Ping already stopped")
-        else:
-            self._ping['run'] = False
+            # Check if ping was ever created
+            if not self._ping:
+                self._logger.error("Ping never started")
+                raise Exception("Ping never started")
 
-        self._ping['thread'].join()
+            # Check if the ping is intended to run 
+            if not self._ping['run']:
+                self._logger.warning("Ping already stopped")
+            else:
+                self._ping['run'] = False
 
-        return True
+            # Wait for the ping thread to finish
+            self._ping['thread'].join()
+
+            self._logger.info("Ping stopped")
+        except Exception as e:
+            self._logger.error(f"Failed to stop ping: {e}")
+            raise Exception("Failed to stop ping") from e
     
 class _DataHandler(_GeneralHandler):
     """
