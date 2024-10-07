@@ -140,8 +140,11 @@ class _GeneralHandler(Client):
             arguments (dict, optional): Additional arguments for the request. Defaults to None.
             tag (str, optional): A custom tag for the request. Defaults to None.
 
+        Raises:
+            Exception: If the request fails to send.
+
         Returns:
-            bool: True if the request was sent successfully, False otherwise.
+            None
         """
         try:
             self._logger.info("Sending request ...")
@@ -169,13 +172,13 @@ class _GeneralHandler(Client):
                 request['arguments']['userId'] = '*****'
                 request['arguments']['password'] = '*****'
 
-            self._logger.info("Sent request: " + str(request))
+            self._logger.info(f"Request sent: {request}")
         except Exception as e:
             self._logger.error(f"Failed to send request: {e}")
             raise Exception("Failed to send request") from e
 
 
-    def receive_response(self, data: bool = True):
+    def receive_response(self, data: bool = True) -> dict:
         """
         Receives a response from the server.
 

@@ -52,7 +52,6 @@ class Client():
     _decoder (json.JSONDecoder): The JSON decoder instance.
     _wait (float): The wait time for connection requests.
     _addresses (dict): A dictionary of available addresses for the socket connection.
-
     _address_key (str): The key of the current address.
     _socket (socket): The socket connection.
 
@@ -64,13 +63,13 @@ class Client():
         send: Sends a message over the socket connection.
         receive: Receives a message from the socket.
         close: Closes the connection and releases the socket.
+
         get_host: Returns the host address.
         set_host: Sets the host address.
         get_port: Returns the port number.
         set_port: Sets the port number.
         get_encrypted: Returns the encrypted flag.
         set_encrypted: Sets the encrypted flag.
-
         get_timeout: Returns the timeout value.
         set_timeout: Sets the timeout value.
         get_interval: Returns the interval value.
@@ -171,6 +170,9 @@ class Client():
 
         Raises:
             Exception: If there is an error getting the addresses.
+
+        Returns:
+            None
         """
 
         try:
@@ -240,6 +242,9 @@ class Client():
         Raises:
             ValueError: If the mode argument is not one of 'basic', 'readable', or 'writable'.
             Exception: If there is an error checking the socket.
+
+        Returns:
+            None
         """
 
         try:
@@ -284,8 +289,10 @@ class Client():
             excluded_errorors (List[str], optional): A list of error values to exclude from retrying. Defaults to [].
 
         Raises:
-            ValueError: If the excluded_errorors list contains an unknown error value.
             Exception: If there is an error creating the socket.
+
+        Returns:
+            None
         """
 
         # Thread safety necessary
@@ -388,6 +395,9 @@ class Client():
 
         Raises:
             Exception: If there is an error opening the connection.
+
+        Returns:
+            None
         """
 
         # Thread safety necessary
@@ -452,6 +462,9 @@ class Client():
 
         Raises:
             Exception: If there is an error sending the message.
+
+        Returns:
+            None
         """
 
         # Thread safety necessary
@@ -521,6 +534,9 @@ class Client():
 
         Raises:
             Exception: If there is an error receiving the message.
+
+        Returns:
+            str: The received message
         """
 
         self._logger.info("Receiving message ...")
@@ -613,6 +629,7 @@ class Client():
         It ensures that any open connections are closed properly and any resources
         are released.
         """
+
         self.close()
 
     def close(self) -> None:
@@ -621,6 +638,9 @@ class Client():
 
         Raises:
             None: If there is an error closing the connection.
+
+        Returns:
+            None
         """
 
         # Thread safety necessary
