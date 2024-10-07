@@ -178,46 +178,54 @@ class _GeneralHandler(Client):
             raise Exception("Failed to send request") from e
 
 
-    def receive_response(self, data: bool = True) -> dict:
+    def receive_response(self, stream: bool = False) -> dict:
         """
         Receives a response from the server.
 
         Args:
-            data (bool): Flag indicating whether to process the response data. Default is True.
+            stream (bool, optional): A flag indicating whether the response is for a stream request. Defaults to False.
+
+        Raises:
+            Exception: If the response is empty or not a dictionary.
 
         Returns:
-            dict or bool: The received response as a dictionary if `data` is True and the response is valid,
-                          otherwise False.
-
+            dict: The response from the server.
         """
-        self._logger.info("Receiving response ...")
 
-        response = self.receive()
+        try:
+            self._logger.info("Receiving response ...")
 
-        if not response:
-            self._logger.error("Failed to receive response")
-            return False
-        
-        self._logger.info("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
+            # Receive the response from the server
+            response = self.receive()
 
-        if not isinstance(response, dict):
-            self._logger.error("Response not a dictionary")
-            return False
+            if not response:
+                self._logger.error("Empty response")
+                raise Exception("Empty response")
+            
+            self._logger.info("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
-        if data:
-            if not 'status' in response:
-                self._logger.error("Response corrupted")
-                return False
+            if not isinstance(response, dict):
+                self._logger.error("Response not a dictionary")
+                raise Exception("Response not a dictionary")
 
-            if not response['status']:
-                self._logger.error("Request failed")
-                self._logger.error(response['errorCode'])
-                self._logger.error(response['errorDescr'])
-                return False
+            if not stream:
+                # Non stream responses have the flag "status"
+                if not 'status' in response:
+                    self._logger.error("Response corrupted")
+                    raise Exception("Response corrupted")
 
-        return response
+                if not response['status']:
+                    self._logger.error("Request failed")
+                    self._logger.error(response['errorCode'])
+                    self._logger.error(response['errorDescr'])
+                    raise Exception("Request failed")
+
+            return response
+        except Exception as e:
+            self._logger.error(f"Failed to receive response: {e}")
+            raise Exception("Failed to receive response") from e
     
-    def thread_monitor(self, name: str, thread_data: dict, reconnect=None):
+    def thread_monitor(self, name: str, thread_data: dict, reconnect=None) -> None:
         """
         Monitors the specified thread and handles reconnection if necessary.
 
@@ -227,37 +235,55 @@ class _GeneralHandler(Client):
             reconnect (callable, optional): A method to be called for reconnection. Defaults to None.
 
         Raises:
-            ValueError: If the reconnect parameter is provided but is not callable.
+            ValueError: If the reconnection method is not callable.
+            Exception: If the thread monitoring fails.
 
         Returns:
             None
         """
-        if reconnect:
-            if not callable(reconnect):
-                raise ValueError("Reconnection method not callable")
 
-        self._logger.info("Monitoring thread for " + name + " ...")
+        try:
+            self._logger.info(f"Monitoring thread for {name} ...")
 
-        while thread_data['run']:
-            if thread_data['thread'].is_alive():
-                continue
+            while thread_data['run']:
+                # If the thread is still running, continue monitoring
+                if thread_data['thread'].is_alive():
+                    continue
 
-            # must be checked again because of thread asynchronity
-            if not thread_data['run']:
-                break
+                # Check if the thread should still be running
+                if not thread_data['run']:
+                    break
 
-            self._logger.error("Thread for " + name + " died")
-            if reconnect:
-                reconnect()
-            
-            self._logger.error("Restarting thread for " + name + " ...")
-            dead_thread=thread_data['thread']
-            thread_data['thread'] = CustomThread(target=dead_thread._target, args=dead_thread._args, daemon=dead_thread._daemon, kwargs=dead_thread.kwargs)
-            thread_data['thread'].start()
+                self._logger.error(f"Thread for {name} died")
 
-            time.sleep(self._interval)
+                # Check if the reconnection method is callable
+                if reconnect:
+                    if not callable(reconnect):
+                        raise ValueError("Reconnection method not callable")
 
-        self._logger.info("Monitoring for thread " + name + " stopped")
+                # Reconnect to the server
+                if reconnect:
+                    reconnect()
+
+                self._logger.error(f"Restarting thread for {name} ...")
+
+                # Create a new thread with the parameters of the dead thread
+                dead_thread = thread_data['thread']
+                thread_data['thread'] = CustomThread(
+                    target=dead_thread._target,
+                    args=dead_thread._args,
+                    daemon=dead_thread._daemon,
+                    kwargs=dead_thread.kwargs
+                )
+                thread_data['thread'].start()
+
+                # Wait for the interval before checking the thread again
+                time.sleep(self._interval)
+
+            self._logger.info(f"Monitoring for thread {name} stopped")
+        except Exception as e:
+            self._logger.error(f"Failed to monitor thread: {e}")
+            raise Exception("Failed to monitor thread") from e
 
     def start_ping(self, handler):
         """
@@ -315,7 +341,7 @@ class _GeneralHandler(Client):
                         return False
 
                     if not ssid:
-                        if not self.receive_response(data = True):
+                        if not self.receive_response():
                             self._logger.error("Ping failed")
                             return False
 
@@ -478,7 +504,7 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("Log in failed")
                 return False
             
-            response = self.receive_response(data=True)
+            response = self.receive_response()
             if not response:
                 self._logger.error("Log in failed")
                 return False
@@ -509,7 +535,7 @@ class _DataHandler(_GeneralHandler):
             if not self.send_request(command='logout'):
                 self._logger.error("Log out failed")
             
-            response=self.receive_response(data = True)
+            response=self.receive_response()
             if not response:
                 self._logger.error("Log out failed")
 
@@ -570,7 +596,7 @@ class _DataHandler(_GeneralHandler):
                 self._logger.error("Request for data not possible")
                 return False 
                 
-            response = self.receive_response(data=True)
+            response = self.receive_response()
             if not response:
                 self._logger.error("No data received")
                 return False
@@ -945,7 +971,7 @@ class _StreamHandler(_GeneralHandler):
             self._logger.info("Streaming data ...")
 
             with self._ping_lock: # waits for the ping check loop to finish
-                response = self.receive_response(data=False)
+                response = self.receive_response(stream = True)
 
             if not response:
                 self._logger.error("Failed to read stream")

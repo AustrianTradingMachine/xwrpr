@@ -208,6 +208,9 @@ class Client():
             elif family == socket.AF_INET6:
                 # For IPv6 sockedadress consists of (ip, port, flowinfo, scopeid)
                 ip_address, port, flowinfo, scopeid = sockaddr 
+            else:
+                # Skip other address families
+                continue
 
             # Log adress
             self._logger.debug("Available address:")
