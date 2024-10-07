@@ -60,12 +60,7 @@ class _GeneralHandler(Client):
         _logger (logging.Logger): The logger instance.
         _host (str): The host address.
         _port (int): The port number.
-        _stream (bool): A flag indicating whether to use streaming.
-        _encrypted (bool): A flag indicating whether the connection is encrypted.
         _interval (float): The interval between sending requests.
-        _max_fails (int): The maximum number of connection fails.
-        _bytes_out (int): The maximum number of bytes to send.
-        _bytes_in (int): The maximum number of bytes to receive.
         _ping (dict): A dictionary to store ping related information.
         _ping_lock (Lock): A lock for ping operations.
 
@@ -191,7 +186,6 @@ class _GeneralHandler(Client):
             self._logger.error(f"Failed to send request: {e}")
             raise Exception("Failed to send request") from e
 
-
     def receive_response(self, stream: bool = False) -> dict:
         """
         Receives a response from the server.
@@ -216,7 +210,7 @@ class _GeneralHandler(Client):
                 self._logger.error("Empty response")
                 raise Exception("Empty response")
             
-            self._logger.info("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
+            self._logger.debug("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
             if not isinstance(response, dict):
                 self._logger.error("Response not a dictionary")
@@ -366,38 +360,63 @@ class _GeneralHandler(Client):
         """
         # sends ping all 10 minutes
         ping_interval = 60*9.9
-        next_ping=0
+        elapsed_time=0
         check_interval=self._interval/10
 
-        while thread_data['run']:
-            start_time = time.time()
-            if next_ping >= ping_interval:
-                # thanks to th with statement the ping could fail to keep is sheduled interval
-                # but thats not important because this is just the maximal needed interval and
-                # a function that locks the ping_key also initiates a reset to the server
-                with self._ping_lock:
-                    # dynamic allocation of ssid for StreamHandler
-                    if isinstance(handler, _StreamHandler):
-                        ssid = handler._dh._ssid
-                    else:
-                        ssid = None
+        try:
+            self._logger.info("Start sending ping ...")
 
-                    if not self.send_request(command='ping', ssid=ssid):
-                        self._logger.error("Ping failed")
-                        return False
+            # Loop until the run flag is set to False
+            while thread_data['run']:
+                # Start the timer
+                start_time = time.time()
 
-                    if not ssid:
-                        if not self.receive_response():
+                # Check if the ping timer has reached the interval
+                if elapsed_time >= ping_interval:
+                    # thanks to th with statement the ping could fail to keep is sheduled interval
+                    # but thats not important because this is just the maximal needed interval and
+                    # a function that locks the ping_key also initiates a reset to the server
+                    
+                    # When the hanler need the socket for a request the ping will be stopped
+                    # to avoid a conflict with the request
+                    with self._ping_lock:
+                        # dynamic allocation of ssid for StreamHandler
+                        # ssid could change during the ping process
+                        if isinstance(handler, _StreamHandler):
+                            ssid = handler._dh._ssid
+                        else:
+                            ssid = None
+
+                        try:
+                            # Stream handler have to send their ssid with every request to the host
+                            self.send_request(command='ping', ssid=ssid)
+                        except Exception as e:
                             self._logger.error("Ping failed")
-                            return False
+                            raise Exception("Ping failed") from e
 
-                    self._logger.info("Ping")
-                    next_ping = 0
+                        if not ssid:
+                            # None stream pings recieve a response
+                            try:
+                                self.receive_response()
+                            except Exception as e:
+                                self._logger.error("Ping failed")
+                                raise Exception("Ping failed") from e
 
-            time.sleep(check_interval)
-            next_ping += time.time() - start_time
+                        self._logger.info("Ping")
 
-        self._logger.info("Ping stopped")
+                        # reset the ping timer
+                        elapsed_time = 0
+
+                # Ping is checked every 1/10 of its interval
+                time.sleep(check_interval)
+
+                # Calculate the elapsed time
+                elapsed_time += time.time() - start_time
+
+            self._logger.info("Ping stopped")
+        except Exception as e:
+            self._logger.error(f"Failed to send ping: {e}")
+            raise Exception("Failed to send ping") from e
 
     def stop_ping(self) -> None:
         """
@@ -420,8 +439,8 @@ class _GeneralHandler(Client):
             else:
                 self._ping['run'] = False
 
-            # Wait for the ping thread to finish
-            self._ping['thread'].join()
+            # Wait 1s for the ping thread to stop
+            self._ping['thread'].join(timeout=1)
 
             self._logger.info("Ping stopped")
         except Exception as e:
