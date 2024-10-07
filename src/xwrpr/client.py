@@ -28,6 +28,7 @@ import select
 from pathlib import Path
 import logging
 import json
+from threading import Lock
 from typing import List
 from xwrpr.utils import generate_logger
 
@@ -49,10 +50,12 @@ class Client():
     _bytes_in (int): The maximum number of bytes to receive in each response.
     _decoder (json.JSONDecoder): The JSON decoder instance.
     _addresses (dict): A dictionary of addresses that have been used.
+    _lock (threading.Lock): A lock for thread safety.
     _address_key (str): The key of the current address.
     _socket (socket): The socket connection.
 
     Methods:
+        _get_addresses: Gets the available addresses for the socket connection.
         check: Check the socket for readability, writability, or errors.
         create: Creates a socket connection.
         open: Opens a connection to the server.
@@ -139,6 +142,9 @@ class Client():
         # List of used addresses
         self._addresses = {}
 
+        # Lock for thread safety
+        self._lock = Lock()
+
         # Create the socket
         self._get_addresses()
         self.create()
@@ -153,52 +159,6 @@ class Client():
 
         self._logger.info("Client initialized")
 
-    def check(self, mode: str) -> None:
-        """
-        Check the socket for readability, writability, or errors.
-
-        Args:
-            mode (str): The mode to check for. Can be one of 'basic', 'readable', or 'writable'.
-
-        Raises:
-            ValueError: If the mode argument is not one of 'basic', 'readable', or 'writable'.
-            Exception: If there is an error checking the socket.
-        """
-
-        try:
-            # Checking check the status of the socket
-            # The check is intern, no request to the server is made
-
-            # Initialize the lists
-            rlist, wlist, xlist = [], [], []
-            if mode == 'basic':
-                xlist = [self._socket]
-            elif mode == 'readable':
-                rlist = [self._socket]
-            elif mode == 'writable':
-                wlist = [self._socket]
-            else:
-                raise ValueError("Unknown mode value")
-            
-            # Check the socket
-            readable, writable, errored  = select.select(rlist, wlist, xlist, 0)
-
-            # Check the results
-            if mode == 'basic' and self._socket in errored:
-                self._logger.error("Socket error")
-                # Log the failure cause
-                self._addresses[self.adress_key]['last_error'] = 'check'
-                raise Exception("Socket error")
-            if mode == 'readable' and self._socket not in readable:
-                self._logger.debug("Socket not readable")
-                raise Exception("Socket not readable")
-            if mode == 'writable' and self._socket not in writable:
-                self._logger.debug("Socket not writable")
-                raise Exception("Socket not writable")
-        except Exception as e:
-            self._logger.error(f"Error in check method: {e}")
-            raise Exception("Error in check method") from e
-        
     def _get_addresses(self) -> None:
         """
         Gets the available addresses for the socket connection.
@@ -263,7 +223,53 @@ class Client():
                 'proto': proto,
                 'sockaddr': sockaddr
             }
-                
+
+    def check(self, mode: str) -> None:
+        """
+        Check the socket for readability, writability, or errors.
+
+        Args:
+            mode (str): The mode to check for. Can be one of 'basic', 'readable', or 'writable'.
+
+        Raises:
+            ValueError: If the mode argument is not one of 'basic', 'readable', or 'writable'.
+            Exception: If there is an error checking the socket.
+        """
+
+        try:
+            # Checking check the status of the socket
+            # The check is intern, no request to the server is made
+
+            # Initialize the lists
+            rlist, wlist, xlist = [], [], []
+            if mode == 'basic':
+                xlist = [self._socket]
+            elif mode == 'readable':
+                rlist = [self._socket]
+            elif mode == 'writable':
+                wlist = [self._socket]
+            else:
+                raise ValueError("Unknown mode value")
+            
+            # Check the socket
+            readable, writable, errored  = select.select(rlist, wlist, xlist, 0)
+
+            # Check the results
+            if mode == 'basic' and self._socket in errored:
+                self._logger.error("Socket error")
+                # Log the failure cause
+                self._addresses[self.adress_key]['last_error'] = 'check'
+                raise Exception("Socket error")
+            if mode == 'readable' and self._socket not in readable:
+                self._logger.debug("Socket not readable")
+                raise Exception("Socket not readable")
+            if mode == 'writable' and self._socket not in writable:
+                self._logger.debug("Socket not writable")
+                raise Exception("Socket not writable")
+        except Exception as e:
+            self._logger.error(f"Error in check method: {e}")
+            raise Exception("Error in check method") from e
+         
     def create(self, excluded_errors: List[str] = []) -> None:
         """
         Creates a socket connection.
@@ -276,99 +282,102 @@ class Client():
             Exception: If there is an error creating the socket.
         """
 
-        self._logger.info("Creating socket ...")
+        # Thread safety necessary
+        # There can just be one socket at a time
+        with self._lock:
+            self._logger.info("Creating socket ...")
 
-        # Check for existing socket
-        if hasattr(self, '_socket'):
-            self._logger.warning("Socket already exists")
-            # Close the existing socket
-            self.close()
+            # Check for existing socket
+            if hasattr(self, '_socket'):
+                self._logger.warning("Socket already exists")
+                # Close the existing socket
+                self.close()
 
-        # List of possible error values
-        # Ordered by level of lifecicle of the socket
-        possible_errors = ['check', 'connect', 'wrap', 'create']
+            # List of possible error values
+            # Ordered by level of lifecicle of the socket
+            possible_errors = ['check', 'connect', 'wrap', 'create']
 
-        # Fill the list of errors
-        errors = []
-        if 'all' not in excluded_errors:
-            errors = [error for error in possible_errors if error not in excluded_errors]
+            # Fill the list of errors
+            errors = []
+            if 'all' not in excluded_errors:
+                errors = [error for error in possible_errors if error not in excluded_errors]
 
-        # Fill the list of available addresses
-        avl_addresses = []
-        for error in [None] + errors:
-            avl_addresses.extend([key for key, value in self._addresses.items() if value['last_error'] == error])
+            # Fill the list of available addresses
+            avl_addresses = []
+            for error in [None] + errors:
+                avl_addresses.extend([key for key, value in self._addresses.items() if value['last_error'] == error])
 
-        try:
-            # Try to create the socket
-            created = False
-            while avl_addresses and not created:
-                # Get the next address
-                self.address_key = avl_addresses.pop(0)
+            try:
+                # Try to create the socket
+                created = False
+                while avl_addresses and not created:
+                    # Get the next address
+                    self.address_key = avl_addresses.pop(0)
 
-                # For request limitation
-                time.sleep(self._interval)
+                    # For request limitation
+                    time.sleep(self._interval)
 
-                # If the address has been tried before
-                self._addresses[self.address_key]['retries'] += 1
-                self._addresses[self.address_key]['last_atempt'] = time.time()
+                    # If the address has been tried before
+                    self._addresses[self.address_key]['retries'] += 1
+                    self._addresses[self.address_key]['last_atempt'] = time.time()
 
-                try:
-                    # Create the socket
-                    self._socket = socket.socket(
-                        family = self._addresses[self.address_key]['family'],
-                        type = self._addresses[self.address_key]['type'],
-                        proto = self._addresses[self.address_key]['proto'],
-                    )
-                except socket.error as e:
-                    self._logger.error(f"Failed to create socket: {e}")
-                    # Log the failure cause
-                    self._addresses[self.address_key]['last_error'] = 'create'
-                    # Close the socket if it is not stable
-                    self.close()
-                    # Try the next address
-                    continue
-
-                self._logger.info("Socket created")
-
-                # If the connection is ssl encrypted
-                if self._encrypted:
-                    self._logger.info("Wrapping socket with SSL ...")
-                    
                     try:
-                        # Wrap the socket with SSL
-                        context = ssl.create_default_context()
-                        self._socket=context.wrap_socket(
-                            sock = self._socket,
-                            server_hostname=self._host)
+                        # Create the socket
+                        self._socket = socket.socket(
+                            family = self._addresses[self.address_key]['family'],
+                            type = self._addresses[self.address_key]['type'],
+                            proto = self._addresses[self.address_key]['proto'],
+                        )
                     except socket.error as e:
-                        self._logger.error(f"Failed to wrap socket: {e}")
+                        self._logger.error(f"Failed to create socket: {e}")
                         # Log the failure cause
-                        self._addresses[self.address_key]['last_error'] = 'wrap'
+                        self._addresses[self.address_key]['last_error'] = 'create'
                         # Close the socket if it is not stable
                         self.close()
                         # Try the next address
                         continue
 
-                    self._logger.info("Socket wrapped")
+                    self._logger.info("Socket created")
 
-                # Set the socket blocking mode
-                self._socket.setblocking(flag = self._blocking)
-                if self._timeout:
-                    # The socket is in non-blocking mode
-                    # The timeout avoids that the socket is raising
-                    # a timout exeption immediately
-                    self._socket.settimeout(value = self._timeout)
+                    # If the connection is ssl encrypted
+                    if self._encrypted:
+                        self._logger.info("Wrapping socket with SSL ...")
+                        
+                        try:
+                            # Wrap the socket with SSL
+                            context = ssl.create_default_context()
+                            self._socket=context.wrap_socket(
+                                sock = self._socket,
+                                server_hostname=self._host)
+                        except socket.error as e:
+                            self._logger.error(f"Failed to wrap socket: {e}")
+                            # Log the failure cause
+                            self._addresses[self.address_key]['last_error'] = 'wrap'
+                            # Close the socket if it is not stable
+                            self.close()
+                            # Try the next address
+                            continue
 
-                # Socket successfully created
-                created = True
+                        self._logger.info("Socket wrapped")
 
-            # If all attempts to create the socket failed raise an exception
-            if not created:
-                self._logger.error("All attempts to create socket failed")
-                raise Exception("All attempts to create socket failed")
-        except Exception as e:
-            self._logger.error(f"Error creating socket: {e}")
-            raise Exception("Error creating socket") from e
+                    # Set the socket blocking mode
+                    self._socket.setblocking(flag = self._blocking)
+                    if self._timeout:
+                        # The socket is in non-blocking mode
+                        # The timeout avoids that the socket is raising
+                        # a timout exeption immediately
+                        self._socket.settimeout(value = self._timeout)
+
+                    # Socket successfully created
+                    created = True
+
+                # If all attempts to create the socket failed raise an exception
+                if not created:
+                    self._logger.error("All attempts to create socket failed")
+                    raise Exception("All attempts to create socket failed")
+            except Exception as e:
+                self._logger.error(f"Error creating socket: {e}")
+                raise Exception("Error creating socket") from e
 
     def open(self, recreate: bool = True) -> None:
         """
@@ -378,55 +387,58 @@ class Client():
             Exception: If there is an error opening the connection.
         """
 
-        self._logger.info("Opening connection ...")
+        # Thread safety necessary
+        # Socket can just be connected once
+        with self._lock:
+            self._logger.info("Opening connection ...")
 
-        try:
-            # Ceck if socket is already connected
-            if self._socket.getpeername():
-                self._logger.warning("Socket already connected")
-                # Return if the socket is already connected
-                return
-        except socket.error:
-            # Pass if the socket is not connected
-            pass
-
-        # Loop until the connection is established
-        # or an error occurs
-        connected = False
-        while not connected:
             try:
-                # Try to connect to the server
-                for attempt in range(1, self._max_fails + 1):
-                    try:
-                        # Connect to the server
-                        self._socket.connect(self._addresses[self.address_key]['sockaddr'])
-                        # Connection successful
-                        connected = True
-                        # Exit loop if connection is successful
-                        break  
-                    except (socket.error, InterruptedError) as e:
-                        self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
-                        
-                        if attempt < self._max_fails:
-                            # For request limitation
-                            time.sleep(self._interval)
-                        else:
-                            # If max fails reached raise an exception
-                            self._logger.error(f"Max fails reached. Unable to connect to server: {e}")
-                            raise Exception("Max fails reached. Unable to connect to server.") from e
-            except Exception as e:
-                self._logger.error(f"Error opening connection: {e}")
-                # Log the failure cause
-                self._addresses[self.address_key]['last_error'] = 'connect'
-                # Close the connection if it is not stable
-                self.close()
+                # Ceck if socket is already connected
+                if self._socket.getpeername():
+                    self._logger.warning("Socket already connected")
+                    # Return if the socket is already connected
+                    return
+            except socket.error:
+                # Pass if the socket is not connected
+                pass
 
-                if recreate:
-                    # Try to create a new socket
-                    self._logger.error("Attempting to recreate socket ...")
-                    self.create(excluded_errors=['all'])
+            # Loop until the connection is established
+            # or an error occurs
+            connected = False
+            while not connected:
+                try:
+                    # Try to connect to the server
+                    for attempt in range(1, self._max_fails + 1):
+                        try:
+                            # Connect to the server
+                            self._socket.connect(self._addresses[self.address_key]['sockaddr'])
+                            # Connection successful
+                            connected = True
+                            # Exit loop if connection is successful
+                            break  
+                        except (socket.error, InterruptedError) as e:
+                            self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
+                            
+                            if attempt < self._max_fails:
+                                # For request limitation
+                                time.sleep(self._interval)
+                            else:
+                                # If max fails reached raise an exception
+                                self._logger.error(f"Max fails reached. Unable to connect to server: {e}")
+                                raise Exception("Max fails reached. Unable to connect to server.") from e
+                except Exception as e:
+                    self._logger.error(f"Error opening connection: {e}")
+                    # Log the failure cause
+                    self._addresses[self.address_key]['last_error'] = 'connect'
+                    # Close the connection if it is not stable
+                    self.close()
 
-        self._logger.info("Connection opened")
+                    if recreate:
+                        # Try to create a new socket
+                        self._logger.error("Attempting to recreate socket ...")
+                        self.create(excluded_errors=['all'])
+
+            self._logger.info("Connection opened")
 
     def send(self, msg: str) -> None:
         """
@@ -439,60 +451,63 @@ class Client():
             Exception: If there is an error sending the message.
         """
 
-        self._logger.info("Sending message ...")
-
-        try:
-            # Convert the message to bytes
-            msg =  json.dumps(msg)
-            msg = msg.encode("utf-8")
-        except json.JSONDecodeError as e:
-            self._logger.error(f"Error dumping message: {e}")
-            raise Exception("Error dumping message") from e
-        except UnicodeEncodeError as e:
-            self._logger.error(f"Error encoding message: {e}")
-            raise Exception("Error encoding message") from e
-        except Exception as e:
-            self._logger.error(f"Error during converting message: {e}")
-            raise Exception("Error during converting message") from e
-        
-        # Check if the socket is in blocking mode
-        blocking = self._socket.getblocking()
-        
-        # Loop until the entire message is sent
-        # Or an error occurs
-        send_msg_length = 0
-        msg_length = len(msg)
-        while send_msg_length < msg_length:
-            # Calculate the package size
-            package_size = min(self._bytes_out, msg_length - send_msg_length)
+        # Thread safety necessary
+        # To guarantee request limitation
+        with self._lock:
+            self._logger.info("Sending message ...")
 
             try:
-                # Attempt to send the message chunk
-                send_msg_length += self._socket.send(msg[send_msg_length:send_msg_length + package_size])
-
-                # For request limitation
-                time.sleep(self._interval)
-
-            except BlockingIOError as e:
-                if not blocking:
-                    # Check if the socket is ready for writing
-                    self._logger.warning("Socket not ready for sending, checking writability...")
-                    self.check(mode='writable')
-                else:
-                    # For blocking mode, raise an exception
-                    self._logger.error(f"Unexpected BlockingIOError in blocking socket mode: {e}")
-                    raise Exception("Unexpected BlockingIOError in blocking socket mode") from e
+                # Convert the message to bytes
+                msg =  json.dumps(msg)
+                msg = msg.encode("utf-8")
+            except json.JSONDecodeError as e:
+                self._logger.error(f"Error dumping message: {e}")
+                raise Exception("Error dumping message") from e
+            except UnicodeEncodeError as e:
+                self._logger.error(f"Error encoding message: {e}")
+                raise Exception("Error encoding message") from e
             except Exception as e:
-                self._logger.error(f"Error sending message: {e}")
-                socket_status = ''
-                try:
-                    self.check(mode='basic')
-                except Exception as check_error:
-                    socket_status = 'Socket failed'
-                    self._logger.error(f"Socket failed: {check_error}")
-                raise Exception(f"Error sending message. {socket_status}") from e
+                self._logger.error(f"Error during converting message: {e}")
+                raise Exception("Error during converting message") from e
             
-        self._logger.info("Message sent")
+            # Check if the socket is in blocking mode
+            blocking = self._socket.getblocking()
+            
+            # Loop until the entire message is sent
+            # Or an error occurs
+            send_msg_length = 0
+            msg_length = len(msg)
+            while send_msg_length < msg_length:
+                # Calculate the package size
+                package_size = min(self._bytes_out, msg_length - send_msg_length)
+
+                try:
+                    # Attempt to send the message chunk
+                    send_msg_length += self._socket.send(msg[send_msg_length:send_msg_length + package_size])
+
+                    # For request limitation
+                    time.sleep(self._interval)
+
+                except BlockingIOError as e:
+                    if not blocking:
+                        # Check if the socket is ready for writing
+                        self._logger.warning("Socket not ready for sending, checking writability...")
+                        self.check(mode='writable')
+                    else:
+                        # For blocking mode, raise an exception
+                        self._logger.error(f"Unexpected BlockingIOError in blocking socket mode: {e}")
+                        raise Exception("Unexpected BlockingIOError in blocking socket mode") from e
+                except Exception as e:
+                    self._logger.error(f"Error sending message: {e}")
+                    socket_status = ''
+                    try:
+                        self.check(mode='basic')
+                    except Exception as check_error:
+                        socket_status = 'Socket failed'
+                        self._logger.error(f"Socket failed: {check_error}")
+                    raise Exception(f"Error sending message. {socket_status}") from e
+                
+            self._logger.info("Message sent")
 
     def receive(self) -> str:
         """
@@ -604,28 +619,31 @@ class Client():
         Raises:
             None: If there is an error closing the connection.
         """
-       
-        # Check if the socket is in a basic state
-        if self._socket.fileno() != -1:
-            try:
-                # Shut down the connection
-                self._logger.info("Closing connection ...")
-                self._socket.shutdown(socket.SHUT_RDWR)
-                self._logger.info("Connections closed")
-            except OSError as e:
-                # For graceful shutdown no error message raise of exception  is allowed
-                self._logger.debug(f"Error during connection shutdown: {e}")
-            
-            try:
-                # Close the socket
-                self._logger.info("Closing socket ...")
-                self._socket.close()
-                self._logger.info("Socket closed")
-            except OSError as e:
-                # For graceful closing no error message raise of exception  is allowed
-                self._logger.error(f"Error closing socket: {e}")
-        else:
-            self._logger.warning("Connection and socket already closed")
+
+        # Thread safety necessary
+        # Socket can just be closed once
+        with self._lock:
+            # Check if the socket is in a basic state
+            if self._socket.fileno() != -1:
+                try:
+                    # Shut down the connection
+                    self._logger.info("Closing connection ...")
+                    self._socket.shutdown(socket.SHUT_RDWR)
+                    self._logger.info("Connections closed")
+                except OSError as e:
+                    # For graceful shutdown no error message raise of exception  is allowed
+                    self._logger.debug(f"Error during connection shutdown: {e}")
+                
+                try:
+                    # Close the socket
+                    self._logger.info("Closing socket ...")
+                    self._socket.close()
+                    self._logger.info("Socket closed")
+                except OSError as e:
+                    # For graceful closing no error message raise of exception  is allowed
+                    self._logger.error(f"Error closing socket: {e}")
+            else:
+                self._logger.warning("Connection and socket already closed")
         
     def get_host(self) -> str:
         return self._host
