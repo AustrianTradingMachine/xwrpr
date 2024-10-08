@@ -29,7 +29,7 @@ from math import floor
 from threading import Lock
 from queue import Queue, Empty
 import pandas as pd
-from typing import Union
+from typing import Union, List
 from xwrpr.client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password
@@ -51,6 +51,7 @@ MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
 MAX_CONNECTION_FAILS=config.getint('CONNECTION','MAX_CONNECTION_FAILS')
 MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
 MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
+MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')
 
 
 class _GeneralHandler(Client):
@@ -101,17 +102,14 @@ class _GeneralHandler(Client):
 
         self._logger.info("Initializing GeneralHandler ...")
 
-        self._host=host
-        self._port=port
-
         # Iinitialize the Client instance
         super().__init__(
-            host=self._host,
-            port=self._port, 
+            host=host,
+            port=port, 
 
             encrypted=True,
             timeout=None,
-            reaction_time = 2.0,
+            reaction_time = MAX_REACTION_TIME/1000,
 
             interval=SEND_INTERVAL/1000,
             max_fails=MAX_CONNECTION_FAILS,
@@ -439,29 +437,24 @@ class _DataHandler(_GeneralHandler):
     Attributes:
         _logger (logging.Logger): The logger instance used for logging.
         _demo (bool): Indicates whether the handler is for the demo mode or not.
-        _host (str): The host address for the XTB trading platform.
-        _port (int): The port number for the XTB trading platform.
         _stream_handlers (list): A list of attached stream handlers.
         _reconnect_lock (threading.Lock): A lock used for thread safety during reconnection.
         _status (str): The status of the data handler ('active', 'inactive', or 'deleted').
         _ssid (str): The stream session ID received from the server.
 
     Methods:
+        delete: Deletes the DataHandler.
         _login: Logs in to the XTB trading platform.
         _logout: Logs out the user from the XTB trading platform.
         getData: Retrieves data from the server.
         _retrieve_data: Retrieves data for the specified command.
         _reconnect: Reconnects to the server.
-        _attach_stream_handler: Attaches a stream handler to the logger.
-        _detach_stream_handler: Detaches a stream handler from the logger.
+        _reconnect_sub: Subroutine for reconnection.
+        _attach_stream_handler: Attaches a stream handler to the DataHandler.
+        _detach_stream_handler: Detaches a stream handler from the DataHandler.
         _close_stream_handlers: Closes the stream handlers.
         get_status: Returns the status of the handler.
         get_StreamHandler: Returns the stream handlers associated with the XTB handler.
-        get_demo: Returns the demo mode.
-        set_demo: Sets the demo mode.
-        get_logger: Returns the logger instance.
-        set_logger: Sets the logger instance.
-
     """
 
     def __init__(
@@ -490,16 +483,11 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("Initializing DataHandler ...")
 
         self._demo=demo
-        self._host=HOST
-        if self._demo:
-            self._port=PORT_DEMO
-        else:
-            self._port=PORT_REAL
 
         # Initialize the GeneralHandler instance
         super().__init__(
-            host=self._host,
-            port=self._port,
+            host=HOST,
+            port=PORT_DEMO if demo else PORT_REAL,
             logger=self._logger
         )
         
@@ -621,7 +609,7 @@ class _DataHandler(_GeneralHandler):
                 self.send_request(command='logout')
                 self._logger.info("Logged out successfully")
             except Exception as e:
-                # For graceful shutdown no error message raise of exception  is allowed
+                # For graceful logout no error message raise of exception  is allowed
                 self._logger.error(f"Could not log out: {e}")
             finally:
                 # Close the socket
@@ -712,6 +700,9 @@ class _DataHandler(_GeneralHandler):
 
         Returns:
             None
+
+        Raises:
+            None
         """
 
         # In case a reconnection is already in progress,
@@ -725,6 +716,9 @@ class _DataHandler(_GeneralHandler):
         This subroutine is necessary to provide connected StreamHandlers the possibility to reconnect.
 
         Returns:
+            None
+
+        Raises:
             None
         """
 
@@ -756,6 +750,9 @@ class _DataHandler(_GeneralHandler):
 
         Returns:
             None
+
+        Raises:
+            None
         """
 
         self._logger.info("Attaching StreamHandler ...")
@@ -779,69 +776,83 @@ class _DataHandler(_GeneralHandler):
         Raises:
             None
         """
+
+        self._logger.info("Detaching StreamHandler ...")
+
         if handler in self._stream_handlers:
             self._stream_handlers.remove(handler)
             self._logger.info("StreamHandler detached")
         else:
             self._logger.warning("StreamHandler not found")
 
-    def _close_stream_handlers(self):
+    def _close_stream_handlers(self) -> None:
         """
         Closes the stream handlers.
 
         This method closes all the stream handlers associated with the logger.
-        If there are no stream handlers to close, it returns True.
-        If any stream handler fails to close, it logs an error message but continues execution.
 
         Returns:
-            bool: True if all stream handlers are closed successfully, False otherwise.
+            None
         """
+
         self._logger.info("Closing StreamHandlers ...")
 
         if not self._stream_handlers:
             self._logger.info("No StreamHandlers to close")
-            return True
-
-        for handler in list(self._stream_handlers):
-            if not handler.delete():
-                self._logger.error("Could not close StreamHandler")
-                # no false return function must run through
-                # detaching is only executed by StreamHandler itself
-
-        return True
+        else:
+            for handler in list(self._stream_handlers):
+                try:
+                    handler.delete()
+                except KeyError as e:
+                    # For graceful closing no error message raise of exception  is allowed
+                    self._logger.error(f"Failed to close StreamHandler: {e}")
+                    # detaching is only executed by StreamHandler itself
     
-    def get_status(self):
+    def get_status(self) -> str:
         """
         Returns the status of the handler.
 
         Returns:
             str: The status of the handler.
+
+        Raises:
+            None
         """
+
         return self._status
 
-    def get_StreamHandler(self):
+    def get_stream_handlers(self) -> List['_StreamHandler']:
         """
         Returns the stream handlers associated with the XTB handler.
 
         Returns:
             list: A list of stream handlers.
-        """
-        return self._stream_handlers
 
-    def get_demo(self):
+        Raises:
+            None
+        """
+
+        return self._stream_handlers
+    
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @property
+    def demo(self) -> bool:
         return self._demo
-    
-    def set_demo(self, demo):
+
+    @demo.setter
+    def demo(self, value: bool) -> None:
         raise ValueError("Error: Demo cannot be changed")
-    
-    def get_logger(self):
+
+    @property
+    def logger(self) -> logging.Logger:
         return self._logger
     
-    def set_logger(self, logger):
+    @logger.setter
+    def logger(self, value: logging.Logger) -> None:
         raise ValueError("Error: Logger cannot be changed")
-    
-    demo = property(get_demo, set_demo, doc='Get/set the demo mode')
-    logger = property(get_logger, set_logger, doc='Get/set the logger')
 
 
 class _StreamHandler(_GeneralHandler):
@@ -1367,7 +1378,7 @@ class HandlerManager():
             bool: True if the handler was successfully deleted, False otherwise.
         """
         if isinstance(handler, _DataHandler):
-            for stream in list(handler.get_StreamHandler()):
+            for stream in list(handler.get_stream_handlers()):
                 self._logger.info("Deregister StreamHandler "+self._handlers['stream'][stream]['name'])
                 self._connections -= 1
             
