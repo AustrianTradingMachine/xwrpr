@@ -50,7 +50,7 @@ class Client():
     _blocking (bool): Indicates whether the connection is blocking.
     _lock (threading.Lock): A lock for thread safety.
     _decoder (json.JSONDecoder): The JSON decoder instance.
-    _wait (float): The wait time for connection requests.
+    _reaction_time (float): Wait time for Socket reaction.
     _addresses (dict): A dictionary of available addresses for the socket connection.
     _address_key (str): The key of the current address.
     _socket (socket): The socket connection.
@@ -151,7 +151,7 @@ class Client():
         self._decoder=json.JSONDecoder()
 
         # Wait time for Socket reaction
-        self._wait = 2.0
+        self._reaction_time = 2.0
 
         # A dictionary of available addresses for the socket connection.
         self._addresses = {}
@@ -238,7 +238,6 @@ class Client():
             raise ValueError("No suitable addresses found")
         self._logger.debug(f"{num_addresses} suitable addresses found")
 
-
     def check(self, mode: str) -> None:
         """
         Check the socket for readability, writability, or errors.
@@ -269,12 +268,13 @@ class Client():
         else:
             raise ValueError("Unknown mode value")
         
-        try:
-            # Check the socket
-            readable, writable, errored  = select.select(rlist, wlist, xlist, self._wait)
-        except select.error as e:
-            self._logger.error(f"Error checking socket: {e}")
-            raise
+        # Check the socket
+        readable, writable, errored  = select.select(rlist, wlist, xlist, self._reaction_time)
+
+        # Check if the socket is ready
+        if not readable and not writable and not errored:
+            self._logger.debug("Socket didnt answer")
+            raise TimeoutError("Socket didnt answer")
 
         # Check the results
         if mode == 'basic' and self._socket in errored:
@@ -331,7 +331,6 @@ class Client():
             while avl_addresses and not created:
                 # Get the next address
                 self.address_key = avl_addresses.pop(0)
-
                 # If the address has been tried before
                 self._addresses[self.address_key]['retries'] += 1
                 self._addresses[self.address_key]['last_atempt'] = time.time()
@@ -356,10 +355,8 @@ class Client():
 
                 # If the connection is ssl encrypted
                 if self._encrypted:
-                    self._logger.info("Wrapping socket with SSL ...")
-                    
                     try:
-                        # Wrap the socket with SSL
+                        self._logger.info("Wrapping socket with SSL ...")
                         context = ssl.create_default_context()
                         self._socket=context.wrap_socket(
                             sock = self._socket,
@@ -436,7 +433,7 @@ class Client():
                             
                             if attempt < self._max_fails:
                                 # For request limitation
-                                time.sleep(self._wait)
+                                time.sleep(self._reaction_time)
                             else:
                                 # If max fails reached raise an exception
                                 self._logger.error(f"Max fails reached. Unable to connect to server: {e}")

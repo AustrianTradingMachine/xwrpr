@@ -155,36 +155,32 @@ class _GeneralHandler(Client):
             None
         """
 
-        try:
-            self._logger.info("Sending request ...")
+        self._logger.info("Sending request ...")
 
-            # Every request must at least contain the command
-            request = {'command': command}
+        # Every request must at least contain the command
+        request = {'command': command}
 
-            # Add the stream session ID, arguments, and custom tag to the request
-            if ssid is not None:
-                # For stream commands the stream session ID is required
-                request['streamSessionId'] = ssid
-            if arguments is not None:
-                # Some commands require additional arguments
-                request.update(arguments)
-            if tag is not None:
-                # Tags ar always optional and can be used for debugging
-                # The response will contain the same tag
-                request['customTag'] = tag
+        # Add the stream session ID, arguments, and custom tag to the request
+        if ssid is not None:
+            # For stream commands the stream session ID is required
+            request['streamSessionId'] = ssid
+        if arguments is not None:
+            # Some commands require additional arguments
+            request.update(arguments)
+        if tag is not None:
+            # Tags ar always optional and can be used for debugging
+            # The response will contain the same tag
+            request['customTag'] = tag
 
-            # Send the request to the server
-            self.send(request)
+        # Send the request to the server
+        self.send(request)
 
-            # For the login command, the user ID and password are masked
-            if command == 'login':
-                request['arguments']['userId'] = '*****'
-                request['arguments']['password'] = '*****'
+        # For the login command, the user ID and password are masked
+        if command == 'login':
+            request['arguments']['userId'] = '*****'
+            request['arguments']['password'] = '*****'
 
-            self._logger.info(f"Request sent: {request}")
-        except Exception as e:
-            self._logger.error(f"Failed to send request: {e}")
-            raise Exception("Failed to send request") from e
+        self._logger.info(f"Request sent: {request}")
 
     def receive_response(self, stream: bool = False) -> dict:
         """
@@ -200,39 +196,35 @@ class _GeneralHandler(Client):
             dict: The response from the server.
         """
 
-        try:
-            self._logger.info("Receiving response ...")
+        self._logger.info("Receiving response ...")
 
-            # Receive the response from the server
-            response = self.receive()
+        # Receive the response from the server
+        response = self.receive()
 
-            if not response:
-                self._logger.error("Empty response")
-                raise Exception("Empty response")
-            
-            self._logger.debug("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
+        if not response:
+            self._logger.error("Empty response")
+            raise ValueError("Empty response")
+        
+        self._logger.debug("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
-            if not isinstance(response, dict):
-                self._logger.error("Response not a dictionary")
-                raise Exception("Response not a dictionary")
+        if not isinstance(response, dict):
+            self._logger.error("Response not a dictionary")
+            raise ValueError("Response not a dictionary")
 
-            if not stream:
-                # Non stream responses have the flag "status"
-                if not 'status' in response:
-                    self._logger.error("Response corrupted")
-                    raise Exception("Response corrupted")
+        if not stream:
+            # Non stream responses have the flag "status"
+            if not 'status' in response:
+                self._logger.error("Response corrupted")
+                raise ValueError("Response corrupted")
 
-                if not response['status']:
-                    # If the status is False, the response contains an error code and description
-                    self._logger.error("Request failed")
-                    self._logger.error(response['errorCode'])
-                    self._logger.error(response['errorDescr'])
-                    raise Exception("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
+            if not response['status']:
+                # If the status is False, the response contains an error code and description
+                self._logger.error("Request failed")
+                self._logger.error(response['errorCode'])
+                self._logger.error(response['errorDescr'])
+                raise ValueError("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
 
-            return response
-        except Exception as e:
-            self._logger.error(f"Failed to receive response: {e}")
-            raise Exception("Failed to receive response") from e
+        return response
     
     def thread_monitor(
         self,
@@ -256,48 +248,44 @@ class _GeneralHandler(Client):
             None
         """
 
-        try:
-            self._logger.info(f"Monitoring thread for {name} ...")
+        self._logger.info(f"Monitoring thread for {name} ...")
 
-            while thread_data['run']:
-                # If the thread is still running, continue monitoring
-                if thread_data['thread'].is_alive():
-                    continue
+        while thread_data['run']:
+            # If the thread is still running, continue monitoring
+            if thread_data['thread'].is_alive():
+                continue
 
-                # Check if the thread should still be running
-                if not thread_data['run']:
-                    break
+            # Check if the thread should still be running
+            if not thread_data['run']:
+                break
 
-                self._logger.error(f"Thread for {name} died")
+            self._logger.error(f"Thread for {name} died")
 
-                # Check if the reconnection method is callable
-                if reconnect:
-                    if not callable(reconnect):
-                        raise ValueError("Reconnection method not callable")
+            # Check if the reconnection method is callable
+            if reconnect:
+                if not callable(reconnect):
+                    raise ValueError("Reconnection method not callable")
 
-                # Reconnect to the server
-                if reconnect:
-                    reconnect()
+            # Reconnect to the server
+            if reconnect:
+                reconnect()
 
-                self._logger.error(f"Restarting thread for {name} ...")
+            self._logger.error(f"Restarting thread for {name} ...")
 
-                # Create a new thread with the parameters of the dead thread
-                dead_thread = thread_data['thread']
-                thread_data['thread'] = CustomThread(
-                    target=dead_thread._target,
-                    args=dead_thread._args,
-                    daemon=dead_thread._daemon,
-                    kwargs=dead_thread.kwargs
-                )
-                thread_data['thread'].start()
+            # Create a new thread with the parameters of the dead thread
+            dead_thread = thread_data['thread']
+            thread_data['thread'] = CustomThread(
+                target=dead_thread._target,
+                args=dead_thread._args,
+                daemon=dead_thread._daemon,
+                kwargs=dead_thread.kwargs
+            )
+            thread_data['thread'].start()
 
-                # Wait for the interval before checking the thread again
-                time.sleep(self._interval)
+            # Wait for the interval before checking the thread again
+            time.sleep(self._interval)
 
-            self._logger.info(f"Monitoring for thread {name} stopped")
-        except Exception as e:
-            self._logger.error(f"Failed to monitor thread: {e}")
-            raise Exception("Failed to monitor thread") from e
+        self._logger.info(f"Monitoring for thread {name} stopped")
 
     def start_ping(
         self,
@@ -313,35 +301,31 @@ class _GeneralHandler(Client):
             Exception: If the ping fails to start.
         """
 
-        try:
-            self._logger.info("Starting ping ...")
+        self._logger.info("Starting ping ...")
 
-            # Set the run flag for the ping on true
-            self._ping['run'] = True
-            # Create a new thread for the ping
-            self._ping['thread'] = CustomThread(
-                target=self._send_ping,
-                args=(handler,self._ping),
-                daemon=True
-            )
-            self._ping['thread'].start()
+        # Set the run flag for the ping on true
+        self._ping['run'] = True
+        # Create a new thread for the ping
+        self._ping['thread'] = CustomThread(
+            target=self._send_ping,
+            args=(handler,self._ping),
+            daemon=True
+        )
+        self._ping['thread'].start()
 
-            self._logger.info("Ping started")
+        self._logger.info("Ping started")
 
 
-            self._logger.info("Starting ping monitor ...")
+        self._logger.info("Starting ping monitor ...")
 
-            # Start the thread monitor for the ping thread
-            monitor_thread = CustomThread(
-                target=self.thread_monitor,
-                args=('Ping', self._ping, handler._reconnect,),
-                daemon=True)
-            monitor_thread.start()
+        # Start the thread monitor for the ping thread
+        monitor_thread = CustomThread(
+            target=self.thread_monitor,
+            args=('Ping', self._ping, handler._reconnect,),
+            daemon=True)
+        monitor_thread.start()
 
-            self._logger.info("Ping monitor started")
-        except Exception as e:
-            self._logger.error(f"Failed to start ping: {e}")
-            raise Exception("Failed to start ping") from e
+        self._logger.info("Ping monitor started")
 
     def _send_ping(
         self,
@@ -363,60 +347,56 @@ class _GeneralHandler(Client):
         elapsed_time=0
         check_interval=self._interval/10
 
-        try:
-            self._logger.info("Start sending ping ...")
+        self._logger.info("Start sending ping ...")
 
-            # Loop until the run flag is set to False
-            while thread_data['run']:
-                # Start the timer
-                start_time = time.time()
+        # Loop until the run flag is set to False
+        while thread_data['run']:
+            # Start the timer
+            start_time = time.time()
 
-                # Check if the ping timer has reached the interval
-                if elapsed_time >= ping_interval:
-                    # thanks to th with statement the ping could fail to keep is sheduled interval
-                    # but thats not important because this is just the maximal needed interval and
-                    # a function that locks the ping_key also initiates a reset to the server
-                    
-                    # When the hanler need the socket for a request the ping will be stopped
-                    # to avoid a conflict with the request
-                    with self._ping_lock:
-                        # dynamic allocation of ssid for StreamHandler
-                        # ssid could change during the ping process
-                        if isinstance(handler, _StreamHandler):
-                            ssid = handler._dh._ssid
-                        else:
-                            ssid = None
+            # Check if the ping timer has reached the interval
+            if elapsed_time >= ping_interval:
+                # thanks to th with statement the ping could fail to keep is sheduled interval
+                # but thats not important because this is just the maximal needed interval and
+                # a function that locks the ping_key also initiates a reset to the server
+                
+                # When the hanler need the socket for a request the ping will be stopped
+                # to avoid a conflict with the request
+                with self._ping_lock:
+                    # dynamic allocation of ssid for StreamHandler
+                    # ssid could change during the ping process
+                    if isinstance(handler, _StreamHandler):
+                        ssid = handler._dh._ssid
+                    else:
+                        ssid = None
 
+                    try:
+                        # Stream handler have to send their ssid with every request to the host
+                        self.send_request(command='ping', ssid=ssid)
+                    except Exception as e:
+                        self._logger.error("Ping failed")
+                        raise Exception("Ping failed") from e
+
+                    if not ssid:
+                        # None stream pings recieve a response
                         try:
-                            # Stream handler have to send their ssid with every request to the host
-                            self.send_request(command='ping', ssid=ssid)
+                            self.receive_response()
                         except Exception as e:
                             self._logger.error("Ping failed")
                             raise Exception("Ping failed") from e
 
-                        if not ssid:
-                            # None stream pings recieve a response
-                            try:
-                                self.receive_response()
-                            except Exception as e:
-                                self._logger.error("Ping failed")
-                                raise Exception("Ping failed") from e
+                    self._logger.info("Ping")
 
-                        self._logger.info("Ping")
+                    # reset the ping timer
+                    elapsed_time = 0
 
-                        # reset the ping timer
-                        elapsed_time = 0
+            # Ping is checked every 1/10 of its interval
+            time.sleep(check_interval)
 
-                # Ping is checked every 1/10 of its interval
-                time.sleep(check_interval)
+            # Calculate the elapsed time
+            elapsed_time += time.time() - start_time
 
-                # Calculate the elapsed time
-                elapsed_time += time.time() - start_time
-
-            self._logger.info("Ping stopped")
-        except Exception as e:
-            self._logger.error(f"Failed to send ping: {e}")
-            raise Exception("Failed to send ping") from e
+        self._logger.info("Ping stopped")
 
     def stop_ping(self) -> None:
         """
@@ -425,27 +405,24 @@ class _GeneralHandler(Client):
         Returns:
             bool: True if the ping process was stopped successfully, False otherwise.
         """
-        try:
-            self._logger.info("Stopping ping ...")
 
-            # Check if ping was ever created
-            if not self._ping:
-                self._logger.error("Ping never started")
-                raise Exception("Ping never started")
+        self._logger.info("Stopping ping ...")
 
-            # Check if the ping is intended to run 
-            if not self._ping['run']:
-                self._logger.warning("Ping already stopped")
-            else:
-                self._ping['run'] = False
+        # Check if ping was ever created
+        if not self._ping:
+            self._logger.error("Ping never started")
+            raise RuntimeError("Ping never started")
 
-            # Wait 1s for the ping thread to stop
-            self._ping['thread'].join(timeout=1)
+        # Check if the ping is intended to run 
+        if not self._ping['run']:
+            self._logger.warning("Ping already stopped")
+        else:
+            self._ping['run'] = False
 
-            self._logger.info("Ping stopped")
-        except Exception as e:
-            self._logger.error(f"Failed to stop ping: {e}")
-            raise Exception("Failed to stop ping") from e
+        # Wait 1s for the ping thread to stop
+        self._ping['thread'].join(timeout=1)
+
+        self._logger.info("Ping stopped")
     
 class _DataHandler(_GeneralHandler):
     """
