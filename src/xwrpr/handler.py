@@ -55,7 +55,7 @@ MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
 
 class _GeneralHandler(Client):
     """
-    A class that handles general requests and responses.
+    A class that handles general requests and responses to and from the XTB trading platform.
 
     Attributes:
         _logger (logging.Logger): The logger instance.
@@ -81,7 +81,7 @@ class _GeneralHandler(Client):
             logger: logging.Logger = None
         ) -> None:
         """
-        Initializes the Handler object.
+        Initializes the general handler.
 
         Args:
             host (str): The host address.
@@ -380,7 +380,7 @@ class _GeneralHandler(Client):
                         self.send_request(command='ping', ssid=ssid)
                     except Exception as e:
                         self._logger.error("Ping failed")
-                        raise Exception("Ping failed") from e
+                        raise
 
                     if not ssid:
                         # None stream pings recieve a response
@@ -388,7 +388,7 @@ class _GeneralHandler(Client):
                             self.receive_response()
                         except Exception as e:
                             self._logger.error("Ping failed")
-                            raise Exception("Ping failed") from e
+                            raise
 
                     self._logger.info("Ping")
 
@@ -470,7 +470,7 @@ class _DataHandler(_GeneralHandler):
         logger: logging.Logger = None
     ) -> None:
         """
-        Initializes the DataHandler object.
+        Initializes the DataHandler.
 
         Args:
             demo (bool): Specifies whether the DataHandler is for demo or real trading.
@@ -520,7 +520,7 @@ class _DataHandler(_GeneralHandler):
         
     def __del__(self) -> None:
         """
-        Destructor method for the Handler class.
+        Destructor method for the DataHandler class.
 
         This method is automatically called when the object is about to be destroyed.
         It performs cleanup operations and deletes the object
@@ -577,6 +577,7 @@ class _DataHandler(_GeneralHandler):
         # To avoid conflicts with the login process
         # Could happen if relogin of running handler is necessary
         with self._ping_lock:
+            # Send the login request to the server
             self.send_request(
                 command='login',
                 arguments={
@@ -586,6 +587,7 @@ class _DataHandler(_GeneralHandler):
                     }
                 }
             )
+            # Receive the response from the server
             response = self.receive_response()
 
         self._logger.info("Log in successfully")
@@ -595,7 +597,7 @@ class _DataHandler(_GeneralHandler):
                             
     def _logout(self) -> None:
         """
-        Logs out the user from the XTB trading platform.
+        Logs out from the XTB trading platform.
 
         Returns:
             None
@@ -603,33 +605,33 @@ class _DataHandler(_GeneralHandler):
         Raises:
             None
         """
-        # no false return function must run through
-        # No reconnection because login is undesirable
+        # No reconnection because login is undesirable!
 
         if not self._ssid:
+            # Logged in clients have a stream session ID
             self._logger.warning("Already logged out")
-            
+        
+        # Locks out the ping process
+        # To avoid conflicts with the login process
         with self._ping_lock:
-            self._logger.info("Logging out ...")
+            try:
+                self._logger.info("Logging out ...")
+                # Send the logout request to the server
+                # Server sends no response for logout request
+                self.send_request(command='logout')
+                self._logger.info("Logged out successfully")
+            except Exception as e:
+                # For graceful shutdown no error message raise of exception  is allowed
+                self._logger.error(f"Could not log out: {e}")
+            finally:
+                # Close the socket
+                self.close()
+                # Delete the stream session ID 
+                self._ssid=None
+                # Set the status to inactive
+                self._status='inactive'
 
-            if not self.send_request(command='logout'):
-                self._logger.error("Log out failed")
-            
-            response=self.receive_response()
-            if not response:
-                self._logger.error("Log out failed")
-
-        self._logger.info("Logged out successfully")
-
-        if not self.close():
-            self._logger.error("Could not close connection")
-            
-        self._ssid=None
-        self._status='inactive'
-
-        return True
-
-    def getData(self, command: str, **kwargs):
+    def getData(self, command: str, **kwargs) -> dict:
         """
         Retrieves data from the server.
 
@@ -638,24 +640,32 @@ class _DataHandler(_GeneralHandler):
             **kwargs: Additional keyword arguments for the command.
 
         Returns:
-            The retrieved data if successful, False otherwise.
+            The retrieved data if successful.
         """
+
         if not self._ssid:
             self._logger.error("Got no StreamSessionId from Server")
-            return False
+            raise ValueError("Got no StreamSessionId from Server")
         
+        # Try to retrieve the data twice
         for tries in range(2):
-            response = self._retrieve_data(command, **kwargs)
-
-            if response:
+            try:
+                # Retrieve the data for the specified command
+                response = self._retrieve_data(command, **kwargs)
+                # Return the response if successful
                 return response
-            elif tries == 0:
-                self._reconnect()
-                
-        self._logger.error("Failed to retrieve data")
-        return False
+            except Exception as e:
+                self._logger.error(f"Failed to retrieve data: {e}")
+                if tries == 0:
+                    # Reconnect if the first attempt fails
+                    self._logger.info("Try a reconnection ...")
+                    self._reconnect()
+                else:
+                    # If the data could not be retrieved, raise an error
+                    self._logger.error("Failed to retrieve data")
+                    raise
 
-    def _retrieve_data(self, command: str, **kwargs):
+    def _retrieve_data(self, command: str, **kwargs) -> dict:
         """
         Retrieve data for the specified command.
 
@@ -669,87 +679,96 @@ class _DataHandler(_GeneralHandler):
         Raises:
             None.
         """
+
+        # Locks out the ping process
+        # To avoid conflicts with the login process
         with self._ping_lock:
             self._logger.info("Getting data for " + pretty(command) + " ...")
 
-            if not self.send_request(command='get'+command, arguments={'arguments': kwargs} if bool(kwargs) else None):
-                self._logger.error("Request for data not possible")
-                return False 
+            # Send the request to the server
+            self.send_request(
+                command='get'+command,
+                arguments={'arguments': kwargs} if bool(kwargs) else None)
                 
+            # Receive the response from the server
             response = self.receive_response()
-            if not response:
-                self._logger.error("No data received")
-                return False
             
-            if not 'returnData' in response:
+            # Response must contain 'returnData' key with data
+            if not 'returnData' in response or not response['returnData']:
                 self._logger.error("No data in response")
-                return False
+                raise ValueError("No data in response")
                 
+            # Log the successful retrieval of data in pretty format
             self._logger.info("Data for "+pretty(command) +" recieved")
 
+            # Return the data
             return response['returnData']
  
-    def _reconnect(self):
+    def _reconnect(self) -> None:
         """
         Reconnects to the server.
 
         This method is used to establish a new connection to the server in case the current connection is lost.
 
         Returns:
-            The result of the `_reconnect_sub` method.
+            None
         """
+
+        # In case a reconnection is already in progress,
+        # by a connected stream handler
+        # the lock is used to avoid conflicts
         with self._reconnect_lock:   
             return self._reconnect_sub()
     
-    def _reconnect_sub(self):
+    def _reconnect_sub(self) -> None:
         """
-        Reconnects the data connection.
-
-        This method attempts to reconnect the data connection.
+        This subroutine is necessary to provide connected StreamHandlers the possibility to reconnect.
 
         Returns:
-            bool: True if the reconnection is successful, False otherwise.
+            None
         """
-        self._status = 'inactive'
 
-        if not self.check(mode='basic'):
-            self._logger.info("Reconnecting ...")
+        try:
+            # Set the status to inactive
+            self._status = 'inactive'
+            self.check(mode='basic')
+        except Exception as e:
+            self._logger.error(f"Reconnection failed: {e}")
 
-            if not self.create():
-                self._logger.error("Creation of socket failed")
-                return False
-            
-            if not self._login():
-                self._logger.error("Could not log in")
-                return False
-
-            self._logger.info("Reconnection successful")
-        else:
-            self._logger.info("Data connection is already active")
+            try:
+                self._logger.info("Reconnecting ...")
+                self.create()
+                self._login()
+                self._logger.info("Reconnection successful")
+            except Exception as e:
+                self._logger.error(f"Reconnection failed: {e}")
+                raise
 
         self._status = 'active'
-
-        return True
-
-    def _attach_stream_handler(self, handler: '_StreamHandler'):
+        self._logger.info("Data connection is already active")
+        
+    def _attach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
-        Attach a stream handler to the logger.
+        Attach a StreamHandler to the DataHandler.
 
         Parameters:
         - handler: The stream handler to attach.
 
         Returns:
-        None
+            None
         """
+
+        self._logger.info("Attaching StreamHandler ...")
+
         if handler not in self._stream_handlers:
             self._stream_handlers.append(handler)
             self._logger.info("StreamHandler attached")
         else:
             self._logger.warning("StreamHandler already attached")
 
-    def _detach_stream_handler(self, handler: '_StreamHandler'):
+    def _detach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
-        Detaches a stream handler from the logger.
+        Detaches a StreamHandler from the DataHandler.
 
         Args:
             handler (_StreamHandler): The stream handler to detach.

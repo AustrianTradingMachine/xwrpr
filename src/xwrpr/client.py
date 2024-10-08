@@ -36,6 +36,7 @@ from xwrpr.utils import generate_logger
 class Client():
     """
     The Client class provides a simple interface for creating and managing
+    a socket connection to a server
 
     Attributes:
     _logger (logging.Logger): The logger instance to use for logging.
@@ -288,7 +289,7 @@ class Client():
          
     def create(self, excluded_errors: List[str] = []) -> None:
         """
-        Creates a socket connection.
+        Creates a socket
 
         Args:
             excluded_errorors (List[str], optional): A list of error values to exclude from retrying. Defaults to [].
