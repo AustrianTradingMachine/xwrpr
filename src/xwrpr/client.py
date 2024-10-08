@@ -43,6 +43,7 @@ class Client():
     _port (int): The port number to connect to.
     _encrypted (bool): Indicates whether the connection should be encrypted.
     _timeout (float): The timeout value for the connection.
+    _reaction_time (float): Wait time for Socket reaction.
     _interval (float): The interval between requests in seconds.
     _max_fails (int): The maximum number of consecutive failed requests before giving up.
     _bytes_out (int): The maximum number of bytes to send in each request.
@@ -50,7 +51,6 @@ class Client():
     _blocking (bool): Indicates whether the connection is blocking.
     _lock (threading.Lock): A lock for thread safety.
     _decoder (json.JSONDecoder): The JSON decoder instance.
-    _reaction_time (float): Wait time for Socket reaction.
     _addresses (dict): A dictionary of available addresses for the socket connection.
     _address_key (str): The key of the current address.
     _socket (socket): The socket connection.
@@ -89,6 +89,7 @@ class Client():
         
         encrypted: bool,
         timeout: float,
+        reaction_time: float=2.0,
         
         interval: float=0.5,
         max_fails: int=10,
@@ -105,6 +106,7 @@ class Client():
             port (int): The port number to connect to.
             encrypted (bool): Indicates whether the connection should be encrypted.
             timeout (float): The timeout value for the connection.
+            reaction_time (float, optional): Wait time for Socket reaction. Defaults to 2.0.
             interval (float, optional): The interval between requests in seconds. Defaults to 0.5.
             max_fails (int, optional): The maximum number of consecutive failed requests before giving up. Defaults to 10.
             bytes_out (int, optional): The maximum number of bytes to send in each request. Defaults to 1024.
@@ -132,6 +134,7 @@ class Client():
         self._port = port
         self._encrypted = encrypted
         self._timeout = timeout
+        self._reaction_time = reaction_time
         self._interval = interval
         self._max_fails = max_fails
         self._bytes_out = bytes_out
@@ -149,9 +152,6 @@ class Client():
 
         # Initialize the JSON decoder
         self._decoder=json.JSONDecoder()
-
-        # Wait time for Socket reaction
-        self._reaction_time = 2.0
 
         # A dictionary of available addresses for the socket connection.
         self._addresses = {}

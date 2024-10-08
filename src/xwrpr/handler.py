@@ -52,6 +52,7 @@ MAX_CONNECTION_FAILS=config.getint('CONNECTION','MAX_CONNECTION_FAILS')
 MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
 MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
 
+
 class _GeneralHandler(Client):
     """
     A class that handles general requests and responses.
@@ -60,7 +61,7 @@ class _GeneralHandler(Client):
         _logger (logging.Logger): The logger instance.
         _host (str): The host address.
         _port (int): The port number.
-        _interval (float): The interval between sending requests.
+        _thread_ticker (float): The ticker for checking threads.
         _ping (dict): A dictionary to store ping related information.
         _ping_lock (Lock): A lock for ping operations.
 
@@ -107,9 +108,6 @@ class _GeneralHandler(Client):
         self._host=host
         self._port=port
 
-        # Set the connection parameters
-        self._interval=SEND_INTERVAL/1000
-
         # Iinitialize the Client instance
         super().__init__(
             host=self._host,
@@ -117,14 +115,18 @@ class _GeneralHandler(Client):
 
             encrypted=True,
             timeout=None,
+            reaction_time = 2.0,
 
-            interval=self._interval,
+            interval=SEND_INTERVAL/1000,
             max_fails=MAX_CONNECTION_FAILS,
             bytes_out=MAX_SEND_DATA,
             bytes_in=MAX_RECIEVE_DATA,
 
             logger=self._logger
         )
+
+        # Set ticker for checking threads
+        self.thread_ticker = 0.5
 
         # Initialize the ping dictionary and lock
         self._ping=dict()
@@ -264,6 +266,7 @@ class _GeneralHandler(Client):
             # Check if the reconnection method is callable
             if reconnect:
                 if not callable(reconnect):
+                    self._logger.error("Reconnection method not callable")
                     raise ValueError("Reconnection method not callable")
 
             # Reconnect to the server
@@ -283,7 +286,7 @@ class _GeneralHandler(Client):
             thread_data['thread'].start()
 
             # Wait for the interval before checking the thread again
-            time.sleep(self._interval)
+            time.sleep(self.thread_ticker)
 
         self._logger.info(f"Monitoring for thread {name} stopped")
 
@@ -345,7 +348,6 @@ class _GeneralHandler(Client):
         # sends ping all 10 minutes
         ping_interval = 60*9.9
         elapsed_time=0
-        check_interval=self._interval/10
 
         self._logger.info("Start sending ping ...")
 
@@ -391,7 +393,7 @@ class _GeneralHandler(Client):
                     elapsed_time = 0
 
             # Ping is checked every 1/10 of its interval
-            time.sleep(check_interval)
+            time.sleep(self.thread_ticker)
 
             # Calculate the elapsed time
             elapsed_time += time.time() - start_time
