@@ -475,6 +475,9 @@ class _DataHandler(_GeneralHandler):
         Args:
             demo (bool): Specifies whether the DataHandler is for demo or real trading.
             logger (logging.Logger, optional): The logger object to use for logging. If not provided, a new logger will be generated.
+
+        Raises:
+            None
         """
 
         if logger:
@@ -518,12 +521,17 @@ class _DataHandler(_GeneralHandler):
     def __del__(self) -> None:
         """
         Destructor method for the Handler class.
-        Deletes the instance of the Handler object.
+
+        This method is automatically called when the object is about to be destroyed.
+        It performs cleanup operations and deletes the object
+
+        Raises:
+            None
         """
 
         self.delete()
     
-    def delete(self):
+    def delete(self) -> None:
         """
         Deletes the DataHandler.
 
@@ -532,60 +540,68 @@ class _DataHandler(_GeneralHandler):
         Finally, a success message is logged and the method returns True.
 
         Returns:
-            bool: True if the DataHandler is successfully deleted, False otherwise.
+            None
         """
+
+        # Check if the DataHandler is already deleted
         if self._status == 'deleted':
             self._logger.warning("DataHandler already deleted")
-            return True
+        else:
+            self._logger.info("Deleting DataHandler ...")
 
-        self._logger.info("Deleting DataHandler ...")
-
-        self._close_stream_handlers()
-        self.stop_ping()
-        self._logout()
-        self._status = 'deleted'
+            self._close_stream_handlers()
+            self.stop_ping()
+            self._logout()
+            self._status = 'deleted'
+                
+            self._logger.info("DataHandler deleted")
             
-        self._logger.info("DataHandler deleted")
-        
-        return True
-            
-    def _login(self):
+    def _login(self) -> None:
         """
         Logs in to the XTB trading platform.
 
         Returns:
-            bool: True if login is successful, False otherwise.
+            None
+
+        Raises:
+            None
         """
+
         # No reconnection because login is part of reconnection routine
         self._logger.info("Logging in ...")
 
-        if not self.open():
-            self._logger.error("Log in failed")
-            return False
-            
+        # Open the connection to the server
+        self.open()
+
+        # Locks out the ping process
+        # To avoid conflicts with the login process
+        # Could happen if relogin of running handler is necessary
         with self._ping_lock:
-            if not self.send_request(command='login', arguments={'arguments': {'userId': get_userId(self._demo), 'password': get_password()}}):
-                self._logger.error("Log in failed")
-                return False
-            
+            self.send_request(
+                command='login',
+                arguments={
+                    'arguments': {
+                        'userId': get_userId(self._demo), # get_userId() returns the user ID for the demo or real trading mode
+                        'password': get_password() # get_password() returns the password for the user ID
+                    }
+                }
+            )
             response = self.receive_response()
-            if not response:
-                self._logger.error("Log in failed")
-                return False
 
         self._logger.info("Log in successfully")
         self._ssid = response['streamSessionId']
 
         self._status = 'active'
                             
-        return True
-
-    def _logout(self):
+    def _logout(self) -> None:
         """
         Logs out the user from the XTB trading platform.
 
         Returns:
-            bool: True if the logout was successful, False otherwise.
+            None
+
+        Raises:
+            None
         """
         # no false return function must run through
         # No reconnection because login is undesirable
