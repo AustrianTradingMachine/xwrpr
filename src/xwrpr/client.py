@@ -114,14 +114,10 @@ class Client():
             logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
 
         Raises:
-            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
+            None
         """
 
         if logger:
-            # Check if the logger is an instance of logging.Logger
-            if not isinstance(logger, logging.Logger):
-                raise ValueError("The logger argument must be an instance of logging.Logger.")
-            
             # Use the provided logger
             self._logger = logger
         else:
@@ -167,7 +163,8 @@ class Client():
         Gets the available addresses for the socket connection.
 
         Raises:
-            Exception: If there is an error getting the addresses.
+            ValueError: If no available addresses are found.
+            ValueError: If no suitable addresses are found.
 
         Returns:
             None
@@ -297,7 +294,7 @@ class Client():
             excluded_errorors (List[str], optional): A list of error values to exclude from retrying. Defaults to [].
 
         Raises:
-            Exception: If there is an error creating the socket.
+            RuntimeError: If all attempts to create the socket fail.
 
         Returns:
             None
@@ -393,7 +390,7 @@ class Client():
         Opens a connection to the server.
 
         Raises:
-            Exception: If there is an error opening the connection.
+            RuntimeError: If all attempts to open the connection fail.
 
         Returns:
             None
@@ -460,7 +457,7 @@ class Client():
             msg (str): The message to send.
 
         Raises:
-            Exception: If there is an error sending the message.
+            Exception: If there is an error sending the message
 
         Returns:
             None
@@ -523,6 +520,7 @@ class Client():
             str: The received message.
 
         Raises:
+            ValueError: If no message is received.
             Exception: If there is an error receiving the message.
 
         Returns:

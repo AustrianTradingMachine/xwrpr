@@ -87,16 +87,12 @@ class _GeneralHandler(Client):
             host (str): The host address.
             port (int): The port number.
             logger (logging.Logger, optional): The logger object. Defaults to None.
-        
+
         Raises:
-            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
+            None
         """
 
         if logger:
-            # Check if the logger is an instance of logging.Logger
-            if not isinstance(logger, logging.Logger):
-                raise ValueError("The logger argument must be an instance of logging.Logger.")
-            
             # Use the provided logger
             self._logger = logger
         else:
@@ -151,7 +147,7 @@ class _GeneralHandler(Client):
             tag (str, optional): A custom tag for the request. Defaults to None.
 
         Raises:
-            Exception: If the request fails to send.
+            None
 
         Returns:
             None
@@ -192,7 +188,9 @@ class _GeneralHandler(Client):
             stream (bool, optional): A flag indicating whether the response is for a stream request. Defaults to False.
 
         Raises:
-            Exception: If the response is empty or not a dictionary.
+            ValueError: If the response is empty or not a dictionary.
+            ValueError: If the response is corrupted.
+            ValueError: If the request failed.
 
         Returns:
             dict: The response from the server.
@@ -243,8 +241,7 @@ class _GeneralHandler(Client):
             reconnect (callable, optional): A method to be called for reconnection. Defaults to None.
 
         Raises:
-            ValueError: If the reconnection method is not callable.
-            Exception: If the thread monitoring fails.
+            ValueError: If the reconnection method is not callable
 
         Returns:
             None
@@ -301,7 +298,10 @@ class _GeneralHandler(Client):
             handler (_DataHandler or _StreamHandler): The handler instance.
 
         Raises:
-            Exception: If the ping fails to start.
+            RuntimeError: If the ping was never started.
+
+        Returns:
+            None
         """
 
         self._logger.info("Starting ping ...")
@@ -344,6 +344,9 @@ class _GeneralHandler(Client):
 
         Returns:
             bool: False if the ping failed.
+
+        Raises:
+            Exception: If the ping failed.
         """
         # sends ping all 10 minutes
         ping_interval = 60*9.9
@@ -406,6 +409,9 @@ class _GeneralHandler(Client):
 
         Returns:
             bool: True if the ping process was stopped successfully, False otherwise.
+
+        Raises:
+            RuntimeError: If the ping was never started.
         """
 
         self._logger.info("Stopping ping ...")
@@ -431,18 +437,16 @@ class _DataHandler(_GeneralHandler):
     Handles data-related operations for the XTB trading platform.
 
     Attributes:
+        _logger (logging.Logger): The logger instance used for logging.
         _demo (bool): Indicates whether the handler is for the demo mode or not.
         _host (str): The host address for the XTB trading platform.
         _port (int): The port number for the XTB trading platform.
-        _userid (str): The user ID for the XTB trading platform.
-        _logger (logging.Logger): The logger instance used for logging.
         _stream_handlers (list): A list of attached stream handlers.
         _reconnect_lock (threading.Lock): A lock used for thread safety during reconnection.
         _status (str): The status of the data handler ('active', 'inactive', or 'deleted').
         _ssid (str): The stream session ID received from the server.
 
     Methods:
-        delete: Deletes the DataHandler.
         _login: Logs in to the XTB trading platform.
         _logout: Logs out the user from the XTB trading platform.
         getData: Retrieves data from the server.
@@ -460,54 +464,63 @@ class _DataHandler(_GeneralHandler):
 
     """
 
-    def __init__(self, demo: bool, logger=None):
+    def __init__(
+        self,
+        demo: bool,
+        logger: logging.Logger = None
+    ) -> None:
         """
         Initializes the DataHandler object.
 
         Args:
             demo (bool): Specifies whether the DataHandler is for demo or real trading.
             logger (logging.Logger, optional): The logger object to use for logging. If not provided, a new logger will be generated.
-
-        Raises:
-            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
         """
+
         if logger:
-            if not isinstance(logger, logging.Logger):
-                raise ValueError("The logger argument must be an instance of logging.Logger.")
-            
+            # Use the provided logger
             self._logger = logger
         else:
+            # Generate a new logger
             self._logger=generate_logger(name='DataHandler', path=Path.cwd() / "logs")
 
-        self._demo=demo
+        self._logger.info("Initializing DataHandler ...")
 
+        self._demo=demo
         self._host=HOST
         if self._demo:
             self._port=PORT_DEMO
         else:
             self._port=PORT_REAL
 
-        self._logger.info("Creating DataHandler ...")
-
-        super().__init__(host=self._host, port=self._port, stream = False, logger=self._logger)
+        # Initialize the GeneralHandler instance
+        super().__init__(
+            host=self._host,
+            port=self._port,
+            logger=self._logger
+        )
         
+        # Stream handlers that are attached to the DataHandler
         self._stream_handlers=[]
         self._reconnect_lock=Lock()
 
+        # Initialize the status and stream session ID
         self._status=None
         self._ssid=None
-        self._login()
 
-        # starts ping to keep connection open
+        # Log in to the XTB trading platform
+        self._login()
+        # Starts ping to keep connection open
         self.start_ping(handler=self)
 
-        self._logger.info("DataHandler created")
+        self._logger.info("DataHandler initialized")
         
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Destructor method for the Handler class.
         Deletes the instance of the Handler object.
         """
+
         self.delete()
     
     def delete(self):
@@ -831,7 +844,9 @@ class _StreamHandler(_GeneralHandler):
 
     """
 
-    def __init__(self, dataHandler: _DataHandler, demo: bool, logger=None):
+    def __init__(
+        self,
+        dataHandler: _DataHandler, demo: bool, logger=None):
         """
         Initialize the StreamHandler object.
 
