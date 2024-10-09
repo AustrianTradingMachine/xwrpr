@@ -427,9 +427,9 @@ class _DataHandler(_GeneralHandler):
     Attributes:
         _logger (logging.Logger): The logger instance used for logging.
         _demo (bool): Indicates whether the handler is for the demo mode or not.
-        _stream_handlers (list): A list of attached stream handlers.
+        stream_handler (list): A list of attached stream handlers.
         _reconnect_lock (threading.Lock): A lock used for thread safety during reconnection.
-        _status (str): The status of the data handler ('active', 'inactive', or 'deleted').
+        status (str): The status of the data handler ('active', 'inactive', or 'deleted').
         _ssid (str): The stream session ID received from the server.
 
     Methods:
@@ -446,6 +446,7 @@ class _DataHandler(_GeneralHandler):
 
     Properties:
         status: The status of the DataHandler.
+        stream_handler: The stream handlers attached to the DataHandler.
     """
 
     def __init__(
@@ -483,7 +484,7 @@ class _DataHandler(_GeneralHandler):
         )
         
         # Stream handlers that are attached to the DataHandler
-        self._stream_handlers=[]
+        self.stream_handler=[]
         self._reconnect_lock=Lock()
 
         # Initialize the status and stream session ID
@@ -742,8 +743,8 @@ class _DataHandler(_GeneralHandler):
 
         self._logger.info("Attaching StreamHandler ...")
 
-        if handler not in self._stream_handlers:
-            self._stream_handlers.append(handler)
+        if handler not in self.stream_handler:
+            self.stream_handler.append(handler)
             self._logger.info("StreamHandler attached")
         else:
             self._logger.warning("StreamHandler already attached")
@@ -764,8 +765,8 @@ class _DataHandler(_GeneralHandler):
 
         self._logger.info("Detaching StreamHandler ...")
 
-        if handler in self._stream_handlers:
-            self._stream_handlers.remove(handler)
+        if handler in self.stream_handler:
+            self.stream_handler.remove(handler)
             self._logger.info("StreamHandler detached")
         else:
             self._logger.warning("StreamHandler not found")
@@ -782,10 +783,10 @@ class _DataHandler(_GeneralHandler):
 
         self._logger.info("Closing StreamHandlers ...")
 
-        if not self._stream_handlers:
+        if not self.stream_handler:
             self._logger.info("No StreamHandlers to close")
         else:
-            for handler in list(self._stream_handlers):
+            for handler in list(self.stream_handler):
                 try:
                     handler.delete()
                 except KeyError as e:
@@ -793,19 +794,10 @@ class _DataHandler(_GeneralHandler):
                     self._logger.error(f"Failed to close StreamHandler: {e}")
                     # detaching is only executed by StreamHandler itself
 
-    def get_stream_handlers(self) -> List['_StreamHandler']:
-        """
-        Returns the stream handlers associated with the XTB handler.
+    @property
+    def stream_handler(self) -> List['_StreamHandler']:
+        return self.stream_handler
 
-        Returns:
-            list: A list of stream handlers.
-
-        Raises:
-            None
-        """
-
-        return self._stream_handlers
-    
     @property
     def status(self) -> str:
         return self.status
@@ -1340,7 +1332,7 @@ class HandlerManager():
             bool: True if the handler was successfully deleted, False otherwise.
         """
         if isinstance(handler, _DataHandler):
-            for stream in list(handler.get_stream_handlers()):
+            for stream in list(handler.stream_handler):
                 self._logger.info("Deregister StreamHandler "+self._handlers['stream'][stream]['name'])
                 self._connections -= 1
             
