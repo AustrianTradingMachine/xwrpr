@@ -29,7 +29,7 @@ from math import floor
 from threading import Lock
 from queue import Queue, Empty
 import pandas as pd
-from typing import Union, List
+from typing import Union, List, Optional
 from xwrpr.client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password
@@ -37,7 +37,7 @@ from xwrpr.account import get_userId, get_password
 
 # read api configuration
 config = configparser.ConfigParser()
-config_path=Path(__file__).parent.absolute()/ 'api.ini'
+config_path=Path(__file__).parent.absolute()/'api.ini'
 config.read(config_path)
 
 HOST=config.get('SOCKET','HOST')
@@ -60,8 +60,6 @@ class _GeneralHandler(Client):
 
     Attributes:
         _logger (logging.Logger): The logger instance.
-        _host (str): The host address.
-        _port (int): The port number.
         _thread_ticker (float): The ticker for checking threads.
         _ping (dict): A dictionary to store ping related information.
         _ping_lock (Lock): A lock for ping operations.
@@ -79,7 +77,7 @@ class _GeneralHandler(Client):
             self,
             host: str,
             port: int,
-            logger: logging.Logger = None
+            logger: Optional[logging.Logger] = None
         ) -> None:
         """
         Initializes the general handler.
@@ -131,9 +129,9 @@ class _GeneralHandler(Client):
     def send_request(
         self,
         command: str,
-        ssid: str = None,
-        arguments: dict = None,
-        tag: str = None
+        ssid: Optional[str] = None,
+        arguments: Optional[dict] = None,
+        tag: Optional[str] = None
         ) -> None:
         """
         Sends a request to the server.
@@ -228,7 +226,7 @@ class _GeneralHandler(Client):
         self,
         name: str,
         thread_data: dict,
-        reconnect: callable = None
+        reconnect: Optional[callable] = None
     ) -> None:
         """
         Monitors the specified thread and handles reconnection if necessary.
@@ -373,20 +371,12 @@ class _GeneralHandler(Client):
                     else:
                         ssid = None
 
-                    try:
-                        # Stream handler have to send their ssid with every request to the host
-                        self.send_request(command='ping', ssid=ssid)
-                    except Exception as e:
-                        self._logger.error("Ping failed")
-                        raise
+                    # Stream handler have to send their ssid with every request to the host
+                    self.send_request(command='ping', ssid=ssid)
 
                     if not ssid:
                         # None stream pings recieve a response
-                        try:
-                            self.receive_response()
-                        except Exception as e:
-                            self._logger.error("Ping failed")
-                            raise
+                        self.receive_response()
 
                     self._logger.info("Ping")
 
@@ -460,7 +450,7 @@ class _DataHandler(_GeneralHandler):
     def __init__(
         self,
         demo: bool,
-        logger: logging.Logger = None
+        logger: Optional[logging.Logger] = None
     ) -> None:
         """
         Initializes the DataHandler.
@@ -619,7 +609,7 @@ class _DataHandler(_GeneralHandler):
                 # Set the status to inactive
                 self._status='inactive'
 
-    def getData(self, command: str, **kwargs) -> dict:
+    def get_data(self, command: str, **kwargs) -> dict:
         """
         Retrieves data from the server.
 
@@ -727,16 +717,12 @@ class _DataHandler(_GeneralHandler):
             self._status = 'inactive'
             self.check(mode='basic')
         except Exception as e:
-            self._logger.error(f"Reconnection failed: {e}")
+            self._logger.error(f"Some error occured: {e}")
 
-            try:
-                self._logger.info("Reconnecting ...")
-                self.create()
-                self._login()
-                self._logger.info("Reconnection successful")
-            except Exception as e:
-                self._logger.error(f"Reconnection failed: {e}")
-                raise
+            self._logger.info("Reconnecting ...")
+            self.create()
+            self._login()
+            self._logger.info("Reconnection successful")
 
         self._status = 'active'
         self._logger.info("Data connection is already active")

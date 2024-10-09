@@ -439,7 +439,7 @@ class Wrapper(HandlerManager):
             self._logger("Could not provide data channel")
             return False
         
-        response = dh.getData(**kwargs)
+        response = dh.get_data(**kwargs)
 
         if not response:
             return False

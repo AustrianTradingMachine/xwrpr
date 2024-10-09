@@ -29,7 +29,7 @@ from pathlib import Path
 import logging
 import json
 from threading import Lock
-from typing import List
+from typing import List, Optional
 from xwrpr.utils import generate_logger
 
 
@@ -97,7 +97,7 @@ class Client():
         bytes_out: int=1024,
         bytes_in: int=1024,
         
-        logger: logging.Logger=None
+        logger: Optional[logging.Logger]=None
     ) -> None:
         """
         Initializes a new instance of the Client class.
