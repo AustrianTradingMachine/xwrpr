@@ -320,7 +320,7 @@ class _GeneralHandler(Client):
         # Start the thread monitor for the ping thread
         monitor_thread = CustomThread(
             target=self.thread_monitor,
-            args=('Ping', self._ping, handler._reconnect,),
+            args=('Ping', self._ping, handler.reconnect,),
             daemon=True)
         monitor_thread.start()
 
@@ -367,7 +367,7 @@ class _GeneralHandler(Client):
                     # dynamic allocation of ssid for StreamHandler
                     # ssid could change during the ping process
                     if isinstance(handler, _StreamHandler):
-                        ssid = handler._dh._ssid
+                        ssid = handler._dh.ssid
                     else:
                         ssid = None
 
@@ -416,7 +416,7 @@ class _GeneralHandler(Client):
             self._ping['run'] = False
 
         # Wait 1s for the ping thread to stop
-        self._ping['thread'].join(timeout=1)
+        self._ping['thread'].join(timeout=self._thread_ticker*5)
 
         self._logger.info("Ping stopped")
     
@@ -428,9 +428,9 @@ class _DataHandler(_GeneralHandler):
         _logger (logging.Logger): The logger instance used for logging.
         _demo (bool): Indicates whether the handler is for the demo mode or not.
         stream_handler (list): A list of attached stream handlers.
-        _reconnect_lock (threading.Lock): A lock used for thread safety during reconnection.
+        reconnection_lock (Lock): A lock for reconnection operations.
         status (str): The status of the data handler ('active', 'inactive', or 'deleted').
-        _ssid (str): The stream session ID received from the server.
+        ssid (str): The stream session ID received from the server.
 
     Methods:
         delete: Deletes the DataHandler.
@@ -439,14 +439,15 @@ class _DataHandler(_GeneralHandler):
         get_data: Retrieves data for the specified command.
         _retrieve_data: Retrieves data for the specified command.
         _reconnect: Reconnects to the server.
-        _reconnect_sub: Subroutine for reconnection.
-        _attach_stream_handler: Attaches a stream handler to the DataHandler.
-        _detach_stream_handler: Detaches a stream handler from the DataHandler.
+        attach_stream_handler: Attaches a stream handler to the DataHandler.
+        detach_stream_handler: Detaches a stream handler from the DataHandler.
         _close_stream_handlers: Closes the stream handlers.
 
     Properties:
-        status: The status of the DataHandler.
         stream_handler: The stream handlers attached to the DataHandler.
+        reconnection_lock: The lock used for reconnection.
+        status: The status of the DataHandler.
+        ssid: The stream session ID.
     """
 
     def __init__(
@@ -474,22 +475,24 @@ class _DataHandler(_GeneralHandler):
 
         self._logger.info("Initializing DataHandler ...")
 
+        # Defines if the server is called for demo or real trading
         self._demo=demo
 
         # Initialize the GeneralHandler instance
         super().__init__(
             host=HOST,
-            port=PORT_DEMO if demo else PORT_REAL,
+            port=PORT_DEMO if self._demo else PORT_REAL,
             logger=self._logger
         )
         
         # Stream handlers that are attached to the DataHandler
         self.stream_handler=[]
-        self._reconnect_lock=Lock()
+        # The lock for reconnection operations
+        self.reconnection_lock=Lock()
 
         # Initialize the status and stream session ID
         self.status=None
-        self._ssid=None
+        self.ssid=None
 
         # Log in to the XTB trading platform
         self._login()
@@ -515,11 +518,10 @@ class _DataHandler(_GeneralHandler):
         """
         Deletes the DataHandler.
 
-        If the DataHandler is already deleted, an error message is logged and the method returns True.
-        Otherwise, the DataHandler is deleted by closing stream handlers, stopping ping, logging out, and updating the status.
-        Finally, a success message is logged and the method returns True.
-
         Returns:
+            None
+
+        Raises:
             None
         """
 
@@ -529,10 +531,17 @@ class _DataHandler(_GeneralHandler):
         else:
             self._logger.info("Deleting DataHandler ...")
 
-            self._close_stream_handlers()
-            self.stop_ping()
-            self._logout()
-            self.status = 'deleted'
+            try:
+                # Close the stream handlers and stop the ping process
+                self._close_stream_handlers()
+                self.stop_ping()
+            except Exception as e:
+                # For graceful closing no raise of exception is allowed
+                self._logger.error(f"Failed to close stream handlers and stop ping: {e}")
+            finally:
+                # Logout must always happen
+                self._logout()
+                self.status = 'deleted'
                 
             self._logger.info("DataHandler deleted")
             
@@ -571,7 +580,7 @@ class _DataHandler(_GeneralHandler):
             response = self.receive_response()
 
         self._logger.info("Log in successfully")
-        self._ssid = response['streamSessionId']
+        self.ssid = response['streamSessionId']
 
         self.status = 'active'
                             
@@ -587,7 +596,7 @@ class _DataHandler(_GeneralHandler):
         """
         # No reconnection because login is undesirable!
 
-        if not self._ssid:
+        if not self.ssid:
             # Logged in clients have a stream session ID
             self._logger.warning("Already logged out")
         
@@ -601,13 +610,13 @@ class _DataHandler(_GeneralHandler):
                 self.send_request(command='logout')
                 self._logger.info("Logged out successfully")
             except Exception as e:
-                # For graceful logout no error message raise of exception  is allowed
+                # For graceful logout no raise of exception is allowed
                 self._logger.error(f"Could not log out: {e}")
             finally:
                 # Close the socket
                 self.close()
                 # Delete the stream session ID 
-                self._ssid=None
+                self.ssid=None
                 # Set the status to inactive
                 self.status='inactive'
 
@@ -623,11 +632,12 @@ class _DataHandler(_GeneralHandler):
             The retrieved data if successful.
         """
 
-        if not self._ssid:
+        if not self.ssid:
             self._logger.error("Got no StreamSessionId from Server")
             raise ValueError("Got no StreamSessionId from Server")
         
         # Try to retrieve the data twice
+        # This enables a automatic reconnection if the first attempt fails
         for tries in range(2):
             try:
                 # Retrieve the data for the specified command
@@ -639,7 +649,7 @@ class _DataHandler(_GeneralHandler):
                 if tries == 0:
                     # Reconnect if the first attempt fails
                     self._logger.info("Try a reconnection ...")
-                    self._reconnect()
+                    self.reconnect()
                 else:
                     # If the data could not be retrieved, raise an error
                     self._logger.error("Failed to retrieve data")
@@ -684,7 +694,7 @@ class _DataHandler(_GeneralHandler):
             # Return the data
             return response['returnData']
  
-    def _reconnect(self) -> None:
+    def reconnect(self) -> None:
         """
         Reconnects to the server.
 
@@ -700,34 +710,21 @@ class _DataHandler(_GeneralHandler):
         # In case a reconnection is already in progress,
         # by a connected stream handler
         # the lock is used to avoid conflicts
-        with self._reconnect_lock:   
-            return self._reconnect_sub()
-    
-    def _reconnect_sub(self) -> None:
-        """
-        This subroutine is necessary to provide connected StreamHandlers the possibility to reconnect.
+        with self.reconnection_lock:
+            try:
+                # Set the status to inactive
+                self.status = 'inactive'
+                self.check(mode='basic')
+            except Exception as e:
+                self._logger.info("Reconnecting ...")
+                self.create()
+                self._login()
+                self._logger.info("Reconnection successful")
 
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-
-        try:
-            # Set the status to inactive
-            self.status = 'inactive'
-            self.check(mode='basic')
-        except Exception as e:
-            self._logger.info("Reconnecting ...")
-            self.create()
-            self._login()
-            self._logger.info("Reconnection successful")
-
-        self.status = 'active'
-        self._logger.info("Data connection is already active")
-        
-    def _attach_stream_handler(self, handler: '_StreamHandler') -> None:
+            self.status = 'active'
+            self._logger.info("Data connection is already active")
+ 
+    def attach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
         Attach a StreamHandler to the DataHandler.
 
@@ -749,7 +746,7 @@ class _DataHandler(_GeneralHandler):
         else:
             self._logger.warning("StreamHandler already attached")
 
-    def _detach_stream_handler(self, handler: '_StreamHandler') -> None:
+    def detach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
         Detaches a StreamHandler from the DataHandler.
 
@@ -797,7 +794,11 @@ class _DataHandler(_GeneralHandler):
     @property
     def stream_handler(self) -> List['_StreamHandler']:
         return self.stream_handler
-
+    
+    @property
+    def reconnection_lock(self) -> Lock:
+        return self.reconnection_lock
+    
     @property
     def status(self) -> str:
         return self.status
@@ -846,7 +847,10 @@ class _StreamHandler(_GeneralHandler):
 
     def __init__(
         self,
-        dataHandler: _DataHandler, demo: bool, logger=None):
+        dataHandler: _DataHandler,
+        demo: bool,
+        logger: Optional[logging.Logger] = None
+        ) -> None:
         """
         Initialize the StreamHandler object.
 
@@ -856,85 +860,107 @@ class _StreamHandler(_GeneralHandler):
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
         
         Raises:
-            ValueError: If the logger argument is provided but is not an instance of logging.Logger.
+            None
         """
+
         if logger:
-            if not isinstance(logger, logging.Logger):
-                raise ValueError("The logger argument must be an instance of logging.Logger.")
-            
+            # Use the provided logger
             self._logger = logger
         else:
+            # Generate a new logger
             self._logger = generate_logger(name='StreamHandler', path=Path.cwd() / "logs")
+
+        self._logger.info("Initializing StreamHandler ...")
 
         self._demo = demo
 
-        self._host = HOST
-        if self._demo:
-            self._port = PORT_DEMO_STREAM
-        else:
-            self._port = PORT_REAL_STREAM
+        # Initialize the GeneralHandler instance
+        super().__init__(
+            host=HOST,
+            port=PORT_DEMO_STREAM if demo else PORT_REAL_STREAM,
+            logger=self._logger
+        )
 
-        self._logger.info("Creating StreamHandler ...")
-
-        super().__init__(host=self._host, port=self._port, stream=True, logger=self._logger)
-
+        # Attach the StreamHandler to the DataHandler
         self._dh = dataHandler
-        self._dh._attach_stream_handler(self)
-        self._logger.info("Attached at DataHandler")
+        self._dh.attach_stream_handler(self)
 
+        # Open connection to the server
+        self.open()
+
+        # Set the status to active
+        # StreamHandler need no login
+        # so the status is active right after the connection is open
         self._status = 'active'
-        if not self.open():
-            self._status = 'inactive'
 
-        # stream must be initialized right after connection is opened
         self._stream=dict()
         self._stream_tasks = dict()
         self._stop_lock = Lock()
-        self.streamData(command='KeepAlive')
-        
-        # start ping to keep connection open
+
+        # Send KeepAlive to keep connection open
+        # First command must beb sent 1 second after connection is opened
+        # Otherwise the server will close the connection
+        self.stream_data(command='KeepAlive')
+        # Start ping to keep connection open
         self.start_ping(handler=self)
         
-        self._logger.info("StreamHandler created")
+        self._logger.info("StreamHandler initialized")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Destructor method for the Handler class.
+
         This method is automatically called when the object is about to be destroyed.
         It performs cleanup operations and deletes the object.
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
+        
         self.delete()
             
-    def delete(self):
+    def delete(self) -> None:
         """
         Deletes the StreamHandler.
 
-        If the StreamHandler is already deleted, an error message is logged and the method returns True.
-        Otherwise, the StreamHandler is deleted by stopping the stream, stopping the ping, closing the connection,
-        detaching the StreamHandler from the DataHandler, and updating the status to 'deleted'.
-
         Returns:
-            bool: True if the StreamHandler is successfully deleted, False otherwise.
+            None
+
+        Raises:
+            None
         """
+
         if self._status == 'deleted':
             self._logger.warning("StreamHandler already deleted")
-            return True
+        else:
+            self._logger.info("Deleting StreamHandler ...")
 
-        self._logger.info("Deleting StreamHandler ...")
+            try:
+                # Stop the stream and ping processes
+                self._stop_stream()
+                self.stop_ping()
+            except Exception as e:
+                self._logger.error(f"Failed to stop stream and ping: {e}")
+                raise
+            finally:
+                # Closing of the server and detaching from the DataHandler
+                # must always happen
+                self.close()
+                self._dh.detach_stream_handler(self)
 
-        self._stop_stream()
-        self.stop_ping()
-        self.close()
-            
-        self._dh._detach_stream_handler(self)
-        self._logger.info("Detached from DataHandler")
-
-        self._status= 'deleted'
-    
-        self._logger.info("StreamHandler deleted")
-        return True
+            self._status= 'deleted'
         
-    def streamData(self, command: str, exchange: dict=None, **kwargs):
+        self._logger.info("StreamHandler deleted")
+        
+    def stream_data(
+        self,
+        command: str,
+        exchange: Optional[dict] = None,
+        **kwargs
+        ) -> None:
         """
         Start streaming data from the server.
 
@@ -944,18 +970,24 @@ class _StreamHandler(_GeneralHandler):
             **kwargs: Additional keyword arguments for the command.
 
         Returns:
-            bool: True if the stream was started successfully, False otherwise.
+            None
         """
-        if not self._dh._ssid:
-            self._logger.error("Got no StreamSessionId from Server")
-            return False
-
+        
+        # Check if DataHandler can provide a ssid
+        if not self._dh.ssid:
+            self._logger.error("DataHandler got no StreamSessionId from Server")
+            raise ValueError("DataHandler got no StreamSessionId from Server")
+        
+        # Check if the specific stream is already open
         for index in self._stream_tasks:
             if self._stream_tasks[index]['command'] == command and self._stream_tasks[index]['kwargs'] == kwargs:
                 self._logger.warning("Stream for data already open")
-                return False
+                raise ValueError("Stream for data already open")
 
+        # Try to retrieve the data twice
+        # This enables a automatic reconnection if the first attempt fails
         for tries in range(2):
+            # Retrieve the data for the specified command
             response = self._start_stream(command, **kwargs)
 
             if response:
@@ -1003,7 +1035,9 @@ class _StreamHandler(_GeneralHandler):
         with self._ping_lock:
             self._logger.info("Starting stream for " + pretty(command) + " ...")
 
-            self._ssid = self._dh._ssid
+            # Dynamic allocation of ssid for StreamHandler
+            # ssid could change during DataHandler is open
+            self._ssid = self._dh.ssid
 
             if not self.send_request(command='get'+command, ssid=self._ssid, arguments=kwargs if bool(kwargs) else None):
                 self._logger.error("Request for stream not possible")
@@ -1204,13 +1238,13 @@ class _StreamHandler(_GeneralHandler):
         Returns:
             bool: True if the reconnection is successful, False otherwise.
         """
-        if self._dh._reconnect_lock.acquire(blocking=False):
-            self._dh._reconnect()
-            self._dh._reconnect_lock.release()
+        if self._dh.reconnection_lock.acquire(blocking=False):
+            self._dh.reconnect()
+            self._dh.reconnection_lock.release()
         else:
             self._logger.info("Reconnection attempt for DataHandler is already in progress by another StreamHandler.")
 
-        with self._dh._reconnect_lock:
+        with self._dh.reconnection_lock:
             self._status='inactive'
 
             if not self.check('basic'):

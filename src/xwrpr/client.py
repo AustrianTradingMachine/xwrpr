@@ -626,7 +626,7 @@ class Client():
                     self._socket.shutdown(socket.SHUT_RDWR)
                     self._logger.info("Connections closed")
                 except OSError as e:
-                    # For graceful shutdown no error message raise of exception  is allowed
+                    # For graceful shutdown no raise of exception  is allowed
                     self._logger.debug(f"Error during connection shutdown: {e}")
                 finally:
                     # Close the socket
@@ -643,6 +643,8 @@ class Client():
 
     @reaction_time.setter
     def reaction_time(self, value: float) -> None:
+        if value < 0:
+            raise ValueError("Reaction time must be greater than or equal to zero")
         self.reaction_time = value
 
     @property
@@ -651,6 +653,8 @@ class Client():
 
     @interval.setter
     def interval(self, value: float) -> None:
+        if value < 0:
+            raise ValueError("Interval must be greater than or equal to zero")
         self.interval = value
 
     @property
@@ -659,6 +663,8 @@ class Client():
 
     @max_fails.setter
     def max_fails(self, value: int) -> None:
+        if value < 0:
+            raise ValueError("Max fails must be greater than or equal to zero")
         self.max_fails = value
 
     @property
@@ -667,6 +673,8 @@ class Client():
 
     @bytes_out.setter
     def bytes_out(self, value: int) -> None:
+        if value < 1:
+            raise ValueError("Bytes out must be greater than or equal to one")
         self.bytes_out = value
 
     @property
@@ -675,4 +683,6 @@ class Client():
 
     @bytes_in.setter
     def bytes_in(self, value: int) -> None:
+        if value < 1:
+            raise ValueError("Bytes in must be greater than or equal to one")
         self.bytes_in = value

@@ -175,7 +175,7 @@ class Wrapper(HandlerManager):
             'df': df,
             'queue': Queue()
             }
-        sh.streamData(exchange=exchange, **kwargs)
+        sh.stream_data(exchange=exchange, **kwargs)
 
         return exchange
     
