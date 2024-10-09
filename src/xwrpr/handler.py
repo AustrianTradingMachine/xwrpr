@@ -118,7 +118,7 @@ class _GeneralHandler(Client):
         )
 
         # Set ticker for checking threads
-        self.thread_ticker = 0.5
+        self._thread_ticker = 0.5
 
         # Initialize the ping dictionary and lock
         self._ping=dict()
@@ -279,7 +279,7 @@ class _GeneralHandler(Client):
             thread_data['thread'].start()
 
             # Wait for the interval before checking the thread again
-            time.sleep(self.thread_ticker)
+            time.sleep(self._thread_ticker)
 
         self._logger.info(f"Monitoring for thread {name} stopped")
 
@@ -384,7 +384,7 @@ class _GeneralHandler(Client):
                     elapsed_time = 0
 
             # Ping is checked every 1/10 of its interval
-            time.sleep(self.thread_ticker)
+            time.sleep(self._thread_ticker)
 
             # Calculate the elapsed time
             elapsed_time += time.time() - start_time
@@ -436,15 +436,16 @@ class _DataHandler(_GeneralHandler):
         delete: Deletes the DataHandler.
         _login: Logs in to the XTB trading platform.
         _logout: Logs out the user from the XTB trading platform.
-        getData: Retrieves data from the server.
+        get_data: Retrieves data for the specified command.
         _retrieve_data: Retrieves data for the specified command.
         _reconnect: Reconnects to the server.
         _reconnect_sub: Subroutine for reconnection.
         _attach_stream_handler: Attaches a stream handler to the DataHandler.
         _detach_stream_handler: Detaches a stream handler from the DataHandler.
         _close_stream_handlers: Closes the stream handlers.
-        get_status: Returns the status of the handler.
-        get_StreamHandler: Returns the stream handlers associated with the XTB handler.
+
+    Properties:
+        status: The status of the DataHandler.
     """
 
     def __init__(
@@ -486,7 +487,7 @@ class _DataHandler(_GeneralHandler):
         self._reconnect_lock=Lock()
 
         # Initialize the status and stream session ID
-        self._status=None
+        self.status=None
         self._ssid=None
 
         # Log in to the XTB trading platform
@@ -522,7 +523,7 @@ class _DataHandler(_GeneralHandler):
         """
 
         # Check if the DataHandler is already deleted
-        if self._status == 'deleted':
+        if self.status == 'deleted':
             self._logger.warning("DataHandler already deleted")
         else:
             self._logger.info("Deleting DataHandler ...")
@@ -530,7 +531,7 @@ class _DataHandler(_GeneralHandler):
             self._close_stream_handlers()
             self.stop_ping()
             self._logout()
-            self._status = 'deleted'
+            self.status = 'deleted'
                 
             self._logger.info("DataHandler deleted")
             
@@ -571,7 +572,7 @@ class _DataHandler(_GeneralHandler):
         self._logger.info("Log in successfully")
         self._ssid = response['streamSessionId']
 
-        self._status = 'active'
+        self.status = 'active'
                             
     def _logout(self) -> None:
         """
@@ -607,7 +608,7 @@ class _DataHandler(_GeneralHandler):
                 # Delete the stream session ID 
                 self._ssid=None
                 # Set the status to inactive
-                self._status='inactive'
+                self.status='inactive'
 
     def get_data(self, command: str, **kwargs) -> dict:
         """
@@ -714,17 +715,15 @@ class _DataHandler(_GeneralHandler):
 
         try:
             # Set the status to inactive
-            self._status = 'inactive'
+            self.status = 'inactive'
             self.check(mode='basic')
         except Exception as e:
-            self._logger.error(f"Some error occured: {e}")
-
             self._logger.info("Reconnecting ...")
             self.create()
             self._login()
             self._logger.info("Reconnection successful")
 
-        self._status = 'active'
+        self.status = 'active'
         self._logger.info("Data connection is already active")
         
     def _attach_stream_handler(self, handler: '_StreamHandler') -> None:
@@ -793,19 +792,6 @@ class _DataHandler(_GeneralHandler):
                     # For graceful closing no error message raise of exception  is allowed
                     self._logger.error(f"Failed to close StreamHandler: {e}")
                     # detaching is only executed by StreamHandler itself
-    
-    def get_status(self) -> str:
-        """
-        Returns the status of the handler.
-
-        Returns:
-            str: The status of the handler.
-
-        Raises:
-            None
-        """
-
-        return self._status
 
     def get_stream_handlers(self) -> List['_StreamHandler']:
         """
@@ -822,23 +808,13 @@ class _DataHandler(_GeneralHandler):
     
     @property
     def status(self) -> str:
-        return self._status
-
-    @property
-    def demo(self) -> bool:
-        return self._demo
-
-    @demo.setter
-    def demo(self, value: bool) -> None:
-        raise ValueError("Error: Demo cannot be changed")
-
-    @property
-    def logger(self) -> logging.Logger:
-        return self._logger
+        return self.status
     
-    @logger.setter
-    def logger(self, value: logging.Logger) -> None:
-        raise ValueError("Error: Logger cannot be changed")
+    @status.setter
+    def status(self, value: str) -> None:
+        if value not in ['active', 'inactive', 'deleted']:
+            raise ValueError("Invalid status value")
+        self.status = value
 
 
 class _StreamHandler(_GeneralHandler):
@@ -1114,7 +1090,7 @@ class _StreamHandler(_GeneralHandler):
         while self._stream_tasks[index]['run']:
             try:
                 # Attempt to get data from the queue with a timeout
-                data = self._stream_tasks[index]['queue'].get(timeout=self._interval)
+                data = self._stream_tasks[index]['queue'].get(timeout=self.interval)
             except Empty:
                 continue
 
@@ -1348,7 +1324,7 @@ class HandlerManager():
             return True
         
         for handler in self._handlers['data']:
-            if handler.get_status() == 'active':
+            if handler.status() == 'active':
                 self._delete_handler(handler)
 
         self._deleted=True
@@ -1398,7 +1374,7 @@ class HandlerManager():
             _DataHandler or None: An available data handler if found, None otherwise.
         """
         for handler in self._handlers['data']:
-            if handler.get_status() == 'active':
+            if handler.status() == 'active':
                 return handler
         return None
     
@@ -1410,7 +1386,7 @@ class HandlerManager():
             _StreamHandler or None: An available stream handler if found, None otherwise.
         """
         for handler in self._handlers['stream']:
-            if handler.get_status() == 'active':
+            if handler.status() == 'active':
                 if len(handler._stream_tasks) < self._max_streams:
                     return handler
         return None

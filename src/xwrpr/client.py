@@ -44,11 +44,11 @@ class Client():
     _port (int): The port number to connect to.
     _encrypted (bool): Indicates whether the connection should be encrypted.
     _timeout (float): The timeout value for the connection.
-    _reaction_time (float): Wait time for Socket reaction.
-    _interval (float): The interval between requests in seconds.
-    _max_fails (int): The maximum number of consecutive failed requests before giving up.
-    _bytes_out (int): The maximum number of bytes to send in each request.
-    _bytes_in (int): The maximum number of bytes to receive in each response.
+    reaction_time (float): Wait time for Socket reaction.
+    interval (float): The interval between requests in seconds.
+    max_fails (int): The maximum number of consecutive failed requests before giving up.
+    bytes_out (int): The maximum number of bytes to send in each request.
+    bytes_in (int): The maximum number of bytes to receive in each response.
     _blocking (bool): Indicates whether the connection is blocking.
     _lock (threading.Lock): A lock for thread safety.
     _decoder (json.JSONDecoder): The JSON decoder instance.
@@ -65,22 +65,12 @@ class Client():
         receive: Receives a message from the socket.
         close: Closes the connection and releases the socket.
 
-        get_host: Returns the host address.
-        set_host: Sets the host address.
-        get_port: Returns the port number.
-        set_port: Sets the port number.
-        get_encrypted: Returns the encrypted flag.
-        set_encrypted: Sets the encrypted flag.
-        get_timeout: Returns the timeout value.
-        set_timeout: Sets the timeout value.
-        get_interval: Returns the interval value.
-        set_interval: Sets the interval value.
-        get_max_fails: Returns the max fails value.
-        set_max_fails: Sets the max fails value.
-        get_bytes_out: Returns the bytes out value.
-        set_bytes_out: Sets the bytes out value.
-        get_bytes_in: Returns the bytes in value.
-        set_bytes_in: Sets the bytes
+    Properties:
+        reaction_time: Wait time for Socket reaction.
+        interval: The interval between requests in seconds.
+        max_fails: The maximum number of consecutive failed requests before giving up.
+        bytes_out: The maximum number of bytes to send in each request.
+        bytes_in: The maximum number of bytes to receive in each response.
     """
 
     def __init__(
@@ -131,11 +121,11 @@ class Client():
         self._port = port
         self._encrypted = encrypted
         self._timeout = timeout
-        self._reaction_time = reaction_time
-        self._interval = interval
-        self._max_fails = max_fails
-        self._bytes_out = bytes_out
-        self._bytes_in = bytes_in
+        self.reaction_time = reaction_time
+        self.interval = interval
+        self.max_fails = max_fails
+        self.bytes_out = bytes_out
+        self.bytes_in = bytes_in
 
         # If timeout is set, the socket should be non-blocking
         # Sockets in blocking mode has to wait indefinitely for an event
@@ -267,7 +257,7 @@ class Client():
             raise ValueError("Unknown mode value")
         
         # Check the socket
-        readable, writable, errored  = select.select(rlist, wlist, xlist, self._reaction_time)
+        readable, writable, errored  = select.select(rlist, wlist, xlist, self.reaction_time)
 
         # Check if the socket is ready
         if not readable and not writable and not errored:
@@ -418,7 +408,7 @@ class Client():
             while not connected:
                 try:
                     # Try to connect to the server
-                    for attempt in range(1, self._max_fails + 1):
+                    for attempt in range(1, self.max_fails + 1):
                         try:
                             # Connect to the server
                             self._socket.connect(self._addresses[self.address_key]['sockaddr'])
@@ -427,11 +417,11 @@ class Client():
                             # Exit loop if connection is successful
                             break  
                         except (socket.error, InterruptedError) as e:
-                            self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
+                            self._logger.error(f"Error connecting to server {attempt}/{self.max_fails}: {e}")
                             
-                            if attempt < self._max_fails:
+                            if attempt < self.max_fails:
                                 # For request limitation
-                                time.sleep(self._reaction_time)
+                                time.sleep(self.reaction_time)
                             else:
                                 # If max fails reached raise an exception
                                 self._logger.error(f"Max fails reached. Unable to connect to server: {e}")
@@ -489,7 +479,7 @@ class Client():
             msg_length = len(msg)
             while send_msg_length < msg_length:
                 # Calculate the package size
-                package_size = min(self._bytes_out, msg_length - send_msg_length)
+                package_size = min(self.bytes_out, msg_length - send_msg_length)
 
                 try:
                     # Attempt to send the message chunk
@@ -497,7 +487,7 @@ class Client():
                     self._logger.debug(f"Sent message chunk of size {package_size} bytes")
 
                     # For request limitation
-                    time.sleep(self._interval)
+                    time.sleep(self.interval)
                 except BlockingIOError as e:
                     if not blocking:
                         # Check if the socket is ready for writing
@@ -549,7 +539,7 @@ class Client():
                 # the loop will end up with an incomplete JSON file.
 
                 # Receive the message
-                msg = self._socket.recv(self._bytes_in)
+                msg = self._socket.recv(self.bytes_in)
                 # Check if the message is empty
                 if not msg:
                     raise ValueError("No message received")
@@ -647,67 +637,42 @@ class Client():
             else:
                 self._logger.warning("Connection and socket already closed")
         
-    def get_host(self) -> str:
-        return self._host
-    
-    def set_host(self, host) -> None:
-        raise AttributeError("Cannot set read-only attribute 'host'")
-    
-    def get_port(self) -> int:
-        return self._port
-    
-    def set_port(self, port) -> None:
-        raise AttributeError("Cannot set read-only attribute 'port'")
+    @property
+    def reaction_time(self) -> float:
+        return self.reaction_time
 
-    def get_encrypted(self) -> bool:
-        return self._encrypted
+    @reaction_time.setter
+    def reaction_time(self, value: float) -> None:
+        self.reaction_time = value
 
-    def set_encrypted(self, encrypted) -> None:
-        raise AttributeError("Cannot set read-only attribute 'encrypted'")
-    
-    def get_timeout(self) -> float:
-        return self._timeout
-    
-    def set_timeout(self, timeout) -> None:
-        self._timeout = timeout
-        self._socket.settimeout(timeout)
-        
-        if timeout:
-            self._blocking=False
-        else:
-            self._blocking=True
+    @property
+    def interval(self) -> float:
+        return self.interval
 
-    def get_interval(self) -> float:
-        return self._interval
+    @interval.setter
+    def interval(self, value: float) -> None:
+        self.interval = value
 
-    def set_interval(self, interval) -> None:
-        self._interval = interval
+    @property
+    def max_fails(self) -> int:
+        return self.max_fails
 
-    def get_max_fails(self) -> int:
-        return self._max_fails
+    @max_fails.setter
+    def max_fails(self, value: int) -> None:
+        self.max_fails = value
 
-    def set_max_fails(self, max_fails) -> None:
-        self._max_fails = max_fails
+    @property
+    def bytes_out(self) -> int:
+        return self.bytes_out
 
-    def get_bytes_out(self) -> int:
-        return self._bytes_out
+    @bytes_out.setter
+    def bytes_out(self, value: int) -> None:
+        self.bytes_out = value
 
-    def set_bytes_out(self, bytes_out) -> None:
-        self._bytes_out = bytes_out
+    @property
+    def bytes_in(self) -> int:
+        return self.bytes_in
 
-    def get_bytes_in(self) -> int:
-        return self._bytes_in
-
-    def set_bytes_in(self, bytes_in) -> None:
-        self._bytes_in = bytes_in
-
-    
-    # Properties
-    host = property(get_host, set_host, doc='read only property socket host')
-    port = property(get_port, set_port, doc='read only property socket port')
-    encrypted = property(get_encrypted, set_encrypted, doc='read only property socket encryption')
-    timeout = property(get_timeout, set_timeout, doc='Get/set the socket timeout')
-    interval = property(get_interval, set_interval, doc='Get/set the interval value')
-    max_fails = property(get_max_fails, set_max_fails, doc='Get/set the max fails value')
-    bytes_out = property(get_bytes_out, set_bytes_out, doc='Get/set the bytes out value')
-    bytes_in = property(get_bytes_in, set_bytes_in, doc='Get/set the bytes in value')
+    @bytes_in.setter
+    def bytes_in(self, value: int) -> None:
+        self.bytes_in = value
