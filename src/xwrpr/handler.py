@@ -715,10 +715,13 @@ class _DataHandler(_GeneralHandler):
             try:
                 # Set the status to inactive
                 self.status = 'inactive'
+                # Check the socket
                 self.check(mode='basic')
             except Exception as e:
                 self._logger.info("Reconnecting ...")
+                # Create a new socket
                 self.create()
+                # Relogin to the server
                 self._login()
                 self._logger.info("Reconnection successful")
 
@@ -1236,39 +1239,50 @@ class _StreamHandler(_GeneralHandler):
         Reconnects the StreamHandler to the DataHandler.
 
         Returns:
-            bool: True if the reconnection is successful, False otherwise.
+            None
+
+        Raises:
+            None
         """
 
+        # Check if reconnection of the DataHandler is already in progress
+        # either by the DataHandler itself or another StreamHandler
         if self.dh.reconnection_lock.acquire(blocking=False):
-            self.dh.reconnect()
-            self.dh.reconnection_lock.release()
+            # If the DataHandler is not already reconnected
+            # the StreamHandler can initiate a reconnection
+            try:
+                # Reconnect the DataHandler
+                self.dh.reconnect()
+            except Exception as e:
+                self._logger.error(f"Failed to reconnect: {e}")
+                raise
+            finally:
+                # Release the lock after the reconnection is done
+                self.dh.reconnection_lock.release()
         else:
+            # If the lock couldnt be acquired, the Streamhandler stops
+            # the reconnection process immediately
             self._logger.info("Reconnection attempt for DataHandler is already in progress by another StreamHandler.")
 
+        # Wait for the DataHandler to reconnect
         with self.dh.reconnection_lock:
-            self.status='inactive'
-
-            if not self.check('basic'):
+            try:
+                # Set the status to inactive
+                self.status='inactive'
+                # Check the socket
+                self.check('basic')
+            except Exception as e:
                 self._logger.info("Reconnecting ...")
-                
-                if not self.create():
-                    self._logger.error("Creation of socket failed")
-                    return False
-                
-                if not self.open():
-                    self._logger.error("Could not open connection")
-                    return False
-
-                self._logger.info("Reconnection successful")
-
+                # Create a new socket
+                self.create()
+                # Open the connection
+                self.open()
+                # Restart the stream tasks
                 self._restart_streams()
-            else:
-                self._logger.info("Stream connection is already active")
-
+ 
             self.status='active'
-            
-        return True
-    
+            self._logger.info("Stream connection is already active")
+
     @property
     def dh(self) -> _DataHandler:
         return self.dh
