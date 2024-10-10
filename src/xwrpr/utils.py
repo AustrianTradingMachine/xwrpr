@@ -253,6 +253,7 @@ def datetime_to_unixtime(dt: datetime):
     Returns:
         float: The timestamp in milliseconds.
     """
+    
     epoch = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
 
     delta = local_to_utc(dt) - epoch
