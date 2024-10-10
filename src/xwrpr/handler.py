@@ -1307,7 +1307,7 @@ class HandlerManager():
     It keeps track of the maximum number of connections and provides available handlers when requested.
     """
 
-    def __init__(self, demo: bool=True, logger=None):
+    def __init__(self, demo: bool=True, logger=None) -> None:
         """
         Initializes a new instance of the HandlerManager class.
 
@@ -1315,15 +1315,15 @@ class HandlerManager():
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
             logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
         """
-        self._demo=demo
-
+        
         if logger:
-            if not isinstance(logger, logging.Logger):
-                raise ValueError("The logger argument must be an instance of logging.Logger.")
-            
+            # Use the provided logger
             self._logger = logger
         else:
+            # Generate a new logger
             self._logger=generate_logger(name='HandlerManager', path=Path.cwd() / "logs")
+
+        self._demo=demo
 
         self._handlers = {'data': {}, 'stream': {}}
         self._max_streams=floor(1000/SEND_INTERVAL)
