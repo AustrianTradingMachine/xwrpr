@@ -623,7 +623,7 @@ class Client():
                     self._socket.shutdown(socket.SHUT_RDWR)
                     self._logger.info("Connections closed")
                 except OSError as e:
-                    # For graceful shutdown no raise of exception  is allowed
+                    # For graceful shutdown no raise of exception is not allowed
                     self._logger.debug(f"Error during connection shutdown: {e}")
                 finally:
                     # Close the socket

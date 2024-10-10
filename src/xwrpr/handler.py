@@ -492,7 +492,7 @@ class _DataHandler(_GeneralHandler):
         self.reconnection_lock=Lock()
 
         # Initialize the status and stream session ID
-        self.status=None
+        self.status='inactive'
         self.ssid=None
 
         # Log in to the XTB trading platform
@@ -504,7 +504,7 @@ class _DataHandler(_GeneralHandler):
         
     def __del__(self) -> None:
         """
-        Destructor method for the DataHandler class.
+        Destructor method that is called when the DataHandler object is about to be destroyed.
 
         This method is automatically called when the object is about to be destroyed.
         It performs cleanup operations and deletes the object
@@ -536,12 +536,12 @@ class _DataHandler(_GeneralHandler):
                 # Close the stream handlers and stop the ping process
                 self._close_stream_handlers()
                 self.stop_ping()
+                self._logout()
             except Exception as e:
-                # For graceful closing no raise of exception is allowed
+                # For graceful closing no raise of exception is not allowed
                 self._logger.error(f"Failed to close stream handlers and stop ping: {e}")
             finally:
-                # Logout must always happen
-                self._logout()
+                # Set Status to deleted
                 self.status = 'deleted'
                 
             self._logger.info("DataHandler deleted")
@@ -611,7 +611,7 @@ class _DataHandler(_GeneralHandler):
                 self.send_request(command='logout')
                 self._logger.info("Logged out successfully")
             except Exception as e:
-                # For graceful logout no raise of exception is allowed
+                # For graceful logout no raise of exception is not allowed
                 self._logger.error(f"Could not log out: {e}")
             finally:
                 # Close the socket
@@ -791,7 +791,7 @@ class _DataHandler(_GeneralHandler):
                 try:
                     handler.delete()
                 except KeyError as e:
-                    # For graceful closing no error message raise of exception  is allowed
+                    # For graceful closing no error message raise of exception not is allowed
                     self._logger.error(f"Failed to close StreamHandler: {e}")
                     # detaching is only executed by StreamHandler itself
 
@@ -908,7 +908,7 @@ class _StreamHandler(_GeneralHandler):
 
     def __del__(self) -> None:
         """
-        Destructor method for the Handler class.
+        Destructor method that is called when the StreamHandler object is about to be destroyed.
 
         This method is automatically called when the object is about to be destroyed.
         It performs cleanup operations and deletes the object.
@@ -942,18 +942,16 @@ class _StreamHandler(_GeneralHandler):
                 # Stop the stream and ping processes
                 self._stop_stream()
                 self.stop_ping()
-            except Exception as e:
-                self._logger.error(f"Failed to stop stream and ping: {e}")
-                raise
-            finally:
-                # Closing of the server and detaching from the DataHandler
-                # must always happen
                 self.close()
                 self.dh.detach_stream_handler(self)
-
-            self.status= 'deleted'
+            except Exception as e:
+                # For graceful closing no raise of exception is not allowed
+                self._logger.error(f"Failed to stop stream and ping: {e}")
+            finally:
+                # Set Status to deleted
+                self.status= 'deleted'
         
-        self._logger.info("StreamHandler deleted")
+            self._logger.info("StreamHandler deleted")
         
     def stream_data(
         self,
@@ -1307,7 +1305,11 @@ class HandlerManager():
     It keeps track of the maximum number of connections and provides available handlers when requested.
     """
 
-    def __init__(self, demo: bool=True, logger=None) -> None:
+    def __init__(
+        self,
+        demo: bool=True,
+        logger: Optional[logging.Logger]=None
+        ) -> None:
         """
         Initializes a new instance of the HandlerManager class.
 
@@ -1331,27 +1333,45 @@ class HandlerManager():
         self._connections=0
         self._deleted=False
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Destructor method that is called when the HandlerManager instance is deleted.
+
+        This method is automatically called when the object is about to be destroyed.
+        It performs cleanup operations and deletes the object.
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
+
         self.delete()
 
-    def delete(self):
+    def delete(self) -> None:
         """
         Deletes the HandlerManager instance and all associated handlers.
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
+
         if self._deleted:
             self._logger.warning("HandlerManager already deleted")
-            return True
-        
-        for handler in self._handlers['data']:
-            if handler.status == 'active':
-                self._delete_handler(handler)
+        else:
+            for handler in self._handlers['data']:
+                # 
+                if handler.status == 'active':
+                    self._delete_handler(handler)
 
-        self._deleted=True
+            # Set the deleted flag to True
+            self._deleted=True
 
-    def _delete_handler(self, handler):
+    def _delete_handler(self, handler: Union[_DataHandler, _StreamHandler]) -> bool:
         """
         Deletes a specific handler and deregisters it from the HandlerManager.
 
@@ -1362,6 +1382,7 @@ class HandlerManager():
             bool: True if the handler was successfully deleted, False otherwise.
         """
         if isinstance(handler, _DataHandler):
+            # Just deregister the Streamhandler from the DataHandler
             for stream in list(handler.stream_handler):
                 self._logger.info("Deregister StreamHandler "+self._handlers['stream'][stream]['name'])
                 self._connections -= 1
@@ -1372,116 +1393,148 @@ class HandlerManager():
             self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
             self._connections -= 1
 
+        # Delete the handler
         handler.delete()
-        
-        return True
 
-    def _get_name(self, handler):
-        """
-        Gets the name of a specific handler.
-
-        Args:
-            handler: The handler to get the name of.
-
-        Returns:
-            str: The name of the handler.
-        """
-        return self._handlers['data'][handler]['name']
-        
-    def _avlb_DataHandler(self):
+    def _avlb_DataHandler(self) -> _DataHandler:
         """
         Gets an available data handler.
 
         Returns:
-            _DataHandler or None: An available data handler if found, None otherwise.
+            _DataHandler: An available DataHandler if found.
+
+        Raises:
+            None
         """
         for handler in self._handlers['data']:
             if handler.status == 'active':
                 return handler
-        return None
     
-    def _avlb_StreamHandler(self):
+    def _avlb_StreamHandler(self) -> _StreamHandler:
         """
         Gets an available stream handler.
 
         Returns:
-            _StreamHandler or None: An available stream handler if found, None otherwise.
+            _StreamHandler: An available StreamHandler if found.
+
+        Raises:
+            None
         """
         for handler in self._handlers['stream']:
             if handler.status == 'active':
                 if len(handler.stream_tasks) < self._max_streams:
                     return handler
-        return None
+
     
-    def _generate_DataHandler(self):
+    def _generate_DataHandler(self) -> _DataHandler:
         """
         Generates a new data handler.
 
         Returns:
-            _DataHandler or False: A new data handler if the maximum number of connections is not reached, False otherwise.
+            _DataHandler: A new DataHandler.
+
+        Raises:
+            RuntimeError: If the maximum number of connections is reached.
         """
+
+        self._logger.info("Generating DataHandler ...")
+
         if self._connections >= self._max_connections:
             self._logger.error("Maximum number of connections reached")
-            return False
+            raise RuntimeError("Maximum number of connections reached")
 
+        # Index the new DataHandler
         index = len(self._handlers['data'])
         name = 'DH_' + str(index)
         dh_logger = self._logger.getChild(name)
 
+        # Create the new DataHandler
         dh = _DataHandler(demo=self._demo, logger=dh_logger)
 
-        self._logger.info("Register DataHandler")
+        # Register the new DataHandler
         self._handlers['data'][dh] = {'name': name}
         self._connections += 1
 
+        self._logger.info("DataHandler generated")
+
         return dh
 
-    def _generate_StreamHandler(self):
+    def _generate_StreamHandler(self) -> _StreamHandler:
         """
         Generates a new stream handler.
 
         Returns:
-            _StreamHandler or False: A new stream handler if the maximum number of connections is not reached, False otherwise.
+            _StreamHandler: A new StreamHandler.
+
+        Raises:
+            RuntimeError: If the maximum number of connections is reached.
         """
+
+        self._logger.info("Generating StreamHandler ...")
+
         if self._connections >= self._max_connections:
             self._logger.error("Maximum number of connections reached")
-            return False
+            raise RuntimeError("Maximum number of connections reached")
 
+        # Index the new StreamHandler
         index = len(self._handlers['stream'])
         name = 'SH_' + str(index)
         sh_logger = self._logger.getChild(name)
 
+        # Create the new StreamHandler
         dh = self.provide_DataHandler()
         sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
 
-        self._logger.info("Register StreamHandler")
+        # Register the new StreamHandler
         self._handlers['stream'][sh] = {'name': name}
         self._connections += 1
 
+        self._logger.info("StreamHandler generated")
+
         return sh
 
-    def provide_DataHandler(self):
+    def provide_DataHandler(self) -> _DataHandler:
         """
         Provides an available data handler.
 
         Returns:
-            _DataHandler: An available data handler if found, otherwise a new data handler.
-        """
-        handler=self._avlb_DataHandler()
-        if handler:
-            return handler
-        else:
-            return self._generate_DataHandler()
+            _DataHandler: An DataHandler if found, otherwise a new DataHandler.
 
-    def provide_StreamHandler(self):
+        Raises:
+            None
+        """
+
+        # Check if an available data handler is available
+        handler=self._avlb_DataHandler()
+
+        # If no available data handler is found, generate a new one
+        if not handler:
+            try:
+                handler = self._generate_DataHandler()
+            except RuntimeError as e:
+                self._logger.error(f"Failed to generate DataHandler: {e}")
+
+        return handler
+
+    def provide_StreamHandler(self) -> _StreamHandler:
         """
         Provides an available stream handler.
 
         Returns:
             _StreamHandler: An available stream handler if found, otherwise a new stream handler.
+
+        Raises:
+            None
         """
+
+        # Check if an available stream handler is available
         handler=self._avlb_StreamHandler()
-        if handler:
-            return handler
-        else:
-            return self._generate_StreamHandler()
+
+        # If no available stream handler is found, generate a new one
+        if not handler:
+            try:
+                handler = self._generate_StreamHandler()
+            except RuntimeError as e:
+                self._logger.error(f"Failed to generate StreamHandler: {e}")
+
+        return handler

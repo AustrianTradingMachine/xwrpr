@@ -28,10 +28,16 @@ import re
 import datetime
 import pytz
 import tzlocal
+from typing import Optional
 from dateutil.relativedelta import relativedelta
 
 
-def generate_logger(name: str, stream_level: str = None, file_level: str = None, path: Path = None):
+def generate_logger(
+    name: str,
+    stream_level: Optional[str] = None,
+    file_level: Optional[str] = None,
+    path: Optional[Path] = None
+) -> logging.Logger:
     """
     Generate a logger with the specified name and configuration.
 
@@ -44,14 +50,19 @@ def generate_logger(name: str, stream_level: str = None, file_level: str = None,
     Returns:
         logging.Logger: The configured logger instance.
     """
+
+    # Create a logger with the specified name
     logger = logging.getLogger(name)
+    # Define the log format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # Set the logger level to DEBUG
     logger.setLevel(logging.DEBUG)
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(_validate_level(stream_level, default="warning"))
-    logger.addHandler(console_handler)
+    # Create a stream handler for the console output
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(_validate_level(stream_level, default="warning"))
+    logger.addHandler(stream_handler)
 
     if path is not None:
         if not path.exists():
@@ -60,6 +71,7 @@ def generate_logger(name: str, stream_level: str = None, file_level: str = None,
             except Exception as e:
                 raise ValueError(f"Could not create the directory {path}. Error: {e}")
 
+        # Create a file handler for the log file
         log_file_path = path / f"{name}.log"
         file_handler = logging.FileHandler(log_file_path)
         file_handler.setFormatter(formatter)
@@ -68,7 +80,10 @@ def generate_logger(name: str, stream_level: str = None, file_level: str = None,
 
     return logger
 
-def _validate_level(level: str = None, default: str = "debug"):
+def _validate_level(
+    level: Optional[str] = None,
+    default: str = "debug"
+    ) -> int:
     """
     Validates the logging level and returns the corresponding logging level constant.
 
@@ -82,6 +97,8 @@ def _validate_level(level: str = None, default: str = "debug"):
     Raises:
         ValueError: If the provided level or default level is invalid.
     """
+
+    # Define the mapping of logging levels
     levels = {
         "debug": logging.DEBUG,
         "info": logging.INFO,
@@ -90,6 +107,7 @@ def _validate_level(level: str = None, default: str = "debug"):
         "critical": logging.CRITICAL
     }
 
+    # Set the logging level
     if level is not None:
         if level.lower() not in levels:
             raise ValueError(f"Invalid logger level: {level}")
@@ -104,56 +122,66 @@ def _validate_level(level: str = None, default: str = "debug"):
 class CustomThread(threading.Thread):
     """
     A custom thread class that extends the functionality of the threading.Thread class.
+
+    Attributes:
+        target (callable): The callable object to be invoked by the thread's run() method.
+        args (tuple): The arguments to be passed to the target callable.
+        daemon (bool): A flag indicating whether the thread should be a daemon thread.
+        kwargs (dict): The keyword arguments to be passed to the target callable.
+
+    Methods:
+        None
+
+    Properties:
+        target (callable): The callable object to be invoked by the thread's run() method.
+        args (tuple): The arguments to be passed to the target callable.
+        daemon (bool): A flag indicating whether the thread should be a daemon thread.
+        kwargs (dict): The keyword arguments to be passed to the target callable.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """
         Initialize a new instance of the class.
 
         Args:
-            target (callable): The callable object to be invoked by the thread's run() method.
-            args (tuple): The arguments to be passed to the target callable.
-            daemon (bool): A flag indicating whether the thread should be a daemon thread.
-            kwargs (dict): The keyword arguments to be passed to the target callable.
+            args: The positional arguments to be passed to the threading.Thread class.
+            kwargs: The keyword arguments to be passed to the threading.Thread class.
 
         Returns:
             None
         """
+
+        # Extract the custom attributes
         self._target = kwargs.pop('target', None)
         self._args = kwargs.pop('args', ())
         self._daemon = kwargs.pop('daemon', True)
         self._kwargs = kwargs.pop('kwargs', {})
-        super().__init__(target=self._target, args=self._args, daemon=self._daemon, kwargs=self._kwargs)
+
+        # Create a new instance of the threading.Thread class
+        super().__init__(
+            target=self._target,
+            args=self._args,
+            daemon=self._daemon,
+            kwargs=self._kwargs
+        )
 
     @property
     def target(self):
-        """
-        Get the target function of the thread.
-        """
         return self._target
 
     @property
     def args(self):
-        """
-        Get the arguments passed to the target function.
-        """
         return self._args
     
     @property
     def daemon(self):
-        """
-        Get the daemon flag of the thread.
-        """
         return self._daemon
 
     @property
     def kwargs(self):
-        """
-        Get the keyword arguments passed to the target function.
-        """
         return self._kwargs
 
-def pretty(command: str):
+def pretty(command: str) -> str:
     """
     Returns a pretty version of the given command by inserting a space before each capital letter.
 
@@ -163,25 +191,9 @@ def pretty(command: str):
     Returns:
         str: The pretty version of the command.
     """
+
     return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
 
-def signum(x):
-    """
-    Returns the sign of a number.
-
-    Parameters:
-    x (float or int): The number to determine the sign of.
-
-    Returns:
-    int: 1 if x is positive, -1 if x is negative, 0 if x is zero.
-    """
-    if x > 0:
-        return 1
-    elif x < 0:
-        return -1
-    else:
-        return 0
-    
 def calculate_timedelta(start: datetime, end: datetime, period: str='minutes'):
     """
     Calculate the time difference between two datetime objects.

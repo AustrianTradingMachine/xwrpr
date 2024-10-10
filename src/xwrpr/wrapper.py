@@ -98,10 +98,6 @@ class Wrapper(HandlerManager):
         self._demo=demo
 
         if logger:
-            # check if logger is an instance of logging.Logger
-            if not isinstance(logger, logging.Logger):
-                raise ValueError("The logger argument must be an instance of logging.Logger.")
-            
             # Use the provided logger and create a child logger
             self._logger = logger.getChild('Wrp')
         else:
