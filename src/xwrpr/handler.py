@@ -809,6 +809,10 @@ class _DataHandler(_GeneralHandler):
             raise ValueError("Invalid status value")
         self.status = value
 
+    @property
+    def ssid(self) -> str:
+        return self.ssid
+
 
 class _StreamHandler(_GeneralHandler):
     """

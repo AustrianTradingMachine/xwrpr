@@ -29,7 +29,7 @@ from pathlib import Path
 import logging
 import json
 from threading import Lock
-from typing import List, Optional
+from typing import List, Optional, Union
 from xwrpr.utils import generate_logger
 
 
@@ -43,13 +43,12 @@ class Client():
     _host (str): The host address to connect to.
     _port (int): The port number to connect to.
     _encrypted (bool): Indicates whether the connection should be encrypted.
-    _timeout (float): The timeout value for the connection.
+    timeout (float): The timeout value for the connection.
     reaction_time (float): Wait time for Socket reaction.
     interval (float): The interval between requests in seconds.
     max_fails (int): The maximum number of consecutive failed requests before giving up.
     bytes_out (int): The maximum number of bytes to send in each request.
     bytes_in (int): The maximum number of bytes to receive in each response.
-    _blocking (bool): Indicates whether the connection is blocking.
     _lock (threading.Lock): A lock for thread safety.
     _decoder (json.JSONDecoder): The JSON decoder instance.
     _addresses (dict): A dictionary of available addresses for the socket connection.
@@ -126,13 +125,6 @@ class Client():
         self.max_fails = max_fails
         self.bytes_out = bytes_out
         self.bytes_in = bytes_in
-
-        # If timeout is set, the socket should be non-blocking
-        # Sockets in blocking mode has to wait indefinitely for an event
-        if self._timeout:
-            self._blocking = False
-        else:
-            self._blocking = True
 
         # Lock for thread safety
         self._lock = Lock()
@@ -361,12 +353,17 @@ class Client():
                     self._logger.info("Socket wrapped")
 
                 # Set the socket blocking mode
-                self._socket.setblocking(flag = self._blocking)
                 if self._timeout:
                     # The socket is in non-blocking mode
                     # The timeout avoids that the socket is raising
                     # a timout exeption immediately
                     self._socket.settimeout(value = self._timeout)
+                    self._socket.setblocking(flag = False)
+                else:
+                    # The socket is in blocking mode
+                    self._socket.settimeout(value = None)
+                    self._socket.setblocking(flag = True)
+
 
                 # Socket successfully created
                 created = True
@@ -636,7 +633,24 @@ class Client():
                 
             else:
                 self._logger.warning("Connection and socket already closed")
+
+    @property
+    def timeout(self) -> Union[float, None]:
+        return self.timeout
+    
+    @timeout.setter
+    def timeout(self, value: Optional[float] = None) -> None:
+        if value is None:
+            self._socket.settimeout(value = None)
+            self._socket.setblocking(flag = True)  
+        elif value > 0:
+            self._socket.settimeout(value = self.timeout)
+            self._socket.setblocking(flag = False)
+        else:
+            raise ValueError("Timeout must be greater than or equal to zero")
         
+        self.timeout = value
+
     @property
     def reaction_time(self) -> float:
         return self.reaction_time
