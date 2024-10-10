@@ -172,7 +172,6 @@ class Wrapper(HandlerManager):
         lock = Lock()
 
         exchange = {
-            'df': df,
             'queue': Queue()
             }
         sh.stream_data(exchange=exchange, **kwargs)

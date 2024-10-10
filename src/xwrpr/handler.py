@@ -317,11 +317,12 @@ class _GeneralHandler(Client):
 
         self._logger.info("Starting ping monitor ...")
 
-        # Start the thread monitor for the ping thread
+        # Create the thread monitor for the ping thread
         monitor_thread = CustomThread(
             target=self.thread_monitor,
             args=('Ping', self._ping, handler.reconnect,),
             daemon=True)
+        # Start the thread monitor
         monitor_thread.start()
 
         self._logger.info("Ping monitor started")
@@ -820,10 +821,6 @@ class _StreamHandler(_GeneralHandler):
 
     Attributes:
         _logger (logging.Logger): The logger object used for logging.
-        _demo (bool): Indicates whether the handler is in demo mode.
-        _host (str): The host address for the connection.
-        _port (int): The port number for the connection.
-        _userid (str): The user ID for the connection.
         _dh (_DataHandler): The data handler object.
         _status (str): The status of the stream handler.
         _stream (dict): The stream dictionary.
@@ -875,8 +872,6 @@ class _StreamHandler(_GeneralHandler):
             self._logger = generate_logger(name='StreamHandler', path=Path.cwd() / "logs")
 
         self._logger.info("Initializing StreamHandler ...")
-
-        self._demo = demo
 
         # Initialize the GeneralHandler instance
         super().__init__(
@@ -975,6 +970,10 @@ class _StreamHandler(_GeneralHandler):
 
         Returns:
             None
+
+        Raises:
+            ValueError: If the DataHandler has no StreamSessionId from the server.
+            ValueError: If the stream for the data is already open.
         """
         
         # Check if DataHandler can provide a ssid
@@ -988,44 +987,66 @@ class _StreamHandler(_GeneralHandler):
                 self._logger.warning("Stream for data already open")
                 raise ValueError("Stream for data already open")
 
+
         # Try to retrieve the data twice
         # This enables a automatic reconnection if the first attempt fails
         for tries in range(2):
-            # Retrieve the data for the specified command
-            response = self._start_stream(command, **kwargs)
+            try:
+                # Retrieve the data for the specified command
+                self._start_stream(command, **kwargs)
+            except Exception as e:
+                self._logger.error(f"Failed to stream data: {e}")
+                if tries == 0:
+                    # Reconnect if the first attempt fails
+                    self._logger.info("Try a reconnection ...")
+                    self._reconnect()
+                else:
+                    # If the data could not be retrieved, raise an error
+                    self._logger.error("Failed to retrieve data")
+                    raise
 
-            if response:
-                break
-            elif tries == 0:
-                self._reconnect()
-            else:
-                self._logger.error("Failed to stream data")
-                return False
-
+        # Initiate the stream thread for the handler
         if not self._stream:
+            # Set the run flag for the stream on true
             self._stream['run'] = True
-            self._stream['thread'] = CustomThread(target=self._receive_stream, daemon=True)
+            # Create a new thread for the stream
+            self._stream['thread'] = CustomThread(
+                target=self._receive_stream,
+                daemon=True
+            )
+            # Start the stream thread
             self._stream['thread'].start()
 
-            monitor_thread = CustomThread(target=self.thread_monitor, args=('Stream', self._stream, self._reconnect,), daemon=True)
+            # Create the thread monitor for the stream thread
+            monitor_thread = CustomThread(
+                target=self.thread_monitor,
+                args=('Stream', self._stream, self._reconnect,),
+                daemon=True
+            )
+            # Start the thread monitor
             monitor_thread.start()
 
+        # Register the stream task
         index = len(self._stream_tasks)
         self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
 
+        # The data from the KeepAlive command is unnecessary
         if command == 'KeepAlive':
             return True
 
-        self._stream_tasks[index]['run'] = True
-        self._stream_tasks[index]['queue'] = Queue()
-        self._stream_tasks[index]['thread'] = CustomThread(target=self._exchange_stream, args=(index, exchange,), daemon=True)
-        self._stream_tasks[index]['thread'].start()
+        # The data from the stream is put into the queue for the exchange
+        self._stream_tasks[index]['queue'] = exchange['queue']
+
+        # Put a killswitch nfor the stream task into the exchange dictionary
+        exchange['thread'] = CustomThread(
+            target=self._stop_task,
+            args=(index,),
+            daemon=True
+        )
 
         self._logger.info("Stream started for " + pretty(command))
 
-        exchange['thread'] = CustomThread(target=self._stop_task, args=(index,), daemon=True)
-
-    def _start_stream(self, command: str, **kwargs):
+    def _start_stream(self, command: str, **kwargs) -> None:
         """
         Starts a stream for the given command.
 
@@ -1034,8 +1055,14 @@ class _StreamHandler(_GeneralHandler):
             **kwargs: Additional keyword arguments to be passed as arguments for the stream.
 
         Returns:
-            bool: True if the request for the stream was sent successfully, False otherwise.
+            None
+
+        Raises:
+            None
         """
+
+        # Locks out the ping process
+        # To avoid conflicts with the stream request
         with self._ping_lock:
             self._logger.info("Starting stream for " + pretty(command) + " ...")
 
@@ -1043,22 +1070,26 @@ class _StreamHandler(_GeneralHandler):
             # ssid could change during DataHandler is open
             self._ssid = self._dh.ssid
 
-            if not self.send_request(command='get'+command, ssid=self._ssid, arguments=kwargs if bool(kwargs) else None):
-                self._logger.error("Request for stream not possible")
-                return False 
-                
-            return True
+            # Send the request for the stream to the server
+            self.send_request(
+                command='get'+command,
+                ssid=self._ssid,
+                arguments=kwargs if bool(kwargs) else None
+            )
         
-    def _receive_stream(self):
+    def _receive_stream(self) -> None:
         """
         Receive and process streaming data from the server.
 
-        This method continuously receives data from the server and processes it based on the registered stream tasks.
-        It waits for the ping check loop to finish before processing each response.
-
         Returns:
-            bool: True if the stream was successfully received and processed, False otherwise.
+            None
+
+        Raises:
+            ValueError: If the response does not contain a command.
+            ValueError: If the response does not contain data.
+            ValueError: If the stream task does not match
         """
+
         # Thanks to the inconsstency of the API necessary to translate the command
         translate = {
             'Balance': 'balance',
@@ -1071,80 +1102,50 @@ class _StreamHandler(_GeneralHandler):
             'TradeStatus': 'tradeStatus',
             }
 
+        # Loop until the run flag is set to False
         while self._stream['run']:
             self._logger.info("Streaming data ...")
-
-            with self._ping_lock: # waits for the ping check loop to finish
+    
+            # Locks out the ping process
+            # To avoid conflicts with the receive process
+            with self._ping_lock:
                 response = self.receive_response(stream = True)
 
-            if not response:
-                self._logger.error("Failed to read stream")
-                return False
+            # Response must contain 'command' key with command
+            if not 'command' in response:
+                self._logger.error("No command in response")
+                raise ValueError("No command in response")
+
+            # Response must contain 'data' key with data
+            if not 'data' in response:
+                self._logger.error("No data in response")
+                raise ValueError("No data in response")
             
-            if not response['data']:
-                self._logger.error("No data received")
-                return False
-            
+            # Assign streamed data to the corresponding stream task
             for index in self._stream_tasks:
                 command = self._stream_tasks[index]['command']
                 arguments = self._stream_tasks[index]['arguments']
                 
+                # Skip if the command does not match
                 if translate[command] != response['command']:
                     continue
-
+                
+                # Skip if its the KeepAlive stream
                 if command == 'KeepAlive':
                     continue
 
+                # Not just the command but also the arguments must match
+                # symbol is the only additional argument that could be passed
                 if 'symbol' in response['data']:
                     if set(arguments['symbol']) != set(response['data']['symbol']):
                         continue
                 
                 self._logger.info("Data received for " + pretty(command))
+
+                # Put the data into the queue for the exchange
                 self._stream_tasks[index]['queue'].put(response['data'])
 
         self._logger.info("All streams stopped")
-
-    def _exchange_stream(self, index: int, exchange: dict):
-        """
-        Stream data from a queue and update the exchange DataFrame.
-
-        Args:
-            index (int): The index of the stream task.
-            exchange (dict): The exchange dictionary containing the DataFrame and lock.
-
-        Returns:
-            None
-        """
-        buffer_df = pd.DataFrame()
-        
-        while self._stream_tasks[index]['run']:
-            try:
-                # Attempt to get data from the queue with a timeout
-                data = self._stream_tasks[index]['queue'].get(timeout=self.interval)
-            except Empty:
-                continue
-
-            # Add the data to the buffer DataFrame
-            if buffer_df.empty:
-                buffer_df = pd.DataFrame([data])
-            else:
-                buffer_df = pd.concat([buffer_df,pd.DataFrame([data])], ignore_index=True)
-
-            self._stream_tasks[index]['queue'].task_done()
-
-            if exchange['lock'].acquire(blocking=False):
-                # Append the buffer DataFrame to the exchange DataFrame
-                exchange['df']  = pd.concat([exchange['df'], buffer_df], ignore_index=True)
-                buffer_df = pd.DataFrame(columns=buffer_df.columns)
-
-                # Limit the DataFrame to the last 1000 rows
-                if len(exchange['df']) > 1000:
-                    exchange['df'] = exchange['df'].iloc[-1000:]
-                    exchange['df'] = exchange['df'].reset_index(drop=True)
-                    
-                exchange['lock'].release()
-
-        self._logger.info("Stream stopped for " + pretty(self._stream_tasks[index]['command']))
 
     def _stop_task(self, index: int):
         """
