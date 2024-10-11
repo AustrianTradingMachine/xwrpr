@@ -68,6 +68,13 @@ class _GeneralHandler(Client):
             self,
             host: str,
             port: int,
+
+            max_send_data: int,
+            max_recieved_data: int,
+            min_request_interval: int,
+            max_retries: int,
+            max_reaction_time: int,
+
             logger: Optional[logging.Logger] = None
         ) -> None:
         """
@@ -76,6 +83,11 @@ class _GeneralHandler(Client):
         Args:
             host (str): The host address.
             port (int): The port number.
+            max_send_data (int): The maximum number of bytes to send.
+            max_recieved_data (int): The maximum number of bytes to receive.
+            min_request_interval (int): The minimum request interval in milliseconds.
+            max_retries (int): The maximum number of retries.
+            max_reaction_time (int): The maximum reaction time in milliseconds.
             logger (logging.Logger, optional): The logger object. Defaults to None.
 
         Raises:
@@ -98,12 +110,12 @@ class _GeneralHandler(Client):
 
             encrypted=True,
             timeout=None,
-            reaction_time = MAX_REACTION_TIME/1000,
+            reaction_time = max_reaction_time/1000,
 
-            interval=SEND_INTERVAL/1000,
-            max_fails=MAX_REACTION_TIME,
-            bytes_out=MAX_SEND_DATA,
-            bytes_in=MAX_RECIEVED_DATA,
+            interval=min_request_interval/1000,
+            max_fails=max_retries,
+            bytes_out=max_send_data,
+            bytes_in=max_recieved_data,
 
             logger=self._logger
         )
@@ -447,6 +459,13 @@ class _DataHandler(_GeneralHandler):
         demo: bool,
         username: str,
         password: str,
+
+        max_send_data: int,
+        max_recieved_data: int,
+        min_request_interval: int,
+        max_retries: int,
+        max_reaction_time: int,
+
         logger: Optional[logging.Logger] = None
     ) -> None:
         """
@@ -456,6 +475,11 @@ class _DataHandler(_GeneralHandler):
             demo (bool): Specifies whether the DataHandler is for demo or real trading.
             username (str): The username for the XTB trading platform.
             password (str): The password for the XTB trading platform.
+            max_send_data (int): The maximum number of bytes to send.
+            max_recieved_data (int): The maximum number of bytes to receive.
+            min_request_interval (int): The minimum request interval in milliseconds.
+            max_retries (int): The maximum number of retries.
+            max_reaction_time (int): The maximum reaction time in milliseconds.
             logger (logging.Logger, optional): The logger object to use for logging. If not provided, a new logger will be generated.
 
         Raises:
@@ -482,6 +506,13 @@ class _DataHandler(_GeneralHandler):
         super().__init__(
             host=HOST,
             port=PORT_DEMO if self._demo else PORT_REAL,
+
+            max_send_data = max_send_data,
+            max_recieved_data = max_recieved_data,
+            min_request_interval = min_request_interval,
+            max_retries = max_retries,
+            max_reaction_time = max_reaction_time,
+
             logger=self._logger
         )
         
@@ -862,6 +893,13 @@ class _StreamHandler(_GeneralHandler):
         self,
         dataHandler: _DataHandler,
         demo: bool,
+
+        max_send_data: int,
+        max_recieved_data: int,
+        min_request_interval: int,
+        max_retries: int,
+        max_reaction_time: int,
+
         logger: Optional[logging.Logger] = None
         ) -> None:
         """
@@ -870,6 +908,11 @@ class _StreamHandler(_GeneralHandler):
         Args:
             dataHandler (_DataHandler): The data handler object.
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
+            max_send_data (int): The maximum number of bytes to send.
+            max_recieved_data (int): The maximum number of bytes to receive.
+            min_request_interval (int): The minimum request interval in milliseconds.
+            max_retries (int): The maximum number of retries.
+            max_reaction_time (int): The maximum reaction time in milliseconds.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
         
         Raises:
@@ -889,6 +932,13 @@ class _StreamHandler(_GeneralHandler):
         super().__init__(
             host=HOST,
             port=PORT_DEMO_STREAM if demo else PORT_REAL_STREAM,
+
+            max_send_data = max_send_data,
+            max_recieved_data = max_recieved_data,
+            min_request_interval = min_request_interval,
+            max_retries = max_retries,
+            max_reaction_time = max_reaction_time,
+
             logger=self._logger
         )
 
@@ -1336,15 +1386,30 @@ class HandlerManager():
 
     def __init__(
         self,
+        
+        max_connections: int,
+        max_send_data: int,
+        max_recieved_data: int,
+        min_request_interval: float,
+        max_retries: int,
+        max_reaction_time: float,
+
         demo: bool=True,
+
         username: Optional[str]=None,
         password: Optional[str]=None,
+
         logger: Optional[logging.Logger]=None
         ) -> None:
         """
         Initializes a new instance of the HandlerManager class.
 
         Args:
+            max_send_data (int): The maximum number of bytes to send.
+            max_recieved_data (int): The maximum number of bytes to receive.
+            min_request_interval (int): The minimum request interval in milliseconds.
+            max_retries (int): The maximum number of retries.
+            max_reaction_time (int): The maximum reaction time in milliseconds.
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
             username (str, optional): The username for the XTB trading platform. Defaults to None.
             password (str, optional): The password for the XTB trading platform. Defaults to None.
@@ -1372,12 +1437,16 @@ class HandlerManager():
             self._username=get_userId(self._demo)
             self._password=get_password()
 
+        self._max_connections=max_connections
+        self._max_send_data=max_send_data
+        self._max_recieved_data=max_recieved_data
+        self._min_request_interval=min_request_interval
+        self._max_retries=max_retries
+        self._max_reaction_time=max_reaction_time
+
         # Initialize the handlers dictionary
         self._handlers = {'data': {}, 'stream': {}}
 
-
-        self._max_streams=floor(1000/SEND_INTERVAL)
-        
         # Set the deleted flag to False
         self._deleted=False
 
@@ -1515,7 +1584,7 @@ class HandlerManager():
 
         self._logger.info("Generating DataHandler ...")
 
-        if self._get_connection_number() >= MAX_CONNECTIONS:
+        if self._get_connection_number() >= self._max_connections:
             self._logger.error("Maximum number of connections reached")
             raise RuntimeError("Maximum number of connections reached")
 
@@ -1525,7 +1594,20 @@ class HandlerManager():
         dh_logger = self._logger.getChild(name)
 
         # Create the new DataHandler
-        dh = _DataHandler(demo=self._demo, logger=dh_logger)
+        dh = _DataHandler(
+            demo=self._demo,
+
+            username=self._username,
+            password=self._password,
+
+            max_send_data=self._max_send_data,
+            max_recieved_data=self._max_recieved_data,
+            min_request_interval=self._min_request_interval,
+            max_retries=self._max_retries,
+            max_reaction_time=self._max_reaction_time,
+
+            logger=dh_logger
+        )
 
         # Register the new DataHandler
         self._handlers['data'][dh] = {'name': name}
@@ -1547,7 +1629,7 @@ class HandlerManager():
 
         self._logger.info("Generating StreamHandler ...")
 
-        if self._get_connection_number() >= MAX_CONNECTIONS:
+        if self._get_connection_number() >= self._max_connections:
             self._logger.error("Maximum number of connections reached")
             raise RuntimeError("Maximum number of connections reached")
 
@@ -1558,7 +1640,18 @@ class HandlerManager():
 
         # Create the new StreamHandler
         dh = self.provide_DataHandler()
-        sh = _StreamHandler(dataHandler=dh, demo=self._demo, logger=sh_logger)
+        sh = _StreamHandler(
+            dataHandler=dh,
+            demo=self._demo,
+
+            max_send_data=self._max_send_data,
+            max_recieved_data=self._max_recieved_data,
+            min_request_interval=self._min_request_interval,
+            max_retries=self._max_retries,
+            max_reaction_time=self._max_reaction_time,
+
+            logger=sh_logger
+        )
 
         # Register the new StreamHandler
         self._handlers['stream'][sh] = {'name': name}
