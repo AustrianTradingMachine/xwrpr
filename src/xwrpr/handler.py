@@ -491,8 +491,11 @@ class _DataHandler(_GeneralHandler):
         # The lock for reconnection operations
         self.reconnection_lock=Lock()
 
-        # Initialize the status and stream session ID
+        # The status of the DataHandler is initially set to inactive
+        # The status can be 'active', 'inactive', or 'deleted'
         self.status='inactive'
+        # Stream session ID is necessary for stream requests
+        # It is provided from the server after login
         self.ssid=None
 
         # Log in to the XTB trading platform
@@ -536,10 +539,11 @@ class _DataHandler(_GeneralHandler):
                 # Close the stream handlers and stop the ping process
                 self._close_stream_handlers()
                 self.stop_ping()
+                # Log out from the XTB trading platform
                 self._logout()
             except Exception as e:
                 # For graceful closing no raise of exception is not allowed
-                self._logger.error(f"Failed to close stream handlers and stop ping: {e}")
+                self._logger.error(f"Failed to delete DataHandler: {e}")
             finally:
                 # Set Status to deleted
                 self.status = 'deleted'
@@ -942,11 +946,13 @@ class _StreamHandler(_GeneralHandler):
                 # Stop the stream and ping processes
                 self._stop_stream()
                 self.stop_ping()
+                # Close the connection to the server
                 self.close()
+                # Detach the StreamHandler from the DataHandler
                 self.dh.detach_stream_handler(self)
             except Exception as e:
                 # For graceful closing no raise of exception is not allowed
-                self._logger.error(f"Failed to stop stream and ping: {e}")
+                self._logger.error(f"Failed to delete StreamHandler: {e}")
             finally:
                 # Set Status to deleted
                 self.status= 'deleted'
@@ -1144,7 +1150,7 @@ class _StreamHandler(_GeneralHandler):
 
         self._logger.info("All streams stopped")
 
-    def _stop_task(self, index: int) -> None:
+    def _stop_task(self, index: int, kill: bool=True) -> None:
         """
         Stops a stream task at the specified index.
 
@@ -1175,10 +1181,11 @@ class _StreamHandler(_GeneralHandler):
                         arguments={'symbol': arguments['symbol']} if 'symbol' in arguments else None
                     )
 
-                # Deregister the stream task
-                del self.stream_tasks[index]
+                if kill:
+                    # Deregister the stream task
+                    del self.stream_tasks[index]
                     
-    def _stop_stream(self) -> None:
+    def _stop_stream(self, kill: bool=True) -> None:
         """
         Stops the stream and ends all associated tasks.
 
@@ -1207,7 +1214,7 @@ class _StreamHandler(_GeneralHandler):
 
         # Stop all stream tasks
         for index in list(self.stream_tasks):
-            self._stop_task(index=index)
+            self._stop_task(index=index, kill=kill)
             
         self._logger.info("All streams stopped")
 
@@ -1231,7 +1238,7 @@ class _StreamHandler(_GeneralHandler):
             self._start_stream(command,**kwargs)
 
         self._logger.info("All streams restarted")
- 
+
     def _reconnect(self) -> None:
         """
         Reconnects the StreamHandler to the DataHandler.
@@ -1284,6 +1291,23 @@ class _StreamHandler(_GeneralHandler):
     @property
     def dh(self) -> _DataHandler:
         return self.dh
+
+    @dh.setter
+    def dh(self, value: _DataHandler) -> None:
+        # Shut down the StreamHandler
+        self._stop_stream(kill=False)
+        self.stop_ping()
+        self.close()
+        self.dh.detach_stream_handler(self)
+
+        # Change the DataHandler
+        self.dh = value
+
+        # Boot up the StreamHandler
+        self.dh.attach_stream_handler(self)
+        self.open()
+        self._restart_streams()
+        self.start_ping(handler=self)
     
     @property
     def status(self) -> str:
