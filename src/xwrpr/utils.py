@@ -26,7 +26,6 @@ from pathlib import Path
 import threading
 import re
 import datetime
-import pytz
 import tzlocal
 from typing import Optional
 from dateutil.relativedelta import relativedelta
@@ -194,7 +193,7 @@ def pretty(command: str) -> str:
 
     return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
 
-def calculate_timedelta(start: datetime, end: datetime, period: str='minutes'):
+def calculate_timedelta(start: datetime, end: datetime, period: str = 'minutes') -> float:
     """
     Calculate the time difference between two datetime objects.
 
@@ -218,52 +217,41 @@ def calculate_timedelta(start: datetime, end: datetime, period: str='minutes'):
     """
     # Calculate the difference
     delta = end - start
-    
-    # Return the difference in the desired unit
-    if period == 'minutes':
-        return delta.total_seconds() / 60
-    elif period == 'hours':
-        return delta.total_seconds() / 3600
-    elif period == 'days':
-        return delta.days
-    elif period == 'weeks':
-        return delta.days / 7
-    elif period == 'months':
-        # Use relativedelta to calculate the number of months
-        rd = relativedelta(end, start)
-        return rd.years * 12 + rd.months
-    else:
-        raise ValueError("Unsupported unit. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
-    
-def datetime_to_unixtime(dt: datetime):
+
+    # Supported units and conversion factors (for seconds-based units)
+    conversions = {
+        'minutes': delta.total_seconds() / 60,
+        'hours': delta.total_seconds() / 3600,
+        'days': delta.days,
+        'weeks': delta.days / 7,
+        'months': relativedelta(end, start).years * 12 + relativedelta(end, start).months
+    }
+
+    # Return the converted value or raise an error if the period is not supported
+    try:
+        return conversions[period]
+    except KeyError:
+        raise ValueError(f"Unsupported unit '{period}'. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
+
+def datetime_to_unixtime(dt: datetime.datetime) -> float:
     """
-    Convert a datetime object into a Unix timestamp.
-    which represents the number of milliseconds since 01.01.1970, 00:00 GMT
-
-    Practical Equivalence: For most practical purposes, GMT and UTC are nearly
-    equivalent in modern usage. However, technically, UTC is more precise due
-    to its incorporation of leap seconds, whereas GMT does not adjust for these.
-
-    Naming: Despite the differences in their technical definitions, in everyday
-    usage and conversation, the terms "GMT" and "UTC" are often used interchangeably.
-
+    Convert a datetime object into a Unix timestamp (milliseconds since 01.01.1970, 00:00 UTC).
+    
     Args:
         dt (datetime): The datetime object to convert.
-
+    
     Returns:
         float: The timestamp in milliseconds.
     """
-    
-    epoch = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
+    # Ensure the datetime is in UTC
+    dt_utc = dt.astimezone(datetime.timezone.utc)
 
-    delta = local_to_utc(dt) - epoch
+    # Get the Unix timestamp in seconds and convert to milliseconds
+    return dt_utc.timestamp() * 1000
 
-    # Convert seconds to milliseconds
-    return delta.total_seconds() * 1000
-
-def local_to_utc(dt_local):
+def local_to_utc(dt_local: datetime.datetime) -> datetime.datetime:
     """
-    Converts a datetime object from the local timezone to a UTC datetime object.
+    Converts a datetime object from the local timezone to UTC.
 
     Args:
         dt_local (datetime): A datetime object in the local timezone.
@@ -274,10 +262,9 @@ def local_to_utc(dt_local):
     # Get the local timezone
     local_timezone = tzlocal.get_localzone()
 
-    # Make the datetime object timezone-aware
-    dt_local = dt_local.replace(tzinfo=local_timezone)
-
+    # Convert the naive datetime to the local timezone, if necessary
+    if dt_local.tzinfo is None:
+        dt_local = dt_local.replace(tzinfo=local_timezone)
+    
     # Convert to UTC
-    dt_utc = dt_local.astimezone(pytz.utc)
-
-    return dt_utc
+    return dt_local.astimezone(datetime.timezone.utc)
