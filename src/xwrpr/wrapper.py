@@ -22,12 +22,12 @@
 ###########################################################################
 
 import logging
-import pandas as pd
 from threading import Lock
 from pathlib import Path
 import configparser
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from typing import Union, List, Optional
 from queue import Queue
 from xwrpr.handler import HandlerManager
 from xwrpr.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
@@ -80,22 +80,22 @@ class Wrapper(HandlerManager):
 
     def __init__(self,
         demo: bool=True,
-        logger=None,
-
-        username: str=None,
-        password: str=None
+        username: Optional[str]=None,
+        password: Optional[str]=None,
+        logger: Optional[logging.Logger]=None,
     ) -> None:
         """
-        Initializes the wrapper object.
+        Initializes a new instance of the Wrapper class.
 
         Args:
-            demo (bool, optional): Specifies whether to use the demo mode. Defaults to True.
-            logger (logging.Logger, optional): The logger object to use for logging. 
-                If not provided, a new logger will be created. Defaults to None.
+            demo (bool): A boolean indicating whether the handler is for demo or real trading.
+            username (str, optional): The username for the XTB API. Defaults to None.
+            password (str, optional): The password for the XTB API. Defaults to None.
+            logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
 
+        Raises:
+            None
         """
-
-        self._demo=demo
 
         if logger:
             # Use the provided logger and create a child logger
@@ -106,32 +106,34 @@ class Wrapper(HandlerManager):
 
         self._logger.info("Initializing wrapper ...")
 
-        # Check if username and password are provided
-        if not username or not password:
-            self._logger.error("Username and password must be provided.")
-            return False
-
         # Initialize the HandlerManager
-        super().__init__(demo=self._demo, logger = self._logger)
+        super().__init__(
+            demo=demo,
+            username=username,
+            password=password,
+            logger = self._logger
+        )
 
+        # Set the deleted flag to False
         self._deleted=False
 
         self._logger.info("Wrapper initialized")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
-        Destructor method for the XTB wrapper class.
-        This method is automatically called when the object is about to be destroyed.
-        It performs cleanup operations and deletes the object.
+        Destructor method that is called when the Wrapper object is about to be destroyed.
+        It ensures that any open connections are closed properly and any resources
+        are released.
 
+        Raises:
+            None
         """
+
         self.delete()
 
     def delete(self):
         """
-        Deletes the wrapper.
-
-        If the wrapper has already been deleted, a warning message is logged and the method returns True.
+        Deletes the Wrapper.
 
         Returns:
             bool: True if the wrapper is successfully deleted, False otherwise.
@@ -139,11 +141,10 @@ class Wrapper(HandlerManager):
         """
         if self._deleted:
             self._logger.warning("Wrapper already deleted.")
-            return True
-
-        self._logger.info("Deleting wrapper.")
-        super().delete()
-        self._logger.info("Wrapper deleted.")
+        else:
+            self._logger.info("Deleting wrapper ...")
+            super().delete()
+            self._logger.info("Wrapper deleted.")
 
     def _open_stream_channel(self, **kwargs):
         """

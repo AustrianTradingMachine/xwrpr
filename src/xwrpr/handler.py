@@ -54,7 +54,7 @@ MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')
 
 class _GeneralHandler(Client):
     """
-    A class that handles general requests and responses to and from the XTB trading platform.
+    Handles general requests to and from the XTB trading platform.
 
     Attributes:
         _logger (logging.Logger): The logger instance.
@@ -78,7 +78,7 @@ class _GeneralHandler(Client):
             logger: Optional[logging.Logger] = None
         ) -> None:
         """
-        Initializes the general handler.
+        Initializes a new instance of the GeneralHandler class.
 
         Args:
             host (str): The host address.
@@ -421,7 +421,7 @@ class _GeneralHandler(Client):
     
 class _DataHandler(_GeneralHandler):
     """
-    Handles data-related operations for the XTB trading platform.
+    Handles data requests to and from the XTB trading platform.
 
     Attributes:
         _logger (logging.Logger): The logger instance used for logging.
@@ -452,13 +452,17 @@ class _DataHandler(_GeneralHandler):
     def __init__(
         self,
         demo: bool,
+        username: str,
+        password: str,
         logger: Optional[logging.Logger] = None
     ) -> None:
         """
-        Initializes the DataHandler.
+        Initializes a new instance of the DataHandler class.
 
         Args:
             demo (bool): Specifies whether the DataHandler is for demo or real trading.
+            username (str): The username for the XTB trading platform.
+            password (str): The password for the XTB trading platform.
             logger (logging.Logger, optional): The logger object to use for logging. If not provided, a new logger will be generated.
 
         Raises:
@@ -476,6 +480,10 @@ class _DataHandler(_GeneralHandler):
 
         # Defines if the server is called for demo or real trading
         self._demo=demo
+        # The username and password for the XTB trading platform
+        # Username depends on the demo or real trading mode
+        self._username=username
+        self._password=password
 
         # Initialize the GeneralHandler instance
         super().__init__(
@@ -506,9 +514,8 @@ class _DataHandler(_GeneralHandler):
     def __del__(self) -> None:
         """
         Destructor method that is called when the DataHandler object is about to be destroyed.
-
-        This method is automatically called when the object is about to be destroyed.
-        It performs cleanup operations and deletes the object
+        It ensures that any open connections are closed properly and any resources
+        are released.
 
         Raises:
             None
@@ -574,8 +581,8 @@ class _DataHandler(_GeneralHandler):
                 command='login',
                 arguments={
                     'arguments': {
-                        'userId': get_userId(self._demo), # get_userId() returns the user ID for the demo or real trading mode
-                        'password': get_password() # get_password() returns the password for the user ID
+                        'userId': self._username,
+                        'password': self._password
                     }
                 }
             )
@@ -798,6 +805,14 @@ class _DataHandler(_GeneralHandler):
                     # detaching is only executed by StreamHandler itself
 
     @property
+    def username(self) -> None:
+        return None
+    
+    @property
+    def password(self) -> None:
+        return None
+
+    @property
     def stream_handler(self) -> List['_StreamHandler']:
         return self.stream_handler
     
@@ -822,7 +837,7 @@ class _DataHandler(_GeneralHandler):
 
 class _StreamHandler(_GeneralHandler):
     """
-    Handles streaming data from XTB API.
+    Handles stream requests to and from the XTB trading platform.
 
     Attributes:
         _logger (logging.Logger): The logger object used for logging.
@@ -856,7 +871,7 @@ class _StreamHandler(_GeneralHandler):
         logger: Optional[logging.Logger] = None
         ) -> None:
         """
-        Initialize the StreamHandler object.
+        Initializes a new instance of the StreamHandler class.
 
         Args:
             dataHandler (_DataHandler): The data handler object.
@@ -911,12 +926,8 @@ class _StreamHandler(_GeneralHandler):
     def __del__(self) -> None:
         """
         Destructor method that is called when the StreamHandler object is about to be destroyed.
-
-        This method is automatically called when the object is about to be destroyed.
-        It performs cleanup operations and deletes the object.
-
-        Returns:
-            None
+        It ensures that any open connections are closed properly and any resources
+        are released.
 
         Raises:
             None
@@ -1330,6 +1341,8 @@ class HandlerManager():
     def __init__(
         self,
         demo: bool=True,
+        username: Optional[str]=None,
+        password: Optional[str]=None,
         logger: Optional[logging.Logger]=None
         ) -> None:
         """
@@ -1337,6 +1350,8 @@ class HandlerManager():
 
         Args:
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
+            username (str, optional): The username for the XTB trading platform. Defaults to None.
+            password (str, optional): The password for the XTB trading platform. Defaults to None.
             logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
         """
         
@@ -1347,7 +1362,19 @@ class HandlerManager():
             # Generate a new logger
             self._logger=generate_logger(name='HandlerManager', path=Path.cwd() / "logs")
 
+        self._logger.info("Initializing HandlerManager ...")
+
         self._demo=demo
+
+        # Check if username and password are provided
+        if username and password:
+            # Set the username and password
+            self._username=username
+            self._password=password
+        else:
+            # Get the username and password from the config file
+            self._username=get_userId(self._demo)
+            self._password=get_password()
 
         self._handlers = {'data': {}, 'stream': {}}
         self._max_streams=floor(1000/SEND_INTERVAL)
@@ -1357,13 +1384,9 @@ class HandlerManager():
 
     def __del__(self) -> None:
         """
-        Destructor method that is called when the HandlerManager instance is deleted.
-
-        This method is automatically called when the object is about to be destroyed.
-        It performs cleanup operations and deletes the object.
-
-        Returns:
-            None
+        Destructor method that is called when the HandlerManager object is about to be destroyed.
+        It ensures that any open connections are closed properly and any resources
+        are released.
 
         Raises:
             None
@@ -1560,3 +1583,16 @@ class HandlerManager():
                 self._logger.error(f"Failed to generate StreamHandler: {e}")
 
         return handler
+    
+    @property
+    def demo(self) -> bool:
+        return self._demo
+
+    @property
+    def username(self) -> None:
+        return None
+    
+    @property
+    def password(self) -> None:
+        return None
+    
