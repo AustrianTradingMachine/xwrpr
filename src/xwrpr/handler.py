@@ -1376,11 +1376,16 @@ class HandlerManager():
             self._username=get_userId(self._demo)
             self._password=get_password()
 
+        # Initialize the handlers dictionary
         self._handlers = {'data': {}, 'stream': {}}
+
+
         self._max_streams=floor(1000/SEND_INTERVAL)
-        self._max_connections=MAX_CONNECTIONS
-        self._connections=0
+        
+        # Set the deleted flag to False
         self._deleted=False
+
+        self._logger.info("HandlerManager initialized")
 
     def __del__(self) -> None:
         """
@@ -1409,34 +1414,35 @@ class HandlerManager():
             self._logger.warning("HandlerManager already deleted")
         else:
             for handler in self._handlers['data']:
-                # 
-                if handler.status == 'active':
+                # Delete all data handlers
+                # The DataHandler wil send a delete command to every attached StreamHandler
+                if handler.status != 'deleted':
                     self._delete_handler(handler)
 
             # Set the deleted flag to True
             self._deleted=True
 
-    def _delete_handler(self, handler: Union[_DataHandler, _StreamHandler]) -> bool:
+    def _delete_handler(self, handler: Union[_DataHandler, _StreamHandler]) -> None:
         """
         Deletes a specific handler and deregisters it from the HandlerManager.
 
         Args:
-            handler: The handler to delete.
+            handler (Union[_DataHandler, _StreamHandler]): The handler to delete.
 
         Returns:
-            bool: True if the handler was successfully deleted, False otherwise.
+            None
         """
         if isinstance(handler, _DataHandler):
             # Just deregister the Streamhandler from the DataHandler
             for stream in list(handler.stream_handler):
                 self._logger.info("Deregister StreamHandler "+self._handlers['stream'][stream]['name'])
-                self._connections -= 1
+                del self._handlers['stream'][stream]
             
             self._logger.info("Deregister DataHandler "+self._handlers['data'][handler]['name'])
-            self._connections -= 1
+            del self._handlers['data'][handler]
         elif isinstance(handler, _StreamHandler):
             self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
-            self._connections -= 1
+            del self._handlers['stream'][handler]
 
         # Delete the handler
         handler.delete()
@@ -1451,6 +1457,7 @@ class HandlerManager():
         Raises:
             None
         """
+
         for handler in self._handlers['data']:
             if handler.status == 'active':
                 return handler
@@ -1465,6 +1472,7 @@ class HandlerManager():
         Raises:
             None
         """
+
         for handler in self._handlers['stream']:
             if handler.status == 'active':
                 if len(handler.stream_tasks) < self._max_streams:
@@ -1484,7 +1492,7 @@ class HandlerManager():
 
         self._logger.info("Generating DataHandler ...")
 
-        if self._connections >= self._max_connections:
+        if self._connections >= MAX_CONNECTIONS:
             self._logger.error("Maximum number of connections reached")
             raise RuntimeError("Maximum number of connections reached")
 
@@ -1498,7 +1506,6 @@ class HandlerManager():
 
         # Register the new DataHandler
         self._handlers['data'][dh] = {'name': name}
-        self._connections += 1
 
         self._logger.info("DataHandler generated")
 
@@ -1517,7 +1524,7 @@ class HandlerManager():
 
         self._logger.info("Generating StreamHandler ...")
 
-        if self._connections >= self._max_connections:
+        if self._connections >= MAX_CONNECTIONS:
             self._logger.error("Maximum number of connections reached")
             raise RuntimeError("Maximum number of connections reached")
 
@@ -1532,7 +1539,6 @@ class HandlerManager():
 
         # Register the new StreamHandler
         self._handlers['stream'][sh] = {'name': name}
-        self._connections += 1
 
         self._logger.info("StreamHandler generated")
 
@@ -1585,14 +1591,9 @@ class HandlerManager():
         return handler
     
     @property
-    def demo(self) -> bool:
-        return self._demo
-
-    @property
     def username(self) -> None:
         return None
     
     @property
     def password(self) -> None:
         return None
-    
