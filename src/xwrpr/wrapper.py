@@ -87,6 +87,7 @@ class Wrapper(HandlerManager):
 
         username: Optional[str]=None,
         password: Optional[str]=None,
+        path: Optional[str]=None,
 
         max_connections: int=MAX_CONNECTIONS,
         max_send_data: int = MAX_SEND_DATA,
@@ -104,6 +105,7 @@ class Wrapper(HandlerManager):
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
             username (str, optional): The username for the XTB API. Defaults to None.
             password (str, optional): The password for the XTB API. Defaults to None.
+            path (str, optional): The path to the XTB API credentials file. Defaults to None.
             max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
             max_recieved_data (int): The maximum number of bytes to receive.
@@ -140,17 +142,18 @@ class Wrapper(HandlerManager):
 
         # Initialize the HandlerManager
         super().__init__(
-            demo=demo,
-            
-            username=username,
-            password=password,
-
             max_connections = max_connections,
             max_send_data = max_send_data,
             max_recieved_data = max_recieved_data,
             min_request_interval = min_request_interval,
             max_retries = max_retries,
             max_reaction_time = max_reaction_time,
+
+            demo=demo,
+            
+            username=username,
+            password=password,
+            path=path,
 
             logger = self._logger
         )

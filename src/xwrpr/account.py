@@ -24,6 +24,8 @@
 from pathlib import Path
 import configparser
 
+PATH = Path('~/.xwrpr').expanduser()
+
 def _get_config(value: str) -> str:
     """
     Retrieves the value of a configuration key from the user.ini file.
@@ -38,7 +40,8 @@ def _get_config(value: str) -> str:
         FileNotFoundError: If the configuration file is not found.
         KeyError: If the specified key is not found in the configuration file.
     """
-    dir_path = Path('~/.xwrpr').expanduser()
+
+    dir_path = PATH
     config_path = dir_path / 'user.ini'
 
     if not config_path.exists():
@@ -77,3 +80,19 @@ def get_password() -> str:
         str: The password stored in the configuration file.
     """
     return _get_config('PASSWORD')
+
+def set_path(path: str) -> None:
+    """
+    Sets the path to the configuration directory.
+
+    Args:
+        path (str): The path to the configuration directory.
+    """
+    
+    # Check if the path is valid
+    if not Path(path).exists():
+        raise ValueError(f'Invalid path: {path}')
+
+    # Set the global PATH variable
+    global PATH
+    PATH = Path(path).expanduser()

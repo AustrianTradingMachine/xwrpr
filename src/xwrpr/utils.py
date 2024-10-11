@@ -215,6 +215,7 @@ def calculate_timedelta(start: datetime, end: datetime, period: str = 'minutes')
         - 'weeks'
         - 'months'
     """
+    
     # Calculate the difference
     delta = end - start
 
@@ -243,6 +244,7 @@ def datetime_to_unixtime(dt: datetime.datetime) -> float:
     Returns:
         float: The timestamp in milliseconds.
     """
+
     # Ensure the datetime is in UTC
     dt_utc = dt.astimezone(datetime.timezone.utc)
 
@@ -259,6 +261,7 @@ def local_to_utc(dt_local: datetime.datetime) -> datetime.datetime:
     Returns:
         datetime: A datetime object in UTC.
     """
+
     # Get the local timezone
     local_timezone = tzlocal.get_localzone()
 

@@ -30,7 +30,7 @@ from threading import Lock
 from typing import Union, List, Optional
 from xwrpr.client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
-from xwrpr.account import get_userId, get_password
+from xwrpr.account import get_userId, get_password, set_path
 
 
 # Reaction time in milliseconds
@@ -1398,6 +1398,7 @@ class HandlerManager():
 
         username: Optional[str]=None,
         password: Optional[str]=None,
+        path: Optional[str]=None,
 
         logger: Optional[logging.Logger]=None
         ) -> None:
@@ -1414,6 +1415,7 @@ class HandlerManager():
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
             username (str, optional): The username for the XTB trading platform. Defaults to None.
             password (str, optional): The password for the XTB trading platform. Defaults to None.
+            path (str, optional): The path to the XTB API credentials file. Defaults to None.
             logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
 
         Raises:
@@ -1437,6 +1439,10 @@ class HandlerManager():
             self._username=username
             self._password=password
         else:
+            # Sets the path to the credentials file
+            if path:
+                set_path(path = path)
+
             # Get the username and password from the config file
             self._username=get_userId(self._demo)
             self._password=get_password()
