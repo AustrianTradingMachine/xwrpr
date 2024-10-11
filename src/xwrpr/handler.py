@@ -33,7 +33,7 @@ from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password
 
 
-# read api configuration
+# Reaction time in milliseconds
 config = configparser.ConfigParser()
 config_path=Path(__file__).parent.absolute()/'api.ini'
 config.read(config_path)
@@ -43,13 +43,6 @@ PORT_DEMO=config.getint('SOCKET','PORT_DEMO')
 PORT_DEMO_STREAM=config.getint('SOCKET','PORT_DEMO_STREAM')
 PORT_REAL=config.getint('SOCKET','PORT_REAL')
 PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
-
-SEND_INTERVAL=config.getint('CONNECTION','SEND_INTERVAL')
-MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
-MAX_CONNECTION_FAILS=config.getint('CONNECTION','MAX_CONNECTION_FAILS')
-MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
-MAX_RECIEVE_DATA=config.getint('CONNECTION','MAX_RECIEVE_DATA')
-MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')
 
 
 class _GeneralHandler(Client):
@@ -108,9 +101,9 @@ class _GeneralHandler(Client):
             reaction_time = MAX_REACTION_TIME/1000,
 
             interval=SEND_INTERVAL/1000,
-            max_fails=MAX_CONNECTION_FAILS,
+            max_fails=MAX_REACTION_TIME,
             bytes_out=MAX_SEND_DATA,
-            bytes_in=MAX_RECIEVE_DATA,
+            bytes_in=MAX_RECIEVED_DATA,
 
             logger=self._logger
         )

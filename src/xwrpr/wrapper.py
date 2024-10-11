@@ -33,13 +33,17 @@ from xwrpr.handler import HandlerManager
 from xwrpr.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
 
 
-# read api configuration
+# Read the configuration file
 config = configparser.ConfigParser()
 config_path=Path(__file__).parent.absolute()/ 'api.ini'
 config.read(config_path)
 
-SEND_INTERVAL=config.getint('CONNECTION','SEND_INTERVAL')
-
+MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
+MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
+MAX_RECIEVED_DATA=config.getint('CONNECTION','MAX_RECIEVED_DATA')
+MIN_REQUEST_INTERVAL=config.getint('CONNECTION','MIN_REQUEST_INTERVAL')
+MAX_RETRIES=config.getint('CONNECTION','MAX_RETRIES')
+MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')
 
 class Wrapper(HandlerManager):
     """
@@ -80,8 +84,17 @@ class Wrapper(HandlerManager):
 
     def __init__(self,
         demo: bool=True,
+
         username: Optional[str]=None,
         password: Optional[str]=None,
+
+        max_connections: int=MAX_CONNECTIONS,
+        max_send_data: int = MAX_SEND_DATA,
+        max_recieved_data: int = MAX_RECIEVED_DATA,
+        min_request_interval: int = MIN_REQUEST_INTERVAL,
+        max_retries: int = MAX_RETRIES,
+        max_reaction_time: int = MAX_REACTION_TIME,
+
         logger: Optional[logging.Logger]=None,
     ) -> None:
         """
@@ -106,11 +119,33 @@ class Wrapper(HandlerManager):
 
         self._logger.info("Initializing wrapper ...")
 
+        # Check the values that are limited by the server
+        if max_connections > MAX_CONNECTIONS:
+            max_connections=MAX_CONNECTIONS
+            self._logger.warning("Max connections must be less than " + str(MAX_CONNECTIONS) + ". Setting max connections to " + str(MAX_CONNECTIONS))
+
+        if max_send_data > MAX_SEND_DATA:
+            max_send_data=MAX_SEND_DATA
+            self._logger.warning("Max send data must be less than " + str(MAX_SEND_DATA) + ". Setting max send data to " + str(MAX_SEND_DATA))
+
+        if min_request_interval < MIN_REQUEST_INTERVAL:
+            min_request_interval=MIN_REQUEST_INTERVAL
+            self._logger.warning("Min request interval must be greater than " + str(MIN_REQUEST_INTERVAL) + ". Setting min request interval to " + str(MIN_REQUEST_INTERVAL))
+
         # Initialize the HandlerManager
         super().__init__(
             demo=demo,
+            
             username=username,
             password=password,
+
+            max_connections = max_connections,
+            max_send_data = max_send_data,
+            max_recieved_data = max_recieved_data,
+            min_request_interval = min_request_interval,
+            max_retries = max_retries,
+            max_reaction_time = max_reaction_time,
+
             logger = self._logger
         )
 
