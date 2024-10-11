@@ -160,20 +160,8 @@ class Wrapper(HandlerManager):
                 - thread (Thread): Starting the Thread will terminate the stream
 
         """
-        sh = self.provide_StreamHandler()
-        if not sh:
-            self._logger("Could not provide stream channel")
-            return False
         
-        df = pd.DataFrame()
-        lock = Lock()
-
-        exchange = {
-            'queue': Queue()
-            }
-        sh.stream_data(exchange=exchange, **kwargs)
-
-        return exchange
+        return self.stream_data(exchange={'queue': Queue()}, **kwargs)
     
     def streamBalance(self):
         """
@@ -430,17 +418,8 @@ class Wrapper(HandlerManager):
             The response from the getData method if successful, False otherwise.
             
         """
-        dh = self.provide_DataHandler()
-        if not dh:
-            self._logger("Could not provide data channel")
-            return False
-        
-        response = dh.get_data(**kwargs)
 
-        if not response:
-            return False
-        else:
-            return response
+        return self.get_data(**kwargs)
         
     def getAllSymbols(self):
         """

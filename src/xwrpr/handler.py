@@ -499,7 +499,7 @@ class _DataHandler(_GeneralHandler):
 
         # The status of the DataHandler is initially set to inactive
         # The status can be 'active', 'inactive', or 'deleted'
-        self.status='inactive'
+        self.status='initiated'
         # Stream session ID is necessary for stream requests
         # It is provided from the server after login
         self.ssid=None
@@ -722,20 +722,27 @@ class _DataHandler(_GeneralHandler):
         # the lock is used to avoid conflicts
         with self.reconnection_lock:
             try:
-                # Set the status to inactive
-                self.status = 'inactive'
+                self._logger.info("Checking connection ...")
                 # Check the socket
                 self.check(mode='basic')
+                self._logger.info("Connection is active")
             except Exception as e:
                 self._logger.info("Reconnecting ...")
-                # Create a new socket
-                self.create()
-                # Relogin to the server
-                self._login()
-                self._logger.info("Reconnection successful")
+                # Set the status to inactive
+                self.status = 'reconnecting'
+                try:
+                    # Create a new socket
+                    self.create()
+                    # Relogin to the server
+                    self._login()
+                    self._logger.info("Reconnection successful")
+                except Exception as e:
+                    self._logger.error(f"Failed to reconnect: {e}")
+                    # Set the status to inactive
+                    self.status = 'failed'
 
+            # Set the status to active
             self.status = 'active'
-            self._logger.info("Data connection is already active")
  
     def attach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
@@ -824,12 +831,6 @@ class _DataHandler(_GeneralHandler):
     def status(self) -> str:
         return self.status
     
-    @status.setter
-    def status(self, value: str) -> None:
-        if value not in ['active', 'inactive', 'deleted']:
-            raise ValueError("Invalid status value")
-        self.status = value
-
     @property
     def ssid(self) -> str:
         return self.ssid
@@ -1281,21 +1282,29 @@ class _StreamHandler(_GeneralHandler):
         # Wait for the DataHandler to reconnect
         with self.dh.reconnection_lock:
             try:
-                # Set the status to inactive
-                self.status='inactive'
+                self._logger.info("Checking connection ...")
                 # Check the socket
                 self.check('basic')
+                self._logger.info("Connection is active")
             except Exception as e:
                 self._logger.info("Reconnecting ...")
-                # Create a new socket
-                self.create()
-                # Open the connection
-                self.open()
-                # Restart the stream tasks
-                self._restart_streams()
+                # Set the status to inactive
+                self.status = 'reconnecting'
+                try:
+                    # Create a new socket
+                    self.create()
+                    # Open the connection
+                    self.open()
+                    # Restart the stream tasks
+                    self._restart_streams()
+                    self._logger.info("Reconnection successful")
+                except Exception as e:
+                    self._logger.error(f"Failed to reconnect: {e}")
+                    # Set the status to inactive
+                    self.status = 'failed'
  
+            # Set the status to active
             self.status='active'
-            self._logger.info("Stream connection is already active")
 
     @property
     def dh(self) -> _DataHandler:
@@ -1321,12 +1330,6 @@ class _StreamHandler(_GeneralHandler):
     @property
     def status(self) -> str:
         return self.status
-    
-    @status.setter
-    def status(self, value: str) -> None:
-        if value not in ['active', 'inactive', 'deleted']:
-            raise ValueError("Invalid status value")
-        self.status = value
 
     @property
     def stream_tasks(self) -> dict:
@@ -1447,6 +1450,21 @@ class HandlerManager():
         # Delete the handler
         handler.delete()
 
+    def _handler_management(self) -> None:
+        """
+        Manages the handlers and ensures that the maximum number of connections is not exceeded.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        while not self._deleted:
+
+
+
     def _avlb_DataHandler(self) -> _DataHandler:
         """
         Gets an available data handler.
@@ -1478,7 +1496,19 @@ class HandlerManager():
                 if len(handler.stream_tasks) < self._max_streams:
                     return handler
 
-    
+    def _get_connection_number(self) -> int:
+        """
+        Gets the number of active connections.
+
+        Returns:
+            int: The number of active connections.
+
+        Raises:
+            None
+        """
+
+        return len(self._handlers['data']) + len(self._handlers['stream'])
+
     def _generate_DataHandler(self) -> _DataHandler:
         """
         Generates a new data handler.
@@ -1492,7 +1522,7 @@ class HandlerManager():
 
         self._logger.info("Generating DataHandler ...")
 
-        if self._connections >= MAX_CONNECTIONS:
+        if self._get_connection_number() >= MAX_CONNECTIONS:
             self._logger.error("Maximum number of connections reached")
             raise RuntimeError("Maximum number of connections reached")
 
@@ -1524,7 +1554,7 @@ class HandlerManager():
 
         self._logger.info("Generating StreamHandler ...")
 
-        if self._connections >= MAX_CONNECTIONS:
+        if self._get_connection_number() >= MAX_CONNECTIONS:
             self._logger.error("Maximum number of connections reached")
             raise RuntimeError("Maximum number of connections reached")
 
