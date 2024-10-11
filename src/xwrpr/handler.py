@@ -1405,6 +1405,7 @@ class HandlerManager():
         Initializes a new instance of the HandlerManager class.
 
         Args:
+            max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
             max_recieved_data (int): The maximum number of bytes to receive.
             min_request_interval (int): The minimum request interval in milliseconds.
@@ -1414,6 +1415,9 @@ class HandlerManager():
             username (str, optional): The username for the XTB trading platform. Defaults to None.
             password (str, optional): The password for the XTB trading platform. Defaults to None.
             logger (logging.Logger, optional): The logger instance to use for logging. Defaults to None.
+
+        Raises:
+            None
         """
         
         if logger:

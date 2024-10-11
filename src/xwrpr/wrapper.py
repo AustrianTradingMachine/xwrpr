@@ -104,6 +104,12 @@ class Wrapper(HandlerManager):
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
             username (str, optional): The username for the XTB API. Defaults to None.
             password (str, optional): The password for the XTB API. Defaults to None.
+            max_connections (int): The maximum number of connections to the server allowed at the same time.
+            max_send_data (int): The maximum number of bytes to send.
+            max_recieved_data (int): The maximum number of bytes to receive.
+            min_request_interval (int): The minimum request interval in milliseconds.
+            max_retries (int): The maximum number of retries.
+            max_reaction_time (int): The maximum reaction time in milliseconds.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
 
         Raises:
