@@ -547,7 +547,13 @@ class Client():
                 msg = self._socket.recv(self._bytes_in)
                 # Check if the message is empty
                 if not msg:
-                    raise ValueError("No message received")
+                    if blocking:
+                        # For blocking mode, raise an exception
+                        self._logger.error("No message received in blocking socket mode")
+                        raise ValueError("No message received in blocking socket mode")
+                    else:
+                        # For non-blocking mode, exit the loop
+                        break
 
                 # Convert the message to a string
                 msg = msg.decode("utf-8")
