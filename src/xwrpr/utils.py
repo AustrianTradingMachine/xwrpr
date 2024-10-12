@@ -52,6 +52,13 @@ def generate_logger(
 
     # Create a logger with the specified name
     logger = logging.getLogger(name)
+
+    # Check if the logger already has handlers attached
+
+    # In case a logger with the same name is already created, return it
+    if logger.hasHandlers():
+        return logger
+
     # Define the log format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # Set the logger level to DEBUG
@@ -64,11 +71,11 @@ def generate_logger(
     logger.addHandler(stream_handler)
 
     if path is not None:
-        if not path.exists():
-            try:
-                path.mkdir(parents=True)
-            except Exception as e:
-                raise ValueError(f"Could not create the directory {path}. Error: {e}")
+        try:
+            # Checks if the path exists, if not, creates it
+            path.mkdir(parents=True)
+        except Exception as e:
+            raise ValueError(f"Could not create the directory {path}. Error: {e}")
 
         # Create a file handler for the log file
         log_file_path = path / f"{name}.log"
@@ -106,21 +113,18 @@ def _validate_level(
         "critical": logging.CRITICAL
     }
 
-    # Set the logging level
-    if level is not None:
-        if level.lower() not in levels:
-            raise ValueError(f"Invalid logger level: {level}")
-        level = levels[level.lower()]
-    else:
-        if default.lower() not in levels:
-            raise ValueError(f"Invalid default level: {default}")
-        level = levels[default.lower()]
+    level = level.lower() if level else default.lower()
+
+    if level not in levels:
+        raise ValueError(f"Invalid logger level: {level}")
+    level = levels[level.lower()]
 
     return level
 
 class CustomThread(threading.Thread):
     """
     A custom thread class that extends the functionality of the threading.Thread class.
+    Necessary to read the custom attributes passed to the constructor.
 
     Attributes:
         target (callable): The callable object to be invoked by the thread's run() method.
@@ -219,24 +223,26 @@ def calculate_timedelta(start: datetime, end: datetime, period: str = 'minutes')
     # Calculate the difference
     delta = end - start
 
-    # Supported units and conversion factors (for seconds-based units)
-    conversions = {
-        'minutes': delta.total_seconds() / 60,
-        'hours': delta.total_seconds() / 3600,
-        'days': delta.days,
-        'weeks': delta.days / 7,
-        'months': relativedelta(end, start).years * 12 + relativedelta(end, start).months
-    }
+    # Return the difference in the desired unit
+    if period == 'minutes':
+        return delta.total_seconds() / 60
+    elif period == 'hours':
+        return delta.total_seconds() / 3600
+    elif period == 'days':
+        return delta.days
+    elif period == 'weeks':
+        return delta.days / 7
+    elif period == 'months':
+        # Use relativedelta to calculate the number of months
+        rd = relativedelta(end, start)
+        return rd.years * 12 + rd.months
+    else:
+        raise ValueError("Unsupported unit. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
 
-    # Return the converted value or raise an error if the period is not supported
-    try:
-        return conversions[period]
-    except KeyError:
-        raise ValueError(f"Unsupported unit '{period}'. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
-
-def datetime_to_unixtime(dt: datetime.datetime) -> float:
+def datetime_to_unixtime(dt: datetime.datetime) -> int:
     """
     Convert a datetime object into a Unix timestamp (milliseconds since 01.01.1970, 00:00 UTC).
+    In case the datetime object is naive, it is assumed to be in the local timezone.
     
     Args:
         dt (datetime): The datetime object to convert.
@@ -245,15 +251,23 @@ def datetime_to_unixtime(dt: datetime.datetime) -> float:
         float: The timestamp in milliseconds.
     """
 
+    # Check if the datetime object is naive
+    if dt.tzinfo is None:
+        # Get the local timezone
+        local_timezone = tzlocal.get_localzone()
+        # Convert the naive datetime to the local timezone
+        dt = dt.replace(tzinfo=local_timezone)
+
     # Ensure the datetime is in UTC
     dt_utc = dt.astimezone(datetime.timezone.utc)
 
     # Get the Unix timestamp in seconds and convert to milliseconds
-    return dt_utc.timestamp() * 1000
+    return int(dt_utc.timestamp() * 1000)
 
 def local_to_utc(dt_local: datetime.datetime) -> datetime.datetime:
     """
     Converts a datetime object from the local timezone to UTC.
+    In case the datetime object is naive, it is assumed to be in the local timezone.
 
     Args:
         dt_local (datetime): A datetime object in the local timezone.
@@ -262,11 +276,11 @@ def local_to_utc(dt_local: datetime.datetime) -> datetime.datetime:
         datetime: A datetime object in UTC.
     """
 
-    # Get the local timezone
-    local_timezone = tzlocal.get_localzone()
-
-    # Convert the naive datetime to the local timezone, if necessary
+    # Check if the datetime object is naive
     if dt_local.tzinfo is None:
+        # Get the local timezone
+        local_timezone = tzlocal.get_localzone()
+        # Convert the naive datetime to the local timezone
         dt_local = dt_local.replace(tzinfo=local_timezone)
     
     # Convert to UTC

@@ -50,6 +50,10 @@ def _get_config(value: str) -> str:
     config = configparser.ConfigParser()
     config.read(config_path)
 
+    # Ensure the 'USER' section exists
+    if 'USER' not in config:
+        raise KeyError("'USER' section not found in configuration file")
+
     try:
         return config['USER'][value]
     except KeyError:
@@ -89,10 +93,12 @@ def set_path(path: str) -> None:
         path (str): The path to the configuration directory.
     """
     
-    # Check if the path is valid
-    if not Path(path).exists():
-        raise ValueError(f'Invalid path: {path}')
+    config_path = Path(path).expanduser()
+
+    # Check if the path is valid and is a directory
+    if not config_path.exists() or not config_path.is_dir():
+        raise ValueError(f'Invalid path: {path} (must be a directory)')
 
     # Set the global PATH variable
     global PATH
-    PATH = Path(path).expanduser()
+    PATH = config_path
