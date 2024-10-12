@@ -22,12 +22,12 @@
 ###########################################################################
 
 import logging
-import time
-from pathlib import Path
 import configparser
-from math import floor
-from threading import Lock
+from pathlib import Path
+from enum import Enum
 from typing import Union, List, Optional
+import time
+from threading import Lock
 from xwrpr.client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password, set_path
@@ -43,6 +43,24 @@ PORT_DEMO=config.getint('SOCKET','PORT_DEMO')
 PORT_DEMO_STREAM=config.getint('SOCKET','PORT_DEMO_STREAM')
 PORT_REAL=config.getint('SOCKET','PORT_REAL')
 PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
+
+
+class Status(Enum):
+    """
+    Enum class for the status of the handler.
+
+    Attributes:
+        ACTIVE: The handler is active.
+        INACTIVE: The handler is inactive.
+        DELETED: The handler is deleted.
+    
+    Methods:
+        None
+    """
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DELETED = "deleted"
 
 
 class _GeneralHandler(Client):
@@ -521,7 +539,7 @@ class _DataHandler(_GeneralHandler):
 
         # The status of the DataHandler is initially set to inactive
         # The status can be 'active', 'inactive', or 'deleted'
-        self.status='initiated'
+        self.status=Status.INACTIVE
         # Stream session ID is necessary for stream requests
         # It is provided from the server after login
         self.ssid=None
@@ -830,12 +848,8 @@ class _DataHandler(_GeneralHandler):
             self._logger.info("No StreamHandlers to close")
         else:
             for handler in list(self.stream_handler):
-                try:
-                    handler.delete()
-                except KeyError as e:
-                    # For graceful closing no error message raise of exception not is allowed
-                    self._logger.error(f"Failed to close StreamHandler: {e}")
-                    # detaching is only executed by StreamHandler itself
+                handler.delete()
+                # detaching is only executed by StreamHandler itself
 
     @property
     def username(self) -> None:
@@ -854,7 +868,7 @@ class _DataHandler(_GeneralHandler):
         return self.reconnection_lock
     
     @property
-    def status(self) -> str:
+    def status(self) -> Status:
         return self.status
     
     @property
