@@ -29,6 +29,7 @@ from typing import Union, List, Optional
 import time
 from threading import Lock
 from queue import Queue
+from statistics import mean
 from xwrpr.client import Client
 from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password, set_path
@@ -47,6 +48,7 @@ PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
 TIMEOUT=config.getfloat('SOCKET','TIMEOUT')
 
 THREAD_TICKER=config.getfloat('HANDLER','THREAD_TICKER')
+SM_INTERVAL=config.getint('HANDLER','SM_INTERVAL')
 
 class Status(Enum):
     """
@@ -976,9 +978,17 @@ class _StreamHandler(_GeneralHandler):
         # so the status is active right after the connection is open
         self._status = Status.ACTIVE
 
+        # The dictionary for the thread control of the stream
         self._stream=dict()
+        # Stream tasks are stored in a dictionary
         self._stream_tasks = dict()
+        # Lock for stopping a stream task
         self._stop_lock = Lock()
+
+        # The idle time list
+        self._idle_times = List[float]
+        # The sliding mean idle time
+        self._sm_idle_time = 0
 
         # Send KeepAlive to keep connection open
         # First command must beb sent 1 second after connection is opened
@@ -1193,15 +1203,30 @@ class _StreamHandler(_GeneralHandler):
 
         # Loop until the run flag is set to False
         while self._stream['run']:
+            # Start timer
+            start_time = time.time()
+
             self._logger.info("Streaming data ...")
     
             # Get the stream data from the server
             response = self._receive_stream()
 
+            # Calculate idle time
+            idle_time = time() - start_time
+            total_idle_time += idle_time
+
             if not response:
                 # Stream responses can be empty
                 continue
-            
+
+            if response['command'] == 'KeepAlive':
+                # KeepAlive stream is not necessary for the exchange
+                continue
+
+            # Reset the idle time
+            self._calculate_sm_idle_time(total_idle_time)
+            total_idle_time = 0
+
             # Assign streamed data to the corresponding stream task
             for index in self._stream_tasks:
                 command = self._stream_tasks[index]['command']
@@ -1209,10 +1234,6 @@ class _StreamHandler(_GeneralHandler):
                 
                 # Skip if the command does not match
                 if translate[command] != response['command']:
-                    continue
-                
-                # Skip if its the KeepAlive stream
-                if command == 'KeepAlive':
                     continue
 
                 # Not just the command but also the arguments must match
@@ -1227,6 +1248,29 @@ class _StreamHandler(_GeneralHandler):
                 self._stream_tasks[index]['queue'].put(response['data'])
 
         self._logger.info("All streams stopped")
+
+    def _calculate_sm_idle_time(self, idle_time: float) -> None:
+        """
+        Calculates the sliding mean idle time for the stream.
+
+        Args:
+            idle_time (float): The last idle time.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        # Sliding mean idle time is calculated
+        # by the last 10 idle times
+        self._idle_times.append(idle_time)
+        if len(self._idle_times) > SM_INTERVAL:
+            self._idle_times.pop(0)
+
+        # Calculate the mean idle time
+        self._sm_idle_time = mean(self._idle_times)
 
     def _receive_stream(self) -> dict:
         """
