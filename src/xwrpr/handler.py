@@ -1495,7 +1495,7 @@ class _StreamHandler(_GeneralHandler):
         Raises:
             None
         """
-        
+
         self._logger.info("Transplanting stream tasks ...")
 
         # Extract the necessary information from the task
@@ -1627,6 +1627,12 @@ class HandlerManager():
         # The HandlerManager is automatically active after initialization
         self._status = Status.ACTIVE
 
+        # Start the handler management thread
+        self._handler_management_thread = CustomThread(
+            target=self._handler_management,
+            daemon=True
+        )
+
         self._logger.info("HandlerManager initialized")
 
     def __del__(self) -> None:
@@ -1660,6 +1666,8 @@ class HandlerManager():
             self._logger.warning("HandlerManager already deleted")
             return
         
+        self._logger.info("Deleting HandlerManager ...")
+        
         for handler in self._handlers['data']:
             # Delete all data handlers
             # The DataHandler wil send a delete command to every attached StreamHandler
@@ -1668,6 +1676,11 @@ class HandlerManager():
 
         # Set the deleted flag to True
         self._status = Status.DELETED
+
+        # Wait for the handler management thread to stop
+        self._handler_management_thread.join(timeout=THREAD_TICKER*5)
+
+        self._logger.info("HandlerManager deleted")
     
     def _delete_handler(self, handler: Union[_DataHandler, _StreamHandler]) -> None:
         """
@@ -1708,7 +1721,7 @@ class HandlerManager():
                     # Check for connected stream handlers
                     if len(handler.stream_handler) > 0:
                         # Provide a new DataHandler that is ready for usage
-                        dh_new = self.provide_DataHandler()
+                        dh_new = self._provide_DataHandler()
                         if dh_new:
                             # Assign the new DataHandler to the connected stream handlers
                             for sh in handler.stream_handler:
@@ -1725,7 +1738,7 @@ class HandlerManager():
                     if len(handler.stream_tasks) > 0:
                         for _, task in handler.stream_tasks.items():
                             # Provide a new StreamHandler that is ready for usage
-                            sh_new = self.provide_StreamHandler()
+                            sh_new = self._provide_StreamHandler()
                             if sh_new:
                                 # Assign the new StreamHandler to the stream tasks
                                 sh_new.transplant_stream_tasks(task)
@@ -1791,6 +1804,7 @@ class HandlerManager():
 
         Raises:
             RuntimeError: If the maximum number of connections is reached.
+            RuntimeError: If the DataHandler is not ready for usage.
         """
 
         self._logger.info("Generating DataHandler ...")
@@ -1841,6 +1855,7 @@ class HandlerManager():
 
         Raises:
             RuntimeError: If the maximum number of connections is reached.
+            RuntimeError: If the StreamHandler is not ready for usage.
         """
 
         self._logger.info("Generating StreamHandler ...")
@@ -1855,7 +1870,7 @@ class HandlerManager():
         sh_logger = self._logger.getChild(name)
 
         # Create the new StreamHandler
-        dh = self.provide_DataHandler()
+        dh = self._provide_DataHandler()
         sh = _StreamHandler(
             data_handler=dh,
             demo=self._demo,
@@ -1881,7 +1896,7 @@ class HandlerManager():
 
         return sh
 
-    def provide_DataHandler(self) -> _DataHandler:
+    def _provide_DataHandler(self) -> _DataHandler:
         """
         Provides an available data handler.
 
@@ -1904,7 +1919,7 @@ class HandlerManager():
 
         return handler
 
-    def provide_StreamHandler(self) -> _StreamHandler:
+    def _provide_StreamHandler(self) -> _StreamHandler:
         """
         Provides an available stream handler.
 
@@ -1926,3 +1941,57 @@ class HandlerManager():
                 self._logger.error(f"Failed to generate StreamHandler: {e}")
 
         return handler
+    
+    def get_data(
+        self,
+        command: str,
+        **kwargs
+        ) -> dict:
+        """
+        Gets data from the server.
+
+        Args:
+            command (str): The command to get data.
+            **kwargs: Additional keyword arguments for the command.
+
+        Returns:
+            dict: The data from the server.
+
+        Raises:
+            None
+        """
+
+        # Provide a new DataHandler that is ready for usage
+        dh = self._provide_DataHandler()
+
+        # Get the data from the server
+        data = dh.get_data(command=command, **kwargs)
+
+        return data
+
+    def stream_data(
+        self,
+        command: str,
+        exchange: Optional[dict] = None,
+        **kwargs
+        ) -> None:
+        """
+        Starts streaming data from the server.
+
+        Args:
+            command (str): The command to start streaming data.
+            exchange (dict, optional): The exchange information. Defaults to None.
+            **kwargs: Additional keyword arguments for the command.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        # Provide a new StreamHandler that is ready for usage
+        sh = self._provide_StreamHandler()
+
+        # Start the stream for the specified command
+        sh.stream_data(command=command, exchange=exchange, **kwargs)
