@@ -44,7 +44,9 @@ PORT_DEMO=config.getint('SOCKET','PORT_DEMO')
 PORT_DEMO_STREAM=config.getint('SOCKET','PORT_DEMO_STREAM')
 PORT_REAL=config.getint('SOCKET','PORT_REAL')
 PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
+TIMEOUT=config.getfloat('SOCKET','TIMEOUT')
 
+THREAD_TICKER=config.getfloat('HANDLER','THREAD_TICKER')
 
 class Status(Enum):
     """
@@ -97,6 +99,7 @@ class _GeneralHandler(Client):
             max_retries: int,
             max_reaction_time: int,
 
+            stream: bool = False,
             logger: Optional[logging.Logger] = None
         ) -> None:
         """
@@ -110,6 +113,7 @@ class _GeneralHandler(Client):
             min_request_interval (int): The minimum request interval in milliseconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (int): The maximum reaction time in milliseconds.
+            stream (bool, optional): A flag indicating whether the handler is for stream requests. Defaults to False.
             logger (logging.Logger, optional): The logger object. Defaults to None.
 
         Raises:
@@ -131,7 +135,7 @@ class _GeneralHandler(Client):
             port=port, 
 
             encrypted=True,
-            timeout=None,
+            timeout= TIMEOUT if stream else None,
             reaction_time = max_reaction_time/1000,
 
             interval=min_request_interval/1000,
@@ -141,9 +145,6 @@ class _GeneralHandler(Client):
 
             logger=self._logger
         )
-
-        # Set ticker for checking threads
-        self._thread_ticker = 0.5
 
         # Initialize the ping dictionary and lock
         self._ping=dict()
@@ -302,7 +303,7 @@ class _GeneralHandler(Client):
             thread_data['thread'].start()
 
             # Wait for the interval before checking the thread again
-            time.sleep(self._thread_ticker)
+            time.sleep(THREAD_TICKER)
 
         self._logger.info(f"Monitoring for thread {name} stopped")
 
@@ -368,8 +369,9 @@ class _GeneralHandler(Client):
         Raises:
             Exception: If the ping failed.
         """
-        # sends ping all 10 minutes
-        ping_interval = 60*9.9
+        # sends ping all 9 minutes
+        # Ping should be sent at least every 10 minutes
+        ping_interval = 60*9
         elapsed_time=0
 
         self._logger.info("Start sending ping ...")
@@ -408,7 +410,7 @@ class _GeneralHandler(Client):
                     elapsed_time = 0
 
             # Ping is checked every 1/10 of its interval
-            time.sleep(self._thread_ticker)
+            time.sleep(THREAD_TICKER)
 
             # Calculate the elapsed time
             elapsed_time += time.time() - start_time
@@ -440,7 +442,7 @@ class _GeneralHandler(Client):
             self._ping['run'] = False
 
             # Wait for the ping thread to stop
-            self._ping['thread'].join(timeout=self._thread_ticker*5)
+            self._ping['thread'].join(timeout=THREAD_TICKER*5)
 
         self._logger.info("Ping stopped")
     
@@ -947,6 +949,7 @@ class _StreamHandler(_GeneralHandler):
         super().__init__(
             host=HOST,
             port=PORT_DEMO_STREAM if demo else PORT_REAL_STREAM,
+            stream=True,
 
             max_send_data = max_send_data,
             max_received_data = max_received_data,
@@ -1328,7 +1331,7 @@ class _StreamHandler(_GeneralHandler):
             self._stream['run'] = False
 
             # Wait for the stream thread to stop
-            self._stream['thread'].join()
+            self._stream['thread'].join(timeout=THREAD_TICKER*5)
 
         # Stop all stream tasks
         for index in list(self._stream_tasks):

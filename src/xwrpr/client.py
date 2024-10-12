@@ -446,6 +446,9 @@ class Client():
     def send(self, msg: str) -> None:
         """
         Sends a message over the socket connection.
+        No matter if socket is blockinmg or non-blocking
+        the method wil terminate when the message is sent
+        or an error occurs.
 
         Args:
             msg (str): The message to send.
@@ -488,7 +491,6 @@ class Client():
                     # Attempt to send the message chunk
                     send_msg_length += self._socket.send(msg[send_msg_length:send_msg_length + package_size])
                     self._logger.debug(f"Sent message chunk of size {package_size} bytes")
-
                     # For request limitation
                     time.sleep(self._interval)
                 except BlockingIOError as e:
