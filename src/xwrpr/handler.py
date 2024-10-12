@@ -1663,18 +1663,33 @@ class HandlerManager():
             None
         """
 
-        while not self._deleted:
+        while self._status == Status.ACTIVE:
             for handler in self._handlers['data']:
+                # Check if the handler is failed
                 if handler.status == Status.FAILED:
-                    self._delete_handler(handler)
-                    continue
+                    # Check for connected stream handlers
+                    if len(handler.stream_handler) > 0:
+                        # Get a new DataHandler that is ready for usage
+                        dh_new = self.provide_DataHandler()
+                        if dh_new:
+                            # Assign the new DataHandler to the connected stream handlers
+                            for sh in handler.stream_handler:
+                                sh.dh = dh_new
+                        else:
+                            self._logger.error("No DataHandler available")
+                # Eventually delete the handler
+                self._delete_handler(handler)
 
             for handler in self._handlers['stream']:
-                
+                # Check if the handler is failed
                 if handler.status == Status.FAILED:
+                    # Check for open stream tasks
+                    if len(handler.stream_tasks) > 0:
+                        stream_tasks = handler.stream_tasks
                     self._delete_handler(handler)
                     continue
 
+            time.sleep(THREAD_TICKER)
 
 
     def _avlb_DataHandler(self) -> _DataHandler:
@@ -1759,6 +1774,11 @@ class HandlerManager():
             logger=dh_logger
         )
 
+        # Check if the initialization of the DataHandler was successful
+        if dh.status != Status.ACTIVE:
+            self._logger.error("DataHandler not ready for usage")
+            raise RuntimeError("DataHandler not ready for usage")
+
         # Register the new DataHandler
         self._handlers['data'][dh] = {'name': name}
 
@@ -1802,6 +1822,11 @@ class HandlerManager():
 
             logger=sh_logger
         )
+
+        # Check if the initialization of the StreamHandler was successful
+        if sh.status != Status.ACTIVE:
+            self._logger.error("StreamHandler not ready for usage")
+            raise RuntimeError("StreamHandler not ready for usage")
 
         # Register the new StreamHandler
         self._handlers['stream'][sh] = {'name': name}
