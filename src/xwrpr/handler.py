@@ -234,7 +234,7 @@ class _GeneralHandler(Client):
 
         if not stream:
             # Non stream responses have the flag "status"
-            if not 'status' in response:
+            if 'status' not in response:
                 self._logger.error("Response corrupted")
                 raise ValueError("Response corrupted")
 
@@ -537,7 +537,7 @@ class _DataHandler(_GeneralHandler):
         )
         
         # Stream handlers that are attached to the DataHandler
-        self._stream_handler=[]
+        self._stream_handler: List['_StreamHandler'] = []
         # The lock for reactivating the DataHandler
         self._reactivation_lock=Lock()
 
@@ -546,7 +546,7 @@ class _DataHandler(_GeneralHandler):
         self._status=Status.INACTIVE
         # Stream session ID is necessary for stream requests
         # It is provided from the server after login
-        self._ssid=None
+        self._ssid: Optional[str] = None
 
         # Log in to the XTB trading platform
         self._login()
@@ -585,23 +585,24 @@ class _DataHandler(_GeneralHandler):
         # Check if the DataHandler is already deleted
         if self._status == Status.DELETED:
             self._logger.warning("DataHandler already deleted")
-        else:
-            self._logger.info("Deleting DataHandler ...")
+            return
+        
+        self._logger.info("Deleting DataHandler ...")
 
-            try:
-                # Close the stream handlers and stop the ping process
-                self._close_stream_handlers()
-                self.stop_ping()
-                # Log out from the XTB trading platform
-                self._logout()
-            except Exception as e:
-                # For graceful closing no raise of exception is not allowed
-                self._logger.error(f"Failed to delete DataHandler: {e}")
-            finally:
-                # Set Status to deleted
-                self._status = Status.DELETED
-                
-            self._logger.info("DataHandler deleted")
+        try:
+            # Close the stream handlers and stop the ping process
+            self._close_stream_handlers()
+            self.stop_ping()
+            # Log out from the XTB trading platform
+            self._logout()
+        except Exception as e:
+            # For graceful closing no raise of exception is not allowed
+            self._logger.error(f"Failed to delete DataHandler: {e}")
+        finally:
+            # Set Status to deleted
+            self._status = Status.DELETED
+            
+        self._logger.info("DataHandler deleted")
             
     def _login(self) -> None:
         """
@@ -702,9 +703,7 @@ class _DataHandler(_GeneralHandler):
         for tries in range(2):
             try:
                 # Retrieve the data for the specified command
-                response = self._retrieve_data(command, **kwargs)
-                # Return the response if successful
-                return response
+                return  self._retrieve_data(command, **kwargs)
             except Exception as e:
                 self._logger.error(f"Failed to retrieve data: {e}")
                 if tries == 0:
@@ -747,7 +746,7 @@ class _DataHandler(_GeneralHandler):
             response = self.receive_response()
             
             # Response must contain 'returnData' key with data
-            if not 'returnData' in response or not response['returnData']:
+            if 'returnData' not in response or not response['returnData']:
                 self._logger.error("No data in response")
                 raise ValueError("No data in response")
                 
@@ -922,7 +921,7 @@ class _StreamHandler(_GeneralHandler):
         Initializes a new instance of the StreamHandler class.
 
         Args:
-            dataHandler (_DataHandler): The data handler object.
+            data_handler (_DataHandler): The data handler object.
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
@@ -1012,30 +1011,31 @@ class _StreamHandler(_GeneralHandler):
 
         if self._status == Status.DELETED:
             self._logger.warning("StreamHandler already deleted")
-        else:
-            self._logger.info("Deleting StreamHandler ...")
+            return
+        
+        self._logger.info("Deleting StreamHandler ...")
 
-            try:
-                # Stop the stream and ping processes
-                self._stop_stream()
-                self.stop_ping()
-                # Detach the StreamHandler from the DataHandler
-                self._dh.detach_stream_handler(self)
-            except Exception as e:
-                # For graceful closing no raise of exception is not allowed
-                self._logger.error(f"Failed to delete StreamHandler: {e}")
-            finally:
-                # Close the connection to the server
-                self.close()
-                # Set Status to deleted
-                self._status= Status.DELETED
+        try:
+            # Stop the stream and ping processes
+            self._stop_stream()
+            self.stop_ping()
+            # Detach the StreamHandler from the DataHandler
+            self._dh.detach_stream_handler(self)
+        except Exception as e:
+            # For graceful closing no raise of exception is not allowed
+            self._logger.error(f"Failed to delete StreamHandler: {e}")
+        finally:
+            # Close the connection to the server
+            self.close()
+            # Set Status to deleted
+            self._status= Status.DELETED
         
             self._logger.info("StreamHandler deleted")
         
     def stream_data(
         self,
         command: str,
-        exchange: Optional[dict] = None,
+        exchange: Optional[dict] = None, # Not necessary for KeepAlive
         **kwargs
         ) -> None:
         """
@@ -1095,8 +1095,9 @@ class _StreamHandler(_GeneralHandler):
 
         # The data from the KeepAlive command is unnecessary
         if command != 'KeepAlive':
-            # The data from the stream is put into the queue for the exchange
-            self._stream_tasks[index]['queue'] = exchange['queue']
+            if 'thread' in exchange or 'queue' in exchange:
+                self._logger.warning("Exchange dictionary was not empty")
+                raise ValueError("Exchange dictionary was not empty")
 
             # Put a killswitch for the stream task into the exchange dictionary
             exchange['thread'] = CustomThread(
@@ -1106,6 +1107,9 @@ class _StreamHandler(_GeneralHandler):
             )
             # Put the queue for the exchange into the exchange dictionary
             exchange['queue'] = Queue(maxsize=1000)
+
+            # The data from the stream is put into the queue for the exchange
+            self._stream_tasks[index]['queue'] = exchange['queue']
 
 
         self._logger.info("Stream started for " + pretty(command))
@@ -1250,12 +1254,12 @@ class _StreamHandler(_GeneralHandler):
                         raise
 
         # Response must contain 'command' key with command
-        if not 'command' in response:
+        if 'command' not in response:
             self._logger.error("No command in response")
             raise ValueError("No command in response")
 
         # Response must contain 'data' key with data
-        if not 'data' in response:
+        if 'data' not in response:
             self._logger.error("No data in response")
             raise ValueError("No data in response")
 
@@ -1613,7 +1617,7 @@ class HandlerManager():
         """
 
         for handler in self._handlers['data']:
-            if handler.status == 'active':
+            if handler.status == Status.ACTIVE:
                 return handler
     
     def _avlb_StreamHandler(self) -> _StreamHandler:
@@ -1628,7 +1632,7 @@ class HandlerManager():
         """
 
         for handler in self._handlers['stream']:
-            if handler.status == 'active':
+            if handler.status == Status.ACTIVE:
                 if len(handler.stream_tasks) < self._max_streams:
                     return handler
 

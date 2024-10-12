@@ -261,7 +261,7 @@ class Client():
         if mode == 'basic' and self._socket in errored:
             self._logger.error("Socket error")
             # Log the failure cause
-            self._addresses[self.adress_key]['last_error'] = 'check'
+            self._addresses[self._address_key]['last_error'] = 'check'
             raise socket.error("Socket error")
         if mode == 'readable' and self._socket not in readable:
             self._logger.debug("Socket not readable")
@@ -313,23 +313,23 @@ class Client():
             created = False
             while avl_addresses and not created:
                 # Get the next address
-                self.address_key = avl_addresses.pop(0)
+                self._address_key = avl_addresses.pop(0)
                 # If the address has been tried before
-                self._addresses[self.address_key]['retries'] += 1
-                self._addresses[self.address_key]['last_atempt'] = time.time()
-                self._logger.debug(f"Trying address {self.address_key} ...")
+                self._addresses[self._address_key]['retries'] += 1
+                self._addresses[self._address_key]['last_atempt'] = time.time()
+                self._logger.debug(f"Trying address {self._address_key} ...")
 
                 try:
                     # Create the socket
                     self._socket = socket.sockt(
-                        family = self._addresses[self.address_key]['family'],
-                        type = self._addresses[self.address_key]['type'],
-                        proto = self._addresses[self.address_key]['proto'],
+                        family = self._addresses[self._address_key]['family'],
+                        type = self._addresses[self._address_key]['type'],
+                        proto = self._addresses[self._address_key]['proto'],
                     )
                 except socket.error as e:
                     self._logger.error(f"Failed to create socket: {e}")
                     # Log the failure cause
-                    self._addresses[self.address_key]['last_error'] = 'create'
+                    self._addresses[self._address_key]['last_error'] = 'create'
                     # Close the socket if it is not stable
                     self.close()
                     # Try the next address
@@ -348,7 +348,7 @@ class Client():
                     except socket.error as e:
                         self._logger.error(f"Failed to wrap socket: {e}")
                         # Log the failure cause
-                        self._addresses[self.address_key]['last_error'] = 'wrap'
+                        self._addresses[self._address_key]['last_error'] = 'wrap'
                         # Close the socket if it is not stable
                         self.close()
                         # Try the next address
@@ -413,7 +413,7 @@ class Client():
                     for attempt in range(1, self._max_fails + 1):
                         try:
                             # Connect to the server
-                            self._socket.connect(self._addresses[self.address_key]['sockaddr'])
+                            self._socket.connect(self._addresses[self._address_key]['sockaddr'])
                             # Connection successful
                             connected = True
                             # Exit loop if connection is successful
@@ -432,7 +432,7 @@ class Client():
                 except RuntimeError as e:
                     self._logger.error(f"Error opening connection: {e}")
                     # Log the failure cause
-                    self._addresses[self.address_key]['last_error'] = 'connect'
+                    self._addresses[self._address_key]['last_error'] = 'connect'
                     # Close the connection if it is not stable
                     self.close()
 
