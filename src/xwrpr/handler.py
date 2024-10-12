@@ -489,7 +489,6 @@ class _DataHandler(_GeneralHandler):
         reactivation_lock: The lock for reactivating the DataHandler.
         status: The status of the DataHandler.
         ssid: The stream session ID.
-        sm_idle_time: The sliding mean idle time.
     """
 
     def __init__(
@@ -915,11 +914,13 @@ class _StreamHandler(_GeneralHandler):
         _stop_stream: Stops the stream.
         _restart_stream: Restarts the stream.
         _reactivate: Reactivates the StreamHandler.
+        transplant_stream_task: Transplants the stream tasks from another StreamHandler.
 
     Properties:
         dh: The data handler object.
         status: The status of the stream handler.
         ssid: The stream session ID.
+        sm_idle_time: The sliding mean idle time.
     """
 
     def __init__(
@@ -1547,9 +1548,38 @@ class _StreamHandler(_GeneralHandler):
 
 class HandlerManager():
     """
-    The HandlerManager class manages the creation and deletion of data and stream handlers.
-    It keeps track of the maximum number of connections and provides available handlers when requested.
+    Manages the handlers for the XTB trading platform.
+
+    Attributes:
+        _logger (logging.Logger): The logger object used for logging.
+        _demo (bool): A boolean indicating whether the handlers are for demo or real trading.
+        _username (str): The username for the XTB trading platform.
+        _password (str): The password for the XTB trading platform.
+        _max_connections (int): The maximum number of connections to the server allowed at the same time.
+        _max_send_data (int): The maximum number of bytes to send.
+        _max_received_data (int): The maximum number of bytes to receive.
+        _min_request_interval (int): The minimum request interval in seconds.
+        _max_retries (int): The maximum number of retries.
+        _max_reaction_time (int): The maximum reaction time in seconds.
+        _handler_register (dict): The dictionary of registered handlers.
+        _status (Status): The status of the handler manager.
+        _handler_management_thread (CustomThread): The handler management thread.
+
+    Methods:
+        delete: Deletes the HandlerManager instance.
+        _delete_handler: Deletes a specific handler and deregisters it from the HandlerManager.
+        _handler_management: Manages the handlers and ensures that the maximum number of connections is not exceeded.
+        _avlb_DataHandler: Gets an available data handler.
+        _avlb_StreamHandler: Gets an available stream handler.
+        _get_connection_number: Gets the number of active connections.
+        _generate_DataHandler: Generates a new data handler.
+        _generate_StreamHandler: Generates a new stream handler.
+        _provide_DataHandler: Provides a data handler for the stream handler.
+        _provide_StreamHandler: Provides a stream handler for the data handler.
+        get_data: Retrieves data from the server.
+        stream_data: Starts streaming data from the server.
     """
+        
 
     def __init__(
         self,
@@ -1622,7 +1652,7 @@ class HandlerManager():
         self._max_reaction_time=max_reaction_time
 
         # Initialize the handlers dictionary
-        self._handlers = {'data': {}, 'stream': {}}
+        self._handler_register = {'data': {}, 'stream': {}}
 
         # The HandlerManager is automatically active after initialization
         self._status = Status.ACTIVE
@@ -1668,7 +1698,7 @@ class HandlerManager():
         
         self._logger.info("Deleting HandlerManager ...")
         
-        for handler in self._handlers['data']:
+        for handler in self._handler_register['data']:
             # Delete all data handlers
             # The DataHandler wil send a delete command to every attached StreamHandler
             if handler.status != Status.DELETED:
@@ -1694,11 +1724,11 @@ class HandlerManager():
         """
 
         if isinstance(handler, _DataHandler):
-            self._logger.info("Deregister DataHandler "+self._handlers['data'][handler]['name'])
-            del self._handlers['data'][handler]
+            self._logger.info("Deregister DataHandler "+self._handler_register['data'][handler]['name'])
+            del self._handler_register['data'][handler]
         elif isinstance(handler, _StreamHandler):
-            self._logger.info("Deregister StreamHandler "+self._handlers['stream'][handler]['name'])
-            del self._handlers['stream'][handler]
+            self._logger.info("Deregister StreamHandler "+self._handler_register['stream'][handler]['name'])
+            del self._handler_register['stream'][handler]
 
         # Delete the handler
         handler.delete()
@@ -1715,7 +1745,7 @@ class HandlerManager():
         """
 
         while self._status == Status.ACTIVE:
-            for handler in self._handlers['data']:
+            for handler in self._handler_register['data']:
                 # Check if the handler is failed
                 if handler.status == Status.FAILED:
                     # Check for connected stream handlers
@@ -1731,7 +1761,7 @@ class HandlerManager():
                     # Eventually delete the handler
                     self._delete_handler(handler)
 
-            for handler in self._handlers['stream']:
+            for handler in self._handler_register['stream']:
                 # Check if the handler is failed
                 if handler.status == Status.FAILED:
                     # Check for open stream tasks
@@ -1760,7 +1790,7 @@ class HandlerManager():
             None
         """
 
-        for handler in self._handlers['data']:
+        for handler in self._handler_register['data']:
             # Check if the handler is active
             if handler.status == Status.ACTIVE:
                 return handler
@@ -1776,7 +1806,7 @@ class HandlerManager():
             None
         """
 
-        for handler in self._handlers['stream']:
+        for handler in self._handler_register['stream']:
             # Check if the handler is active
             # and the idle time is above the threshold
             if handler.status == Status.ACTIVE and handler.sm_idle_time > IDLE_THRESHOLD:
@@ -1793,7 +1823,7 @@ class HandlerManager():
             None
         """
 
-        return len(self._handlers['data']) + len(self._handlers['stream'])
+        return len(self._handler_register['data']) + len(self._handler_register['stream'])
 
     def _generate_DataHandler(self) -> _DataHandler:
         """
@@ -1814,7 +1844,7 @@ class HandlerManager():
             raise RuntimeError("Maximum number of connections reached")
 
         # Index the new DataHandler
-        index = len(self._handlers['data'])
+        index = len(self._handler_register['data'])
         name = 'DH_' + str(index)
         dh_logger = self._logger.getChild(name)
 
@@ -1840,7 +1870,7 @@ class HandlerManager():
             raise RuntimeError("DataHandler not ready for usage")
 
         # Register the new DataHandler
-        self._handlers['data'][dh] = {'name': name}
+        self._handler_register['data'][dh] = {'name': name}
 
         self._logger.info("DataHandler generated")
 
@@ -1865,7 +1895,7 @@ class HandlerManager():
             raise RuntimeError("Maximum number of connections reached")
 
         # Index the new StreamHandler
-        index = len(self._handlers['stream'])
+        index = len(self._handler_register['stream'])
         name = 'SH_' + str(index)
         sh_logger = self._logger.getChild(name)
 
@@ -1890,7 +1920,7 @@ class HandlerManager():
             raise RuntimeError("StreamHandler not ready for usage")
 
         # Register the new StreamHandler
-        self._handlers['stream'][sh] = {'name': name}
+        self._handler_register['stream'][sh] = {'name': name}
 
         self._logger.info("StreamHandler generated")
 
@@ -1948,7 +1978,7 @@ class HandlerManager():
         **kwargs
         ) -> dict:
         """
-        Gets data from the server.
+        Retrieves data from the server.
 
         Args:
             command (str): The command to get data.
