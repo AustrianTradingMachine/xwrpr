@@ -26,6 +26,7 @@ import configparser
 from pathlib import Path
 from enum import Enum
 from typing import Union, List, Optional
+import json
 import time
 from threading import Lock
 from queue import Queue
@@ -57,6 +58,7 @@ class Status(Enum):
     Attributes:
         ACTIVE: The handler is active.
         INACTIVE: The handler is inactive.
+        SUSPENDED: The handler is suspended.
         FAILED: The handler failed.
         DELETED: The handler is deleted.
     
@@ -225,30 +227,34 @@ class _GeneralHandler(Client):
         # Receive the response from the server
         response = self.receive()
 
-        if not response:
+        if response == '':
             if stream:
                 # Stream responses can be empty
-                return
+                # in this case just return an empty dictionary
+                return {}
             
             self._logger.error("Empty response")
             raise ValueError("Empty response")
         
         self._logger.debug("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
-        if not isinstance(response, dict):
-            self._logger.error("Response not a dictionary")
-            raise ValueError("Response not a dictionary")
+        try:
+            # Convert the response string to a dictionary
+            response_dict = json.loads(response)
+        except json.JSONDecodeError as e:
+            self._logger.error(f"Error decoding JSON response: {e}")
+            raise ValueError("Response not a valid JSON")
 
         if not stream:
             # Non stream responses have the flag "status"
-            if 'status' not in response:
+            if 'status' not in response_dict:
                 self._logger.error("Response corrupted")
                 raise ValueError("Response corrupted")
 
-            if not response['status']:
+            if not response_dict['status']:
                 # If the status is False, the response contains an error code and description
-                self._logger.error("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
-                raise ValueError("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
+                self._logger.error("Request failed. Error code: " + str(response_dict['errorCode']) + ", Error description: " + response_dict['errorDescr'])
+                raise ValueError("Request failed. Error code: " + str(response_dict['errorCode']) + ", Error description: " + response_dict['errorDescr'])
 
         return response
     
@@ -1308,7 +1314,7 @@ class _StreamHandler(_GeneralHandler):
                         self._logger.error(f"Failed to stream data {e}")
                         raise
 
-        if not response:
+        if response == {}:
             # Stream responses can be empty
             return
 
@@ -1469,7 +1475,7 @@ class _StreamHandler(_GeneralHandler):
                     self._logger.info("Reactivation successful")
                 except Exception as e:
                     self._logger.error(f"Failed to reactivate: {e}")
-                    # Set the status to inactive
+                    # Set the status to failed
                     self._status = Status.FAILED
 
     @property
@@ -1580,8 +1586,8 @@ class HandlerManager():
         # Initialize the handlers dictionary
         self._handlers = {'data': {}, 'stream': {}}
 
-        # Set the deleted flag to False
-        self._deleted=False
+        # The HandlerManager is automatically active after initialization
+        self._status = Status.ACTIVE
 
         self._logger.info("HandlerManager initialized")
 
@@ -1612,18 +1618,19 @@ class HandlerManager():
             None
         """
 
-        if self._deleted:
+        if self._status == Status.DELETED:
             self._logger.warning("HandlerManager already deleted")
-        else:
-            for handler in self._handlers['data']:
-                # Delete all data handlers
-                # The DataHandler wil send a delete command to every attached StreamHandler
-                if handler.status != 'deleted':
-                    self._delete_handler(handler)
+            return
+        
+        for handler in self._handlers['data']:
+            # Delete all data handlers
+            # The DataHandler wil send a delete command to every attached StreamHandler
+            if handler.status != Status.DELETED:
+                self._delete_handler(handler)
 
-            # Set the deleted flag to True
-            self._deleted=True
-
+        # Set the deleted flag to True
+        self._status = Status.DELETED
+    
     def _delete_handler(self, handler: Union[_DataHandler, _StreamHandler]) -> None:
         """
         Deletes a specific handler and deregisters it from the HandlerManager.
@@ -1634,12 +1641,8 @@ class HandlerManager():
         Returns:
             None
         """
+
         if isinstance(handler, _DataHandler):
-            # Just deregister the Streamhandler from the DataHandler
-            for stream in list(handler._stream_handler):
-                self._logger.info("Deregister StreamHandler "+self._handlers['stream'][stream]['name'])
-                del self._handlers['stream'][stream]
-            
             self._logger.info("Deregister DataHandler "+self._handlers['data'][handler]['name'])
             del self._handlers['data'][handler]
         elif isinstance(handler, _StreamHandler):
@@ -1661,6 +1664,16 @@ class HandlerManager():
         """
 
         while not self._deleted:
+            for handler in self._handlers['data']:
+                if handler.status == Status.FAILED:
+                    self._delete_handler(handler)
+                    continue
+
+            for handler in self._handlers['stream']:
+                
+                if handler.status == Status.FAILED:
+                    self._delete_handler(handler)
+                    continue
 
 
 

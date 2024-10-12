@@ -581,8 +581,10 @@ class Client():
                 # Fill buffer with received data package
                 buffer += msg
                 # Try to decode the buffer
-                full_msg, pos = self._decoder.raw_decode(buffer)
-
+                decoded_msg, pos = self._decoder.raw_decode(buffer)
+                # Add the decoded message to the full message
+                full_msg += decoded_msg
+                
                 if pos == len(buffer):
                     # Entire buffer has been successfully decoded
                     buffer=''
