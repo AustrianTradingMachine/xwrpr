@@ -43,12 +43,12 @@ class Client():
     _host (str): The host address to connect to.
     _port (int): The port number to connect to.
     _encrypted (bool): Indicates whether the connection should be encrypted.
-    timeout (float): The timeout value for the connection.
-    reaction_time (float): Wait time for Socket reaction.
-    interval (float): The interval between requests in seconds.
-    max_fails (int): The maximum number of consecutive failed requests before giving up.
-    bytes_out (int): The maximum number of bytes to send in each request.
-    bytes_in (int): The maximum number of bytes to receive in each response.
+    _timeout (float): The timeout value for the connection.
+    _reaction_time (float): Wait time for Socket reaction.
+    _interval (float): The interval between requests in seconds.
+    _max_fails (int): The maximum number of consecutive failed requests before giving up.
+    _bytes_out (int): The maximum number of bytes to send in each request.
+    _bytes_in (int): The maximum number of bytes to receive in each response.
     _lock (threading.Lock): A lock for thread safety.
     _decoder (json.JSONDecoder): The JSON decoder instance.
     _addresses (dict): A dictionary of available addresses for the socket connection.
@@ -65,6 +65,7 @@ class Client():
         close: Closes the connection and releases the socket.
 
     Properties:
+        timeout: The timeout value for the connection.
         reaction_time: Wait time for Socket reaction.
         interval: The interval between requests in seconds.
         max_fails: The maximum number of consecutive failed requests before giving up.
@@ -120,11 +121,11 @@ class Client():
         self._port = port
         self._encrypted = encrypted
         self._timeout = timeout
-        self.reaction_time = reaction_time
-        self.interval = interval
-        self.max_fails = max_fails
-        self.bytes_out = bytes_out
-        self.bytes_in = bytes_in
+        self._reaction_time = reaction_time
+        self._interval = interval
+        self._max_fails = max_fails
+        self._bytes_out = bytes_out
+        self._bytes_in = bytes_in
 
         # Lock for thread safety
         self._lock = Lock()
@@ -249,7 +250,7 @@ class Client():
             raise ValueError("Unknown mode value")
         
         # Check the socket
-        readable, writable, errored  = select.select(rlist, wlist, xlist, self.reaction_time)
+        readable, writable, errored  = select.select(rlist, wlist, xlist, self._reaction_time)
 
         # Check if the socket is ready
         if not readable and not writable and not errored:
@@ -301,10 +302,12 @@ class Client():
             errors = []
             if 'all' not in excluded_errors:
                 errors = [error for error in possible_errors if error not in excluded_errors]
+            self._logger.debug(f"Excluded errors: {excluded_errors}")
             # Fill the list of available addresses
             avl_addresses = []
             for error in [None] + errors:
                 avl_addresses.extend([key for key, value in self._addresses.items() if value['last_error'] == error])
+            self._logger.debug(f"Available addresses: {avl_addresses}")
 
             # Try to create the socket
             created = False
@@ -314,10 +317,11 @@ class Client():
                 # If the address has been tried before
                 self._addresses[self.address_key]['retries'] += 1
                 self._addresses[self.address_key]['last_atempt'] = time.time()
+                self._logger.debug(f"Trying address {self.address_key} ...")
 
                 try:
                     # Create the socket
-                    self._socket = socket.socket(
+                    self._socket = socket.sockt(
                         family = self._addresses[self.address_key]['family'],
                         type = self._addresses[self.address_key]['type'],
                         proto = self._addresses[self.address_key]['proto'],
@@ -364,6 +368,7 @@ class Client():
                     self._socket.settimeout(value = None)
                     self._socket.setblocking(flag = True)
 
+                self._logger.debug("Blocking mode: %s", self._socket.getblocking())
 
                 # Socket successfully created
                 created = True
@@ -405,7 +410,7 @@ class Client():
             while not connected:
                 try:
                     # Try to connect to the server
-                    for attempt in range(1, self.max_fails + 1):
+                    for attempt in range(1, self._max_fails + 1):
                         try:
                             # Connect to the server
                             self._socket.connect(self._addresses[self.address_key]['sockaddr'])
@@ -414,11 +419,12 @@ class Client():
                             # Exit loop if connection is successful
                             break  
                         except (socket.error, InterruptedError) as e:
-                            self._logger.error(f"Error connecting to server {attempt}/{self.max_fails}: {e}")
+                            self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
                             
-                            if attempt < self.max_fails:
+                            if attempt < self._max_fails:
+                                self._logger.warning("Retrying connection ...")
                                 # For request limitation
-                                time.sleep(self.reaction_time)
+                                time.sleep(self._reaction_time)
                             else:
                                 # If max fails reached raise an exception
                                 self._logger.error(f"Max fails reached. Unable to connect to server: {e}")
@@ -476,7 +482,7 @@ class Client():
             msg_length = len(msg)
             while send_msg_length < msg_length:
                 # Calculate the package size
-                package_size = min(self.bytes_out, msg_length - send_msg_length)
+                package_size = min(self._bytes_out, msg_length - send_msg_length)
 
                 try:
                     # Attempt to send the message chunk
@@ -484,7 +490,7 @@ class Client():
                     self._logger.debug(f"Sent message chunk of size {package_size} bytes")
 
                     # For request limitation
-                    time.sleep(self.interval)
+                    time.sleep(self._interval)
                 except BlockingIOError as e:
                     if not blocking:
                         # Check if the socket is ready for writing
@@ -536,7 +542,7 @@ class Client():
                 # the loop will end up with an incomplete JSON file.
 
                 # Receive the message
-                msg = self._socket.recv(self.bytes_in)
+                msg = self._socket.recv(self._bytes_in)
                 # Check if the message is empty
                 if not msg:
                     raise ValueError("No message received")
@@ -637,8 +643,8 @@ class Client():
                 self._logger.warning("Connection and socket already closed")
 
     @property
-    def timeout(self) -> Union[float, None]:
-        return self.timeout
+    def timeout(self) -> Optional[float]:
+        return self._timeout
     
     @timeout.setter
     def timeout(self, value: Optional[float] = None) -> None:
@@ -646,59 +652,59 @@ class Client():
             self._socket.settimeout(value = None)
             self._socket.setblocking(flag = True)  
         elif value > 0:
-            self._socket.settimeout(value = self.timeout)
+            self._socket.settimeout(value = value)
             self._socket.setblocking(flag = False)
         else:
             raise ValueError("Timeout must be greater than or equal to zero")
         
-        self.timeout = value
+        self._timeout = value
 
     @property
     def reaction_time(self) -> float:
-        return self.reaction_time
+        return self._reaction_time
 
     @reaction_time.setter
     def reaction_time(self, value: float) -> None:
         if value < 0:
             raise ValueError("Reaction time must be greater than or equal to zero")
-        self.reaction_time = value
+        self._reaction_time = value
 
     @property
     def interval(self) -> float:
-        return self.interval
+        return self._interval
 
     @interval.setter
     def interval(self, value: float) -> None:
         if value < 0:
             raise ValueError("Interval must be greater than or equal to zero")
-        self.interval = value
+        self._interval = value
 
     @property
     def max_fails(self) -> int:
-        return self.max_fails
+        return self._max_fails
 
     @max_fails.setter
     def max_fails(self, value: int) -> None:
         if value < 0:
             raise ValueError("Max fails must be greater than or equal to zero")
-        self.max_fails = value
+        self._max_fails = value
 
     @property
     def bytes_out(self) -> int:
-        return self.bytes_out
+        return self._bytes_out
 
     @bytes_out.setter
     def bytes_out(self, value: int) -> None:
         if value < 1:
             raise ValueError("Bytes out must be greater than or equal to one")
-        self.bytes_out = value
+        self._bytes_out = value
 
     @property
     def bytes_in(self) -> int:
-        return self.bytes_in
+        return self._bytes_in
 
     @bytes_in.setter
     def bytes_in(self, value: int) -> None:
         if value < 1:
             raise ValueError("Bytes in must be greater than or equal to one")
-        self.bytes_in = value
+        self._bytes_in = value
