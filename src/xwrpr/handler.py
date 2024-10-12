@@ -70,7 +70,7 @@ class _GeneralHandler(Client):
             port: int,
 
             max_send_data: int,
-            max_recieved_data: int,
+            max_received_data: int,
             min_request_interval: int,
             max_retries: int,
             max_reaction_time: int,
@@ -84,7 +84,7 @@ class _GeneralHandler(Client):
             host (str): The host address.
             port (int): The port number.
             max_send_data (int): The maximum number of bytes to send.
-            max_recieved_data (int): The maximum number of bytes to receive.
+            max_received_data (int): The maximum number of bytes to receive.
             min_request_interval (int): The minimum request interval in milliseconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (int): The maximum reaction time in milliseconds.
@@ -115,7 +115,7 @@ class _GeneralHandler(Client):
             interval=min_request_interval/1000,
             max_fails=max_retries,
             bytes_out=max_send_data,
-            bytes_in=max_recieved_data,
+            bytes_in=max_received_data,
 
             logger=self._logger
         )
@@ -218,9 +218,7 @@ class _GeneralHandler(Client):
 
             if not response['status']:
                 # If the status is False, the response contains an error code and description
-                self._logger.error("Request failed")
-                self._logger.error(response['errorCode'])
-                self._logger.error(response['errorDescr'])
+                self._logger.error("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
                 raise ValueError("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
 
         return response
@@ -379,7 +377,7 @@ class _GeneralHandler(Client):
                     self.send_request(command='ping', ssid=ssid)
 
                     if not ssid:
-                        # None stream pings recieve a response
+                        # None stream pings receive a response
                         self.receive_response()
 
                     self._logger.info("Ping")
@@ -461,7 +459,7 @@ class _DataHandler(_GeneralHandler):
         password: str,
 
         max_send_data: int,
-        max_recieved_data: int,
+        max_received_data: int,
         min_request_interval: int,
         max_retries: int,
         max_reaction_time: int,
@@ -476,7 +474,7 @@ class _DataHandler(_GeneralHandler):
             username (str): The username for the XTB trading platform.
             password (str): The password for the XTB trading platform.
             max_send_data (int): The maximum number of bytes to send.
-            max_recieved_data (int): The maximum number of bytes to receive.
+            max_received_data (int): The maximum number of bytes to receive.
             min_request_interval (int): The minimum request interval in milliseconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (int): The maximum reaction time in milliseconds.
@@ -508,7 +506,7 @@ class _DataHandler(_GeneralHandler):
             port=PORT_DEMO if self._demo else PORT_REAL,
 
             max_send_data = max_send_data,
-            max_recieved_data = max_recieved_data,
+            max_received_data = max_received_data,
             min_request_interval = min_request_interval,
             max_retries = max_retries,
             max_reaction_time = max_reaction_time,
@@ -545,7 +543,11 @@ class _DataHandler(_GeneralHandler):
             None
         """
 
-        self.delete()
+        try:
+            self.delete()
+        except Exception as e:
+            # For graceful closing no raise of exception is not allowed
+            self._logger.error(f"Exception in destructor: {e}")
     
     def delete(self) -> None:
         """
@@ -723,7 +725,7 @@ class _DataHandler(_GeneralHandler):
                 raise ValueError("No data in response")
                 
             # Log the successful retrieval of data in pretty format
-            self._logger.info("Data for "+pretty(command) +" recieved")
+            self._logger.info("Data for "+pretty(command) +" received")
 
             # Return the data
             return response['returnData']
@@ -895,7 +897,7 @@ class _StreamHandler(_GeneralHandler):
         demo: bool,
 
         max_send_data: int,
-        max_recieved_data: int,
+        max_received_data: int,
         min_request_interval: int,
         max_retries: int,
         max_reaction_time: int,
@@ -909,7 +911,7 @@ class _StreamHandler(_GeneralHandler):
             dataHandler (_DataHandler): The data handler object.
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
             max_send_data (int): The maximum number of bytes to send.
-            max_recieved_data (int): The maximum number of bytes to receive.
+            max_received_data (int): The maximum number of bytes to receive.
             min_request_interval (int): The minimum request interval in milliseconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (int): The maximum reaction time in milliseconds.
@@ -934,7 +936,7 @@ class _StreamHandler(_GeneralHandler):
             port=PORT_DEMO_STREAM if demo else PORT_REAL_STREAM,
 
             max_send_data = max_send_data,
-            max_recieved_data = max_recieved_data,
+            max_received_data = max_received_data,
             min_request_interval = min_request_interval,
             max_retries = max_retries,
             max_reaction_time = max_reaction_time,
@@ -977,7 +979,11 @@ class _StreamHandler(_GeneralHandler):
             None
         """
         
-        self.delete()
+        try:
+            self.delete()
+        except Exception as e:
+            # For graceful closing no raise of exception is not allowed
+            self._logger.error(f"Exception in destructor: {e}")
             
     def delete(self) -> None:
         """
@@ -1389,7 +1395,7 @@ class HandlerManager():
         
         max_connections: int,
         max_send_data: int,
-        max_recieved_data: int,
+        max_received_data: int,
         min_request_interval: float,
         max_retries: int,
         max_reaction_time: float,
@@ -1408,7 +1414,7 @@ class HandlerManager():
         Args:
             max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
-            max_recieved_data (int): The maximum number of bytes to receive.
+            max_received_data (int): The maximum number of bytes to receive.
             min_request_interval (int): The minimum request interval in milliseconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (int): The maximum reaction time in milliseconds.
@@ -1449,7 +1455,7 @@ class HandlerManager():
 
         self._max_connections=max_connections
         self._max_send_data=max_send_data
-        self._max_recieved_data=max_recieved_data
+        self._max_received_data=max_received_data
         self._min_request_interval=min_request_interval
         self._max_retries=max_retries
         self._max_reaction_time=max_reaction_time
@@ -1472,7 +1478,11 @@ class HandlerManager():
             None
         """
 
-        self.delete()
+        try:
+            self.delete()
+        except Exception as e:
+            # For graceful closing no raise of exception is not allowed
+            self._logger.error(f"Exception in destructor: {e}")
 
     def delete(self) -> None:
         """
@@ -1611,7 +1621,7 @@ class HandlerManager():
             password=self._password,
 
             max_send_data=self._max_send_data,
-            max_recieved_data=self._max_recieved_data,
+            max_received_data=self._max_received_data,
             min_request_interval=self._min_request_interval,
             max_retries=self._max_retries,
             max_reaction_time=self._max_reaction_time,
@@ -1655,7 +1665,7 @@ class HandlerManager():
             demo=self._demo,
 
             max_send_data=self._max_send_data,
-            max_recieved_data=self._max_recieved_data,
+            max_received_data=self._max_received_data,
             min_request_interval=self._min_request_interval,
             max_retries=self._max_retries,
             max_reaction_time=self._max_reaction_time,

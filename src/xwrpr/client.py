@@ -564,7 +564,7 @@ class Client():
 
             # Thanks to the JSON format we can easily check if the message is complete
             try:
-                # Fill buffer with recieved data package
+                # Fill buffer with received data package
                 buffer += msg
                 # Try to decode the buffer
                 full_msg, pos = self._decoder.raw_decode(buffer)
@@ -597,7 +597,11 @@ class Client():
             None
         """
 
-        self.close()
+        try:
+            self.close()
+        except Exception as e:
+            # For graceful closing no raise of exception is not allowed
+            self._logger.error(f"Exception in destructor: {e}")
 
     def close(self) -> None:
         """
