@@ -1122,10 +1122,6 @@ class _StreamHandler(_GeneralHandler):
 
         # The data from the KeepAlive command is unnecessary
         if command != 'KeepAlive':
-            if 'thread' in exchange or 'queue' in exchange:
-                self._logger.warning("Exchange dictionary was not empty")
-                raise ValueError("Exchange dictionary was not empty")
-
             # Put a killswitch for the stream task into the exchange dictionary
             exchange['thread'] = CustomThread(
                 target=self._stop_task,
@@ -1486,12 +1482,12 @@ class _StreamHandler(_GeneralHandler):
                     # Set the status to failed
                     self._status = Status.FAILED
 
-    def transplant_stream_tasks(self, stream_tasks: dict) -> None:
+    def transplant_stream_task(self, task: dict) -> None:
         """
         Transplants the stream tasks from another StreamHandler.
 
         Args:
-            stream_tasks (dict): The stream tasks to transplant.
+            task (dict): The task to transplant.
 
         Returns:
             None
@@ -1499,44 +1495,22 @@ class _StreamHandler(_GeneralHandler):
         Raises:
             None
         """
-
+        
         self._logger.info("Transplanting stream tasks ...")
 
-        for index in stream_tasks:
-            command = stream_tasks[index]['command']
-            arguments = stream_tasks[index]['arguments']
-            exchange = stream_tasks[index]['exchange']
+        # Extract the necessary information from the task
+        command = task['command']
+        arguments = task['arguments']
+        exchange = task['exchange']
 
-            # Start the stream for the specified command
-            self._start_stream(command, **arguments)
+        # Start the stream for the specified command
+        self.stream_data(
+            command=command,
+            exchange=exchange,
+            **arguments
+        )
 
-            # Register the stream task
-            index = len(self._stream_tasks)
-            self._stream_tasks[index] = {'command': command, 'arguments': arguments}
-
-            # The data from the KeepAlive command is unnecessary
-            if command != 'KeepAlive':
-                if 'thread' in exchange or 'queue' in exchange:
-                    self._logger.warning("Exchange dictionary was not empty")
-                    raise ValueError("Exchange dictionary was not empty")
-
-                # Put a killswitch for the stream task into the exchange dictionary
-                exchange['thread'] = CustomThread(
-                    target=self._stop_task,
-                    args=(index,),
-                    daemon=True
-                )
-                # Put the queue for the exchange into the exchange dictionary
-                exchange['queue'] = Queue(maxsize=1000)
-
-                # The data from the stream is put into the queue for the exchange
-                self._stream_tasks[index]['queue'] = exchange['queue']
-
-                # Store the exchange dictionary in the stream task
-                # In case the stream task has to switch the StreamHandler
-                self._stream_tasks[index]['exchange'] = exchange
-
-        self._logger
+        self._logger.info("Stream tasks transplanted")
 
     @property
     def dh(self) -> _DataHandler:
@@ -1749,7 +1723,7 @@ class HandlerManager():
                 if handler.status == Status.FAILED:
                     # Check for open stream tasks
                     if len(handler.stream_tasks) > 0:
-                        for task in handler.stream_tasks:
+                        for _, task in handler.stream_tasks.items():
                             # Provide a new StreamHandler that is ready for usage
                             sh_new = self.provide_StreamHandler()
                             if sh_new:
