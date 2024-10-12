@@ -216,7 +216,7 @@ class Wrapper(HandlerManager):
         """
         
         return self.stream_data(
-            exchange={'queue': Queue(maxsize=1000)},
+            exchange={},
             **kwargs
         )
     
