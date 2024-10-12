@@ -1486,7 +1486,57 @@ class _StreamHandler(_GeneralHandler):
                     # Set the status to failed
                     self._status = Status.FAILED
 
-    def transplant_stream_tasks(self, )
+    def transplant_stream_tasks(self, stream_tasks: dict) -> None:
+        """
+        Transplants the stream tasks from another StreamHandler.
+
+        Args:
+            stream_tasks (dict): The stream tasks to transplant.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        self._logger.info("Transplanting stream tasks ...")
+
+        for index in stream_tasks:
+            command = stream_tasks[index]['command']
+            arguments = stream_tasks[index]['arguments']
+            exchange = stream_tasks[index]['exchange']
+
+            # Start the stream for the specified command
+            self._start_stream(command, **arguments)
+
+            # Register the stream task
+            index = len(self._stream_tasks)
+            self._stream_tasks[index] = {'command': command, 'arguments': arguments}
+
+            # The data from the KeepAlive command is unnecessary
+            if command != 'KeepAlive':
+                if 'thread' in exchange or 'queue' in exchange:
+                    self._logger.warning("Exchange dictionary was not empty")
+                    raise ValueError("Exchange dictionary was not empty")
+
+                # Put a killswitch for the stream task into the exchange dictionary
+                exchange['thread'] = CustomThread(
+                    target=self._stop_task,
+                    args=(index,),
+                    daemon=True
+                )
+                # Put the queue for the exchange into the exchange dictionary
+                exchange['queue'] = Queue(maxsize=1000)
+
+                # The data from the stream is put into the queue for the exchange
+                self._stream_tasks[index]['queue'] = exchange['queue']
+
+                # Store the exchange dictionary in the stream task
+                # In case the stream task has to switch the StreamHandler
+                self._stream_tasks[index]['exchange'] = exchange
+
+        self._logger
 
     @property
     def dh(self) -> _DataHandler:
@@ -1683,7 +1733,7 @@ class HandlerManager():
                 if handler.status == Status.FAILED:
                     # Check for connected stream handlers
                     if len(handler.stream_handler) > 0:
-                        # Get a new DataHandler that is ready for usage
+                        # Provide a new DataHandler that is ready for usage
                         dh_new = self.provide_DataHandler()
                         if dh_new:
                             # Assign the new DataHandler to the connected stream handlers
@@ -1699,14 +1749,14 @@ class HandlerManager():
                 if handler.status == Status.FAILED:
                     # Check for open stream tasks
                     if len(handler.stream_tasks) > 0:
-                        sh_new = self.provide_StreamHandler()
-                        if sh_new:
-                            # Assign the new StreamHandler to the stream tasks
-                            for index in handler.stream_tasks:
-                                
-
-                        else:
-                            self._logger.error("No StreamHandler available")
+                        for task in handler.stream_tasks:
+                            # Provide a new StreamHandler that is ready for usage
+                            sh_new = self.provide_StreamHandler()
+                            if sh_new:
+                                # Assign the new StreamHandler to the stream tasks
+                                sh_new.transplant_stream_tasks(task)
+                            else:
+                                self._logger.error("No StreamHandler available")
                     # Eventually delete the handler
                     self._delete_handler(handler)
 
