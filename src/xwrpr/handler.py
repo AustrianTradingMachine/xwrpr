@@ -1221,7 +1221,7 @@ class _StreamHandler(_GeneralHandler):
             idle_time = time() - start_time
             total_idle_time += idle_time
 
-            if not response:
+            if response == {}:
                 # Stream responses can be empty
                 continue
 
@@ -1316,7 +1316,7 @@ class _StreamHandler(_GeneralHandler):
 
         if response == {}:
             # Stream responses can be empty
-            return
+            return response
 
         # Response must contain 'command' key with command
         if 'command' not in response:
