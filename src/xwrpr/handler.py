@@ -1197,6 +1197,10 @@ class _StreamHandler(_GeneralHandler):
     
             # Get the stream data from the server
             response = self._receive_stream()
+
+            if not response:
+                # Stream responses can be empty
+                continue
             
             # Assign streamed data to the corresponding stream task
             for index in self._stream_tasks:
