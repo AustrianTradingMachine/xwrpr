@@ -29,7 +29,7 @@ from pathlib import Path
 import logging
 import json
 from threading import Lock
-from typing import List, Optional, Union
+from typing import List, Optional
 from xwrpr.utils import generate_logger
 
 

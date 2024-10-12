@@ -224,6 +224,10 @@ class _GeneralHandler(Client):
         response = self.receive()
 
         if not response:
+            if stream:
+                # Stream responses can be empty
+                return
+            
             self._logger.error("Empty response")
             raise ValueError("Empty response")
         
@@ -1255,6 +1259,10 @@ class _StreamHandler(_GeneralHandler):
                         # If the stream data could not be received, raise an error
                         self._logger.error(f"Failed to stream data {e}")
                         raise
+
+        if not response:
+            # Stream responses can be empty
+            return
 
         # Response must contain 'command' key with command
         if 'command' not in response:
