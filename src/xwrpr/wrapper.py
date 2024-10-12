@@ -41,9 +41,9 @@ config.read(config_path)
 MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
 MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
 MAX_RECEIVED_DATA=config.getint('CONNECTION','MAX_RECEIVED_DATA')
-MIN_REQUEST_INTERVAL=config.getint('CONNECTION','MIN_REQUEST_INTERVAL')
+MIN_REQUEST_INTERVAL=config.getint('CONNECTION','MIN_REQUEST_INTERVAL')/1000
 MAX_RETRIES=config.getint('CONNECTION','MAX_RETRIES')
-MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')
+MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')/1000
 
 class Wrapper(HandlerManager):
     """
@@ -109,9 +109,9 @@ class Wrapper(HandlerManager):
             max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in milliseconds.
+            min_request_interval (int): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in milliseconds.
+            max_reaction_time (int): The maximum reaction time in seconds.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
 
         Raises:

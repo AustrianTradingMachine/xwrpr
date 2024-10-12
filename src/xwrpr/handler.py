@@ -36,7 +36,7 @@ from xwrpr.utils import pretty ,generate_logger, CustomThread
 from xwrpr.account import get_userId, get_password, set_path
 
 
-# Reaction time in milliseconds
+# Read the configuration file
 config = configparser.ConfigParser()
 config_path=Path(__file__).parent.absolute()/'api.ini'
 config.read(config_path)
@@ -46,10 +46,11 @@ PORT_DEMO=config.getint('SOCKET','PORT_DEMO')
 PORT_DEMO_STREAM=config.getint('SOCKET','PORT_DEMO_STREAM')
 PORT_REAL=config.getint('SOCKET','PORT_REAL')
 PORT_REAL_STREAM=config.getint('SOCKET','PORT_REAL_STREAM')
-TIMEOUT=config.getfloat('SOCKET','TIMEOUT')
+TIMEOUT=config.getint('SOCKET','TIMEOUT')
 
-THREAD_TICKER=config.getfloat('HANDLER','THREAD_TICKER')
+THREAD_TICKER=config.getint('HANDLER','THREAD_TICKER')/1000
 SM_INTERVAL=config.getint('HANDLER','SM_INTERVAL')
+IDLE_THRESHOLD=config.getint('HANDLER','IDLE_THRESHOLD')/1000
 
 class Status(Enum):
     """
@@ -114,9 +115,9 @@ class _GeneralHandler(Client):
             port (int): The port number.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in milliseconds.
+            min_request_interval (int): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in milliseconds.
+            max_reaction_time (int): The maximum reaction time in seconds.
             stream (bool, optional): A flag indicating whether the handler is for stream requests. Defaults to False.
             logger (logging.Logger, optional): The logger object. Defaults to None.
 
@@ -140,9 +141,9 @@ class _GeneralHandler(Client):
 
             encrypted=True,
             timeout= TIMEOUT if stream else None,
-            reaction_time = max_reaction_time/1000,
+            reaction_time = max_reaction_time,
 
-            interval=min_request_interval/1000,
+            interval=min_request_interval,
             max_fails=max_retries,
             bytes_out=max_send_data,
             bytes_in=max_received_data,
@@ -469,6 +470,8 @@ class _DataHandler(_GeneralHandler):
         _reactivation_lock (Lock): The lock for reactivation.
         _status (Status): The status of the handler.
         _ssid (str): The stream session ID received from the server.
+        _idle_times (List[float]): The list of idle times.
+        _sm_idle_time (float): The sliding mean idle time.
 
     Methods:
         delete: Deletes the DataHandler.
@@ -486,6 +489,7 @@ class _DataHandler(_GeneralHandler):
         reactivation_lock: The lock for reactivating the DataHandler.
         status: The status of the DataHandler.
         ssid: The stream session ID.
+        sm_idle_time: The sliding mean idle time.
     """
 
     def __init__(
@@ -511,9 +515,9 @@ class _DataHandler(_GeneralHandler):
             password (str): The password for the XTB trading platform.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in milliseconds.
+            min_request_interval (int): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in milliseconds.
+            max_reaction_time (int): The maximum reaction time in seconds.
             logger (logging.Logger, optional): The logger object to use for logging. If not provided, a new logger will be generated.
 
         Raises:
@@ -939,9 +943,9 @@ class _StreamHandler(_GeneralHandler):
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in milliseconds.
+            min_request_interval (int): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in milliseconds.
+            max_reaction_time (int): The maximum reaction time in seconds.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
         
         Raises:
@@ -1084,7 +1088,7 @@ class _StreamHandler(_GeneralHandler):
         
         # Check if the specific stream is already open
         for index in self._stream_tasks:
-            if self._stream_tasks[index]['command'] == command and self._stream_tasks[index]['kwargs'] == kwargs:
+            if self._stream_tasks[index]['command'] == command and self._stream_tasks[index]['arguments'] == kwargs:
                 self._logger.warning("Stream for data already open")
                 raise ValueError("Stream for data already open")
             
@@ -1133,6 +1137,10 @@ class _StreamHandler(_GeneralHandler):
 
             # The data from the stream is put into the queue for the exchange
             self._stream_tasks[index]['queue'] = exchange['queue']
+
+            # Store the exchange dictionary in the stream task
+            # In case the stream task has to switch the StreamHandler
+            self._stream_tasks[index]['exchange'] = exchange
 
 
         self._logger.info("Stream started for " + pretty(command))
@@ -1478,6 +1486,8 @@ class _StreamHandler(_GeneralHandler):
                     # Set the status to failed
                     self._status = Status.FAILED
 
+    def transplant_stream_tasks(self, )
+
     @property
     def dh(self) -> _DataHandler:
         return self._dh
@@ -1506,6 +1516,10 @@ class _StreamHandler(_GeneralHandler):
     @property
     def stream_tasks(self) -> dict:
         return self._stream_tasks
+    
+    @property
+    def sm_idle_time(self) -> float:
+        return self._sm_idle_time
 
 class HandlerManager():
     """
@@ -1538,9 +1552,9 @@ class HandlerManager():
             max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in milliseconds.
+            min_request_interval (int): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in milliseconds.
+            max_reaction_time (int): The maximum reaction time in seconds.
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
             username (str, optional): The username for the XTB trading platform. Defaults to None.
             password (str, optional): The password for the XTB trading platform. Defaults to None.
@@ -1677,20 +1691,26 @@ class HandlerManager():
                                 sh.dh = dh_new
                         else:
                             self._logger.error("No DataHandler available")
-                # Eventually delete the handler
-                self._delete_handler(handler)
+                    # Eventually delete the handler
+                    self._delete_handler(handler)
 
             for handler in self._handlers['stream']:
                 # Check if the handler is failed
                 if handler.status == Status.FAILED:
                     # Check for open stream tasks
                     if len(handler.stream_tasks) > 0:
-                        stream_tasks = handler.stream_tasks
+                        sh_new = self.provide_StreamHandler()
+                        if sh_new:
+                            # Assign the new StreamHandler to the stream tasks
+                            for index in handler.stream_tasks:
+                                
+
+                        else:
+                            self._logger.error("No StreamHandler available")
+                    # Eventually delete the handler
                     self._delete_handler(handler)
-                    continue
 
             time.sleep(THREAD_TICKER)
-
 
     def _avlb_DataHandler(self) -> _DataHandler:
         """
@@ -1704,6 +1724,7 @@ class HandlerManager():
         """
 
         for handler in self._handlers['data']:
+            # Check if the handler is active
             if handler.status == Status.ACTIVE:
                 return handler
     
@@ -1719,9 +1740,10 @@ class HandlerManager():
         """
 
         for handler in self._handlers['stream']:
-            if handler.status == Status.ACTIVE:
-                if len(handler.stream_tasks) < self._max_streams:
-                    return handler
+            # Check if the handler is active
+            # and the idle time is above the threshold
+            if handler.status == Status.ACTIVE and handler.sm_idle_time > IDLE_THRESHOLD:
+                return handler
 
     def _get_connection_number(self) -> int:
         """
