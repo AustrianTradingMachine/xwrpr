@@ -1567,8 +1567,7 @@ class HandlerManager():
 
     Methods:
         delete: Deletes the HandlerManager instance.
-        _delete_handler: Deletes a specific handler and deregisters it from the HandlerManager.
-        _handler_management: Manages the handlers and ensures that the maximum number of connections is not exceeded.
+        _delete_handler: Deletes a specific handler and deregisters it from the HandlerManager..
         _avlb_DataHandler: Gets an available data handler.
         _avlb_StreamHandler: Gets an available stream handler.
         _get_connection_number: Gets the number of active connections.
@@ -1578,6 +1577,7 @@ class HandlerManager():
         _provide_StreamHandler: Provides a stream handler for the data handler.
         get_data: Retrieves data from the server.
         stream_data: Starts streaming data from the server.
+        _healthcheck: Checks the health of the handlers.
     """
         
 
@@ -1659,7 +1659,7 @@ class HandlerManager():
 
         # Start the handler management thread
         self._handler_management_thread = CustomThread(
-            target=self._handler_management,
+            target=self._healthcheck,
             daemon=True
         )
 
@@ -1732,52 +1732,6 @@ class HandlerManager():
 
         # Delete the handler
         handler.delete()
-
-    def _handler_management(self) -> None:
-        """
-        Manages the handlers and ensures that the maximum number of connections is not exceeded.
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-
-        while self._status == Status.ACTIVE:
-            for handler in self._handler_register['data']:
-                # Check if the handler is failed
-                if handler.status == Status.FAILED:
-                    # Check for connected stream handlers
-                    if len(handler.stream_handler) > 0:
-                        # Provide a new DataHandler that is ready for usage
-                        dh_new = self._provide_DataHandler()
-                        if dh_new:
-                            # Assign the new DataHandler to the connected stream handlers
-                            for sh in handler.stream_handler:
-                                sh.dh = dh_new
-                        else:
-                            self._logger.error("No DataHandler available")
-                    # Eventually delete the handler
-                    self._delete_handler(handler)
-
-            for handler in self._handler_register['stream']:
-                # Check if the handler is failed
-                if handler.status == Status.FAILED:
-                    # Check for open stream tasks
-                    if len(handler.stream_tasks) > 0:
-                        for _, task in handler.stream_tasks.items():
-                            # Provide a new StreamHandler that is ready for usage
-                            sh_new = self._provide_StreamHandler()
-                            if sh_new:
-                                # Assign the new StreamHandler to the stream tasks
-                                sh_new.transplant_stream_tasks(task)
-                            else:
-                                self._logger.error("No StreamHandler available")
-                    # Eventually delete the handler
-                    self._delete_handler(handler)
-
-            time.sleep(THREAD_TICKER)
 
     def _avlb_DataHandler(self) -> _DataHandler:
         """
@@ -2025,3 +1979,49 @@ class HandlerManager():
 
         # Start the stream for the specified command
         sh.stream_data(command=command, exchange=exchange, **kwargs)
+
+    def _healthcheck(self) -> None:
+        """
+        Manages the handlers and ensures that the maximum number of connections is not exceeded.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        while self._status == Status.ACTIVE:
+            for handler in self._handler_register['data']:
+                # Check if the handler is failed
+                if handler.status == Status.FAILED:
+                    # Check for connected stream handlers
+                    if len(handler.stream_handler) > 0:
+                        # Provide a new DataHandler that is ready for usage
+                        dh_new = self._provide_DataHandler()
+                        if dh_new:
+                            # Assign the new DataHandler to the connected stream handlers
+                            for sh in handler.stream_handler:
+                                sh.dh = dh_new
+                        else:
+                            self._logger.error("No DataHandler available")
+                    # Eventually delete the handler
+                    self._delete_handler(handler)
+
+            for handler in self._handler_register['stream']:
+                # Check if the handler is failed
+                if handler.status == Status.FAILED:
+                    # Check for open stream tasks
+                    if len(handler.stream_tasks) > 0:
+                        for _, task in handler.stream_tasks.items():
+                            # Provide a new StreamHandler that is ready for usage
+                            sh_new = self._provide_StreamHandler()
+                            if sh_new:
+                                # Assign the new StreamHandler to the stream tasks
+                                sh_new.transplant_stream_tasks(task)
+                            else:
+                                self._logger.error("No StreamHandler available")
+                    # Eventually delete the handler
+                    self._delete_handler(handler)
+
+            time.sleep(THREAD_TICKER)

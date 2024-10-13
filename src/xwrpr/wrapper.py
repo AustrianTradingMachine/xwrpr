@@ -245,7 +245,6 @@ class Wrapper(HandlerManager):
             margin	            float	    margin requirements
             marginFree	        float	    free margin
             marginLevel	        float	    margin level percentage
-
         """
 
         return self._open_stream_channel(command="Balance")
@@ -283,7 +282,6 @@ class Wrapper(HandlerManager):
             float	            2	        float
             depth	            3	        depth
             cross	            4	        cross
-
         """
 
         return self._open_stream_channel(command="Candles", symbol=symbol)
@@ -304,7 +302,6 @@ class Wrapper(HandlerManager):
             key	                string	    News key
             time	            timestamp   Time
             title	            string	    News title
-
         """
 
         return self._open_stream_channel(command="News")
@@ -325,7 +322,6 @@ class Wrapper(HandlerManager):
             order2	            integer     Transaction ID
             position	        integer     Position number
             profit	            float	    Profit in account currency
-
         """
 
         return self._open_stream_channel(command="Profits")
@@ -372,7 +368,6 @@ class Wrapper(HandlerManager):
             float	            2	        float
             depth	            3	        depth
             cross	            4	        cross
-
         """
 
         if minArrivalTime is not None and minArrivalTime < 0:
@@ -494,7 +489,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="TradeStatus")
 
-    def _open_data_channel(self, **kwargs):
+    def _open_data_channel(self, **kwargs) -> Union[List[dict], dict]:
         """
         Opens a data channel and retrieves data.
 
@@ -502,7 +497,7 @@ class Wrapper(HandlerManager):
             **kwargs: Additional keyword arguments to be passed to the `getData` method.
 
         Returns:
-            The response from the getData method if successful
+            Union[List[dict], dict]: A list of dictionaries containing the data or a dictionary with the data.
             
         Raises:
             None
@@ -510,17 +505,16 @@ class Wrapper(HandlerManager):
 
         return self.get_data(**kwargs)
         
-    def getAllSymbols(self):
+    def getAllSymbols(self) -> List[dict]:
         """
         Returns array of all symbols available for the user.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-	                            dictionary  SYMBOL_RECORD 
+            A list of dictionaries containing the symbol data.
 
-        Format of SYMBOL_RECORD:
+        Format of the dictionary: 
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             ask	                float	    Ask price in base currency
             bid	                float	    Bid price in base currency
             categoryName	    string	    Category name
@@ -555,7 +549,7 @@ class Wrapper(HandlerManager):
             starting	        timestamp	Null if not applicable
             stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
             stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
-            swap_rollover3days  integer	    timestamp when additional swap is accounted for weekend
+            swap_rollover3days  integer	    Time when additional swap is accounted for weekend
             swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
             swapLong	        float	    Swap value for long positions in pips
             swapShort	        float	    Swap value for short positions in pips
@@ -570,6 +564,7 @@ class Wrapper(HandlerManager):
 
         Possible values of quoteId field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             fixed	            1	        fixed
             float	            2	        float
             depth	            3	        depth
@@ -577,29 +572,30 @@ class Wrapper(HandlerManager):
 
         Possible values of marginMode field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             Forex	            101	        Forex
             CFD leveraged	    102	        CFD leveraged
             CFD	                103	        CFD
 
         Possible values of profitMode field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             FOREX	            5	        FOREX
             CFD	                6	        CFD
-
         """
+
         return self._open_data_channel(command="AllSymbols")
     
-    def getCalendar(self):
+    def getCalendar(self) -> List[dict]:
         """
         Returns calendar with market events.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-    	                        dictionary	CALENDAR_RECORD 
+            A list of dictionaries containing market events data.
 
-        Format of CALENDAR_RECORD:
+        Format of the dictionary: 
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             country	            string	    Two letter country code
             current	            string	    Market value (current), empty before time of release of this value (time from "time" record)
             forecast	        string	    Forecasted value
@@ -611,14 +607,15 @@ class Wrapper(HandlerManager):
 
         Possible values of impact field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             low	                1	        low
             medium	            2	        medium
             high	            3	        high
-
         """
+
         return self._open_data_channel(command="Calendar")
     
-    def getChartLastRequest(self, symbol: str, period: str, start: datetime=None):
+    def getChartLastRequest(self, symbol: str, period: str, start: datetime=None) -> dict:
         """
         Returns chart info, from start date to the current time. If the chosen period is greater than 1 minute, 
         the last candle returned by the API can change until the end of the period.
@@ -632,11 +629,13 @@ class Wrapper(HandlerManager):
         Returns:
             Dictionary: A Dictionary containing the following fields:
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             digits	            integer	    Number of decimal places
-            rateInfos	        dictionary	RATE_INFO_RECORD objects
+            rateInfos	        list        List of dictionaries containing the candle data 
 
-        Format of RATE_INFO_RECORD:
+        Format of the dictionary: 
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             close	            float	    Value of close price (shift from open price)
             ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
             ctmString	        string	    String representation of the 'ctm' field
@@ -645,7 +644,9 @@ class Wrapper(HandlerManager):
             open            	float	    Open price (in base currency * 10 to the power of digits)
             vol	                float	    Volume in lots
 
+            Price values must be divided by 10 to the power of digits in order to obtain exact prices.
         """
+
         periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
 
         if period not in periods:
