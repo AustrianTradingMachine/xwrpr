@@ -235,17 +235,18 @@ class Wrapper(HandlerManager):
         if self._status == Status.DELETED:
             # For graceful closing no raise of exception is not allowed
             self._logger.warning("Wrapper already deleted.")
-        else:
-            try:
-                self._logger.info("Deleting wrapper ...")
-                # Calling the delete method of the HandlerManager
-                super().delete()
-                self._logger.info("Wrapper deleted.")
-            except Exception as e:
-                self._logger.error(f"Exception in delete: {e}")
-            finally:
-                # Set the status to deleted
-                self._status = Status.DELETED
+            return
+
+        try:
+            self._logger.info("Deleting wrapper ...")
+            # Calling the delete method of the HandlerManager
+            super().delete()
+            self._logger.info("Wrapper deleted.")
+        except Exception as e:
+            self._logger.error(f"Exception in delete: {e}")
+        finally:
+            # Set the status to deleted
+            self._status = Status.DELETED
 
     def _open_stream_channel(self, **kwargs) -> dict:
         """

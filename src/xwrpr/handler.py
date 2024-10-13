@@ -100,9 +100,9 @@ class _GeneralHandler(Client):
 
             max_send_data: int,
             max_received_data: int,
-            min_request_interval: int,
+            min_request_interval: float,
             max_retries: int,
-            max_reaction_time: int,
+            max_reaction_time: float,
 
             stream: bool = False,
             logger: Optional[logging.Logger] = None
@@ -115,9 +115,9 @@ class _GeneralHandler(Client):
             port (int): The port number.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in seconds.
+            min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in seconds.
+            max_reaction_time (float): The maximum reaction time in seconds.
             stream (bool, optional): A flag indicating whether the handler is for stream requests. Defaults to False.
             logger (logging.Logger, optional): The logger object. Defaults to None.
 
@@ -134,7 +134,7 @@ class _GeneralHandler(Client):
 
         self._logger.info("Initializing GeneralHandler ...")
 
-        # Iinitialize the Client instance
+        # Initialize the Client instance
         super().__init__(
             host=host,
             port=port, 
@@ -499,9 +499,9 @@ class _DataHandler(_GeneralHandler):
 
         max_send_data: int,
         max_received_data: int,
-        min_request_interval: int,
+        min_request_interval: float,
         max_retries: int,
-        max_reaction_time: int,
+        max_reaction_time: float,
 
         logger: Optional[logging.Logger] = None
     ) -> None:
@@ -514,9 +514,9 @@ class _DataHandler(_GeneralHandler):
             password (str): The password for the XTB trading platform.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in seconds.
+            min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in seconds.
+            max_reaction_time (float): The maximum reaction time in seconds.
             logger (logging.Logger, optional): The logger object to use for logging. If not provided, a new logger will be generated.
 
         Raises:
@@ -944,9 +944,9 @@ class _StreamHandler(_GeneralHandler):
             demo (bool): A boolean indicating whether the handler is for demo or real trading.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in seconds.
+            min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in seconds.
+            max_reaction_time (float): The maximum reaction time in seconds.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
         
         Raises:
@@ -966,7 +966,6 @@ class _StreamHandler(_GeneralHandler):
         super().__init__(
             host=HOST,
             port=PORT_DEMO_STREAM if demo else PORT_REAL_STREAM,
-            stream=True,
 
             max_send_data = max_send_data,
             max_received_data = max_received_data,
@@ -974,6 +973,7 @@ class _StreamHandler(_GeneralHandler):
             max_retries = max_retries,
             max_reaction_time = max_reaction_time,
 
+            stream=True,
             logger=self._logger
         )
 
@@ -1558,9 +1558,9 @@ class HandlerManager():
         _max_connections (int): The maximum number of connections to the server allowed at the same time.
         _max_send_data (int): The maximum number of bytes to send.
         _max_received_data (int): The maximum number of bytes to receive.
-        _min_request_interval (int): The minimum request interval in seconds.
+        _min_request_interval (float): The minimum request interval in seconds.
         _max_retries (int): The maximum number of retries.
-        _max_reaction_time (int): The maximum reaction time in seconds.
+        _max_reaction_time (float): The maximum reaction time in seconds.
         _handler_register (dict): The dictionary of registered handlers.
         _status (Status): The status of the handler manager.
         _handler_management_thread (CustomThread): The handler management thread.
@@ -1606,9 +1606,9 @@ class HandlerManager():
             max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in seconds.
+            min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in seconds.
+            max_reaction_time (float): The maximum reaction time in seconds.
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
             username (str, optional): The username for the XTB trading platform. Defaults to None.
             password (str, optional): The password for the XTB trading platform. Defaults to None.
@@ -1948,6 +1948,11 @@ class HandlerManager():
         # Provide a new DataHandler that is ready for usage
         dh = self._provide_DataHandler()
 
+        # Check if a DataHandler is available
+        if not dh:
+            self._logger.error("No DataHandler available")
+            return
+
         # Get the data from the server
         data = dh.get_data(command=command, **kwargs)
 
@@ -1976,6 +1981,11 @@ class HandlerManager():
 
         # Provide a new StreamHandler that is ready for usage
         sh = self._provide_StreamHandler()
+        
+        # Check if a StreamHandler is available
+        if not sh:
+            self._logger.error("No StreamHandler available")
+            return
 
         # Start the stream for the specified command
         sh.stream_data(command=command, exchange=exchange, **kwargs)
