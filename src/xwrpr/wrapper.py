@@ -21,6 +21,7 @@
 #
 ###########################################################################
 
+from enum import Enum
 import logging
 from pathlib import Path
 import configparser
@@ -43,41 +44,64 @@ MIN_REQUEST_INTERVAL=config.getint('CONNECTION','MIN_REQUEST_INTERVAL')/1000
 MAX_RETRIES=config.getint('CONNECTION','MAX_RETRIES')
 MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')/1000
 
+
+class Status(Enum):
+    """
+    Enum class for the status of the wrapper.
+
+    Attributes:
+        ACTIVE: The handler is active.
+        DELETED: The handler is deleted.
+    
+    Methods:
+        None
+    """
+
+    ACTIVE = "active"
+    DELETED = "deleted"
+
+
 class Wrapper(HandlerManager):
     """
     Wrapper class for XTB API.
 
     Attributes:
-        _demo (bool): Flag indicating whether the demo environment is used.
-        _logger (logging.Logger): Logger instance for logging messages.
-        _deleted (bool): Flag indicating whether the wrapper has been deleted.
+        _logger (logging.Logger): The logger object to use for logging.
+        _status (Status): The status of the wrapper.
 
     Methods:
-        __init__(self, demo: bool=True, logger=None): Initializes the Wrapper instance.
-        __del__(self): Destructor method that calls the delete() method.
-        delete(self): Deletes the wrapper instance.
-        _open_stream_channel(self, **kwargs): Opens a stream channel for data streaming.
-        streamBalance(self): Retrieves the balance data.
-        streamCandles(self, symbol: str): Retrieves the candle data for a specific symbol.
-        streamNews(self): Retrieves the news data.
-        streamProfits(self): Retrieves the profits data.
-        streamTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1): Retrieves the tick prices data.
-        streamTrades(self): Retrieves the trades data.
-        streamradeStatus(self): Retrieves the trade status data.
-        _open_data_channel(self, **kwargs): Opens a data channel for data retrieval.
-        getAllSymbols(self): Retrieves all symbols data.
-        getCalendar(self): Retrieves the calendar data.
-        getChartLastRequest(self, symbol: str, period: str, start: datetime=None): Retrieves the last chart data request.
-        getChartRangeRequest(self, symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0): Retrieves the chart data within a range.
-        getCommissionDef(self, symbol: str, volume: float): Retrieves the commission definition data.
-        getCurrentUserData(self): Retrieves the current user data.
-        getIbsHistory(self, start: datetime, end: datetime): Retrieves the IBS history data.
-        getMarginLevel(self): Retrieves the margin level data.
-        getMarginTrade(self, symbol: str, volume: float): Retrieves the margin trade data.
-        getNews(self): Retrieves the news data.
-        getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int): Retrieves the profit calculation data.
-        getServerTime(self): Retrieves the server time data.
-        getStepRules(self): Retrieves the step rules data.
+        delete: Deletes the Wrapper.
+        _open_stream_channel: Opens a channel for the streaming of data.
+        streamBalance: Allows to get actual account indicators values in real-time.
+        streamCandles: Subscribes for and unsubscribes from API chart candles.
+        streamNews: Subscribes for and unsubscribes from news.
+        streamProfits: Subscribes for and unsubscribes from profits.
+        streamTickPrices: Establishes subscription for quotations.
+        streamTrades: Establishes subscription for user trade status data.
+        streamTradeStatus: Allows to get status for sent trade requests in real-time.
+        _open_data_channel: Opens a data channel and retrieves data.
+        getAllSymbols: Returns array of all symbols available for the user.
+        getCalendar: Returns calendar with market events.
+        getChartLastRequest: Returns chart info, from start date to the current time.
+        getChartRangeRequest: Returns chart info with data between given start and end dates.
+        getCommissionDef: Returns calculation of commission and rate of exchange for a given symbol and volume.
+        getCurrentUserData: Returns information about account currency, and account leverage.
+        getIbsHistory: Returns IBs data from the given time range.
+        getMarginLevel: Returns various account indicators.
+        getMarginTrade: Returns expected margin for given instrument and volume.
+        getNews: Returns news from trading server which were sent within specified period of time.
+        getProfitCalculation: Calculates estimated profit for given deal data.
+        getServerTime: Returns current time on trading server.
+        getStepRules: Returns a list of step rules for DMAs.
+        getSymbol: Returns information about symbol available for the user.
+        getTickPrices: Returns array of current quotations for given symbols.
+        getTradeRecords: Returns array of trades listed in orders argument.
+        getTrades: Returns array of trades for the user.
+        getTradesHistory: Returns array of trades history for the user.
+        getTradingHours: Returns quotes and trading times.
+        getVersion: Returns the current API version.
+        tradeTransaction: Starts trade transaction.
+        tradeTransactionStatus: Returns current transaction status.
     """
 
     def __init__(self,
@@ -156,8 +180,8 @@ class Wrapper(HandlerManager):
             logger = self._logger
         )
 
-        # Set the deleted flag to False
-        self._deleted=False
+        # Set the status to active
+        self._status = Status.ACTIVE
 
         self._logger.info("Wrapper initialized")
 
@@ -188,14 +212,20 @@ class Wrapper(HandlerManager):
             None
         """
 
-        if self._deleted:
+        if self._status == Status.DELETED:
             # For graceful closing no raise of exception is not allowed
             self._logger.warning("Wrapper already deleted.")
         else:
-            self._logger.info("Deleting wrapper ...")
-            # Calling the delete method of the HandlerManager
-            super().delete()
-            self._logger.info("Wrapper deleted.")
+            try:
+                self._logger.info("Deleting wrapper ...")
+                # Calling the delete method of the HandlerManager
+                super().delete()
+                self._logger.info("Wrapper deleted.")
+            except Exception as e:
+                self._logger.error(f"Exception in delete: {e}")
+            finally:
+                # Set the status to deleted
+                self._status = Status.DELETED
 
     def _open_stream_channel(self, **kwargs) -> dict:
         """
@@ -622,9 +652,7 @@ class Wrapper(HandlerManager):
     
     def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime]=None) -> Dict[int,List[dict]]:
         """
-        Returns chart info, from start date to the current time. If the chosen period is greater than 1 minute, 
-        the last candle returned by the API can change until the end of the period.
-        the candle is being automatically updated every minute.
+        Returns chart info, from start date to the current time.
 
         Args:
             name                type        optional    description
@@ -662,6 +690,9 @@ class Wrapper(HandlerManager):
                 vol	                float	    Volume in lots
 
                 Price values must be divided by 10 to the power of digits in order to obtain exact prices.
+
+                If the chosen period is greater than 1 minute, the last candle returned by the API can change until the end of the period.
+                the candle is being automatically updated every minute.
 
         Raises:
             ValueError: If the period is invalid.
@@ -1058,7 +1089,7 @@ class Wrapper(HandlerManager):
     
     def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int) -> dict:
         """
-        Calculates estimated profit for given deal data Should be used for calculator-like apps only.
+        Calculates estimated profit for given deal data. Should be used for calculator-like apps only.
         Profit for opened transactions should be taken from server, due to higher precision of server calculation.
 
         Args:
@@ -1415,7 +1446,7 @@ class Wrapper(HandlerManager):
         
         return self._open_data_channel(command="Trades", openedOnly=openedOnly)
     
-    def getTradeHistory(self, start: datetime, end: datetime) -> List[dict]:
+    def getTradesHistory(self, start: datetime, end: datetime) -> List[dict]:
         """
         Returns array of user's trades which were closed within specified period of time.
 
@@ -1483,7 +1514,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
-        return self._open_data_channel(command="TradeHistory", start=start_ux, end=end_ux)
+        return self._open_data_channel(command="TradesHistory", end=end_ux, start=start_ux)
 
     def getTradingHours(self, symbols: List[str]) -> List[Dict[List[dict], str, List[dict]]]:
         """
@@ -1649,7 +1680,7 @@ class Wrapper(HandlerManager):
             command="tradeTransaction",
             tradeTransInfo=dict(
                 cmd=cmd,
-                customCommand=customComment,
+                customComment=customComment,
                 expiration=expiration_ux,
                 offset=offset,
                 order=order,

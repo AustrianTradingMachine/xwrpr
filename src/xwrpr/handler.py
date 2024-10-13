@@ -21,10 +21,10 @@
 #
 ###########################################################################
 
+from enum import Enum
 import logging
 import configparser
 from pathlib import Path
-from enum import Enum
 from typing import Union, List, Optional
 import json
 import time
