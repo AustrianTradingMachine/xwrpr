@@ -227,7 +227,7 @@ class Wrapper(HandlerManager):
         return exchange
 
     
-    def streamBalance(self):
+    def streamBalance(self) -> dict:
         """
         Allows to get actual account indicators values in real-time, as soon as they are available in the system.
 
@@ -250,7 +250,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="Balance")
 
-    def streamCandles(self, symbol: str):
+    def streamCandles(self, symbol: str) -> dict:
         """
         Subscribes for and unsubscribes from API chart candles. The interval of every candle is 1 minute.
         A new candle arrives every minute
@@ -288,7 +288,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="Candles", symbol=symbol)
     
-    def streamNews(self):
+    def streamNews(self) -> dict:
         """
         Subscribes for and unsubscribes from news.
 
@@ -309,7 +309,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="News")
 
-    def streamProfits(self):
+    def streamProfits(self) -> dict:
         """
         Subscribes for and unsubscribes from profits.
 
@@ -330,7 +330,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="Profits")
 
-    def streamTickPrices(self, symbol: str, minArrivalTime: Optional[int]=None, maxLevel: Optional[int]=None):
+    def streamTickPrices(self, symbol: str, minArrivalTime: Optional[int]=None, maxLevel: Optional[int]=None) -> dict:
         """
         Establishes subscription for quotations and allows to obtain the relevant information in real-time,
         as soon as it is available in the system.
@@ -385,7 +385,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
 
-    def streamTrades(self):
+    def streamTrades(self) -> dict:
         """
         Establishes subscription for user trade status data and allows to obtain the relevant information in real-time, as soon as
         it is available in the system.
@@ -465,7 +465,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="Trades")
     
-    def streamTradeStatus(self):
+    def streamTradeStatus(self) -> dict:
         """
         Allows to get status for sent trade requests in real-time, as soon as it is available in the system.
 
@@ -496,14 +496,16 @@ class Wrapper(HandlerManager):
 
     def _open_data_channel(self, **kwargs):
         """
-        Opens a data channel and retrieves data using the provided DataHandler.
+        Opens a data channel and retrieves data.
 
         Args:
-            **kwargs: Additional keyword arguments to be passed to the getData method of the DataHandler.
+            **kwargs: Additional keyword arguments to be passed to the `getData` method.
 
         Returns:
-            The response from the getData method if successful, False otherwise.
+            The response from the getData method if successful
             
+        Raises:
+            None
         """
 
         return self.get_data(**kwargs)
