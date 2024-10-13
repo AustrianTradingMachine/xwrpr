@@ -245,12 +245,14 @@ class Wrapper(HandlerManager):
         
         # Create a new dictionary for the exchange data
         exchange = {}
+
         # Call the streamData method of the HandlerManager
         # and store the returned dictionary in the exchange dictionary
         self.stream_data(
             exchange=exchange,
             **kwargs
         )
+
         # Return the exchange dictionary
         return exchange
 
@@ -305,7 +307,7 @@ class Wrapper(HandlerManager):
                 symbol	            string	    Symbol
                 vol	                float	    Volume in lots
 
-            Possible values of quoteId field:
+            Possible values of "quoteId" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 fixed	            1	        fixed
@@ -396,7 +398,7 @@ class Wrapper(HandlerManager):
                 symbol	            string	    Symbol
                 timestamp	        timestamp   Timestamp
 
-            Possible values of quoteId field:
+            Possible values of "quoteId" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 fixed	            1	        fixed
@@ -459,7 +461,7 @@ class Wrapper(HandlerManager):
                 type	            integer     type
                 volume	            float	    Volume in lots
 
-            Possible values of cmd field:
+            Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -468,26 +470,28 @@ class Wrapper(HandlerManager):
                 SELL_LIMIT	        3	        sell limit
                 BUY_STOP	        4	        buy stop
                 SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                BALANCE	            6	        Read only
                 CREDIT	            7	        Read only
 
-            Possible values of comment field:
-                - "[S/L]", then the trade was closed by stop loss
-                - "[T/P]", then the trade was closed by take profit
-                - "[S/O margin level% equity / margin (currency)]", then the trade was closed because of Stop Out
-                - If the comment remained unchanged from that of opened order, then the order was closed by user
+            Possible values of "comment" field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                STOP_LOSS	        [S/L]       the trade was closed by stop loss
+                TAKE_PROFIT	        [T/P]       the trade was closed by take profit
+                STOP_OUT	        [S/O margin level% equity / margin (currency)] the trade was closed because of Stop Out
+                If the comment remained unchanged from that of opened order, then the order was closed by user
 
-            Possible values of state field:
+            Possible values of "state" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 MODIFIED	        "Modified"  modified
                 DELETED	            "Deleted"   deleted
 
-            Possible values of type field:
+            Possible values of "type" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 OPEN	            0	        order open, used for opening orders
-                PENDING	            1	        order pending, only used in the streaming getTrades  command
+                PENDING	            1	        order pending, only used in the streamTrades  command
                 CLOSE	            2	        order close
                 MODIFY	            3	        order modify, only used in the tradeTransaction  command
                 DELETE	            4	        order delete, only used in the tradeTransaction  command
