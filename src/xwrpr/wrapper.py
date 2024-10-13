@@ -22,15 +22,13 @@
 ###########################################################################
 
 import logging
-from threading import Lock
 from pathlib import Path
 import configparser
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from typing import Union, List, Optional
-from queue import Queue
+from typing import Union, List, Optional, Dict
 from xwrpr.handler import HandlerManager
-from xwrpr.utils import generate_logger, calculate_timedelta, datetime_to_unixtime
+from xwrpr.utils import generate_logger, calculate_timesteps, datetime_to_unixtime
 
 
 # Read the configuration file
@@ -255,7 +253,9 @@ class Wrapper(HandlerManager):
         A new candle arrives every minute
 
         Args:
-            symbol (str): The symbol for which to retrieve the candles.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol for which to retrieve the candle data.
 
         Returns:
             A dictionary, containing the following elements:
@@ -332,13 +332,18 @@ class Wrapper(HandlerManager):
         as soon as it is available in the system.
 
         Args:
-            symbol (str): The symbol for which to retrieve tick prices.
-            minArrivalTime (int, optional)): The minimum the minimal interval in milliseconds between any two consecutive updates. If
-                                             this field is not present, or it is set to 0 (zero), ticks - if available - are sent to the
-                                             client with interval equal to 200 milliseconds. In order to obtain ticks as frequently as
-                                             server allows you, set it to 1 (one).
-            maxLevel (int, optional): The maximum level of the tick prices.If this field is not specified, the subscription is
-                                      active for all levels that are managed in the system.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol for which to retrieve the tick prices.
+            minArrivalTime      integer     yes         The minimal interval in milliseconds between any two consecutive updates  
+            maxLevel            integer     yes         The maximum level of the tick prices
+
+            minArrivalTime: If this field is not present, or it is set to 0 (zero), ticks - if available - are sent to the
+                            client with interval equal to 200 milliseconds. In order to obtain ticks as frequently as
+                            server allows you, set it to 1 (one).
+            
+            maxLevel: The maximum level of the tick prices. If this field is not specified, the subscription isactive for all
+                      levels that are managed in the system.
 
         Returns:
             A dictionary, containing the following elements:
@@ -615,16 +620,18 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="Calendar")
     
-    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime]=None) -> dict:
+    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime]=None) -> Dict[int,List[dict]]:
         """
         Returns chart info, from start date to the current time. If the chosen period is greater than 1 minute, 
         the last candle returned by the API can change until the end of the period.
         the candle is being automatically updated every minute.
 
         Args:
-            symbol (str): The symbol for which to retrieve the chart data.
-            period (str): The period of the chart data. Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
-            start (datetime, optional): The start time of the chart data. Default is 0001-01-01 00:00:00
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol for which to retrieve the chart data.
+            period              string	    no          Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            start               datetime	yes         Start of chart block (rounded down to the nearest interval and excluding)
 
             Limitations: there are limitations in charts data availability. Detailed ranges for charts data, what can be accessed
             with specific period, are as follows:
@@ -635,11 +642,13 @@ class Wrapper(HandlerManager):
             PERIOD_D1 --- 13 month, and earlier on
             
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            digits	            integer	    Number of decimal places
-            rateInfos	        list        List of dictionaries containing the candle data 
+            Dictionary: A Dictionary with the chart data.
+
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                digits	            integer	    Number of decimal places
+                rateInfos	        list        List of dictionaries containing the candle data 
 
             Format of the dictionary: 
                 name	            type	    description
@@ -656,6 +665,7 @@ class Wrapper(HandlerManager):
 
         Raises:
             ValueError: If the period is invalid.
+            ValueError: If the start time is greater than the current time.
         """
 
         # Dictionary for transforming periods to seconds
@@ -702,19 +712,22 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="ChartLastRequest",info=dict(period=periods[period],start=start_ux,symbol=symbol))
 
-    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime]=None, end: Optional[datetime]=None, ticks: int=0) -> dict:
+    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime]=None, end: Optional[datetime]=None, ticks: int=0) -> Dict[int,List[dict]]:
         """
         Returns chart info with data between given start and end dates.
 
         Args:
-            symbol (str): The symbol for which to retrieve the chart data.
-            period (str): The time period of the chart data. Must be one of : "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
-            start (datetime, optional): The start time of the chart data. Default is 0001-01-01 00:00:00
-            end (datetime, optional): The end time of the chart data. Default is now.
-            ticks (int, optional): The number of ticks to retrieve. If set to 0, the start and end times are used.
-                                   If ticks >0 (e.g. N) then API returns N candles from time start.
-                                   If ticks <0 then API returns N candles to time start.
-                                   It is possible for API to return fewer chart candles than set in tick field.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol for which to retrieve the chart data.
+            period              string	    no          Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            start               datetime	yes         Start of chart block (rounded down to the nearest interval and excluding)
+            end                 datetime	yes         End of chart block (rounded down to the nearest interval and excluding)
+            ticks               integer     yes         The number of ticks to retrieve. If set to 0, the start and end times are used.
+
+            If ticks >0 (e.g. N) then API returns N candles from time start.
+            If ticks <0 then API returns N candles to time start.
+            It is possible for API to return fewer chart candles than set in tick field.
 
             Limitations: there are limitations in charts data availability. Detailed ranges for charts data, what can be accessed
             with specific period, are as follows:
@@ -725,11 +738,13 @@ class Wrapper(HandlerManager):
             PERIOD_D1 --- 13 month, and earlier on
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            digits	            integer	    Number of decimal places
-            rateInfos	        list        List of dictionaries containing the candle data 
+            Dictionary: A Dictionary with the chart data.
+
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                digits	            integer	    Number of decimal places
+                rateInfos	        list        List of dictionaries containing the candle data 
 
             Format of the dictionary: 
                 name	            type	    description
@@ -743,6 +758,12 @@ class Wrapper(HandlerManager):
                 vol	                float	    Volume in lots
             
                 Price values must be divided by 10 to the power of digits in order to obtain exact prices.
+
+        Raises:
+            ValueError: If the period is invalid.
+            ValueError: If the start time is greater than the current time.
+            ValueError: If the end time is greater than the current time.
+            ValueError: If the start time is greater or equal to the end time.
         """
 
         # Dictionary for transforming periods to seconds
@@ -750,7 +771,7 @@ class Wrapper(HandlerManager):
 
         if period not in periods:
             self._logger("Invalid period. Choose from: "+", ".join(periods))
-            return False
+            raise ValueError("Invalid period. Choose from: "+", ".join(periods))
         
         # Get the current time
         now=datetime.now()
@@ -787,377 +808,451 @@ class Wrapper(HandlerManager):
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
         if ticks == 0:
+            # Convert the end time to unix time
             if not end:
+                # If no end time is given, set it to the current time
                 end_ux=now_ux
             else:
                 end_ux=datetime_to_unixtime(end)
-                
+            
+            # Check if the end time is in the future
             if end_ux> now_ux:
                 self._logger.error("End time is greater than current time.")
-                return False
+                raise ValueError("End time is greater than current time.")
 
+            # Check if the start time is greater or equal to the end time
             if start_ux>= end_ux:
                 self._logger.error("Start time is greater or equal than end time.")
-                return False
+                raise ValueError("Start time is greater or equal than end time.")
         else:
+            # In case ticks parameter is set, end time is ignored
             self._logger.info("Ticks parameter is set. Ignoring end time.")
 
             reference = start
 
             if ticks < 0:
+                # If ticks is negative, the limit time lies in the past
                 if period in ["M1", "M5", "M15", "M30"]:
-                    delta = calculate_timedelta(limit,reference, period='minutes')
+                    delta = calculate_timesteps(limit,reference, period='minutes')
                 elif period in ["H1", "H4"]:
-                    delta = calculate_timedelta(limit,reference, period='hours')
+                    delta = calculate_timesteps(limit,reference, period='hours')
                 elif period == "D1":
-                    delta = calculate_timedelta(limit,reference, period='days')
+                    delta = calculate_timesteps(limit,reference, period='days')
                 elif period == "W1":
-                    delta = calculate_timedelta(limit,reference, period='weeks')
+                    delta = calculate_timesteps(limit,reference, period='weeks')
                 else:
-                    delta = calculate_timedelta(limit,reference,period='months')
+                    delta = calculate_timesteps(limit,reference,period='months')
 
+                # Check if the ticks reach too far in the past
                 if delta < abs(ticks):
+                    ticks = delta*(-1)
                     self._logger.warning("Ticks reach too far in the past for selected period "+period+". Setting tick to "+str(delta))
-                    ticks = delta
+                    
             else:
+                # If ticks is positive, the limit time lies in the future
                 if period in ["M1", "M5", "M15", "M30"]:
-                    delta = calculate_timedelta(reference, now, period='minutes')
+                    delta = calculate_timesteps(reference, now, period='minutes')
                 elif period in ["H1", "H4"]:
-                    delta = calculate_timedelta(reference, now, period='hours')
+                    delta = calculate_timesteps(reference, now, period='hours')
                 elif period == "D1":
-                    delta = calculate_timedelta(reference, now, period='days')
+                    delta = calculate_timesteps(reference, now, period='days')
                 elif period == "W1":
-                    delta = calculate_timedelta(reference, now, period='weeks')
+                    delta = calculate_timesteps(reference, now, period='weeks')
                 else:
-                    delta = calculate_timedelta(reference, now, period='months')
+                    delta = calculate_timesteps(reference, now, period='months')
                 
+                # Check if the ticks reach too far in the future
                 if delta < ticks:
-                    self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
                     ticks = delta
+                    self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
 
         return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_ux, period=periods[period], start=start_ux, symbol=symbol, ticks=ticks))
 
-    def getCommissionDef(self, symbol: str, volume: float):
+    def getCommissionDef(self, symbol: str, volume: float) -> dict:
         """
         Returns calculation of commission and rate of exchange. The value is calculated as expected value, and therefore might not be perfectly accurate.
 
         Args:
-            symbol (str): The symbol for which to retrieve the commission definition.
-            volume (float): The volume for which to retrieve the commission definition.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol for which to retrieve the commission definition.
+            volume              float	    no          The volume for which to retrieve the commission definition.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description        
+            Dictionary: A Dictionary with the commission definition.
+
+            Format of the dictionary:
+            name	            type	    description
+            -----------------------------------------------------------------------------------------------    
             commission	        float	    calculated commission in account currency, could be null if not applicable
             rateOfExchange	    float	    rate of exchange between account currency and instrument base currency, could be null if not applicable
-
+        
+        Raises:
+            ValueError: If the volume is less than or equal to 0.
         """
 
-        if volume < 0:
+        # Check if the volume is less than or equal to 0
+        if volume <= 0:
             self._logger.error("Volume must be greater than 0.")
-            return False
+            raise ValueError("Volume must be greater than 0.")
 
         return self._open_data_channel(command="CommissionDef", symbol=symbol, volume=volume)
     
-    def getCurrentUserData(self):
+    def getCurrentUserData(self) -> dict:
         """
         Returns information about account currency, and account leverage.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            companyUnit	        integer	    Unit the account is assigned to.
-            currency	        string	    account currency
-            group	            string	    group
-            ibAccount	        boolean	    Indicates whether this account is an IB account.
-            leverage	        integer	    This field should not be used. It is inactive and its value is always 1.
-            leverageMultiplier	float	    The factor used for margin calculations. The actual value of leverage can be calculated by dividing this value by 100.
-            spreadType	        string	    spreadType, null if not applicable
-            trailingStop	    boolean	    Indicates whether this account is enabled to use trailing stop   
+            Dictionary: A Dictionary containing the account information.
 
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------   
+                companyUnit	        integer	    Unit the account is assigned to.
+                currency	        string	    account currency
+                group	            string	    group
+                ibAccount	        boolean	    Indicates whether this account is an IB account.
+                leverage	        integer	    This field should not be used. It is inactive and its value is always 1.
+                leverageMultiplier	float	    The factor used for margin calculations. The actual value of leverage can be calculated by dividing this value by 100.
+                spreadType	        string	    spreadType, null if not applicable
+                trailingStop	    boolean	    Indicates whether this account is enabled to use trailing stop   
         """
+
         return self._open_data_channel(command="CurrentUserData")
     
-    def getIbsHistory(self, start: datetime, end: datetime):
+    def getIbsHistory(self, start: datetime, end: datetime) -> List[dict]:
         """
-        Retrieves the IBS (Internal Bar Strength) history data from the specified start time to the specified end time.
+        Returns IBs data from the given time range.
 
         Args:
-            start (datetime): The start time of the data range.
-            end (datetime): The end time of the data range.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            start               datetime	no          Start of IBs history block
+            end                 datetime	no          End of IBs history block
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-	                            dictionary  IB_RECORD 
+            A list of dictionaries containing the IBs data.
 
-        Format of IB_RECORD:
-            name	            type	    description
-            closePrice	        float	    IB close price or null if not allowed to view
-            login	            string	    IB user login or null if not allowed to view
-            nominal	            float	    IB nominal or null if not allowed to view
-            openPrice	        float	    IB open price or null if not allowed to view
-            side	            integer	    Operation code or null if not allowed to view
-            surname	            string	    IB user surname or null if not allowed to view
-            symbol	            string	    Symbol or null if not allowed to view
-            timestamp	        timestamp	Time the record was created or null if not allowed to view
-            volume	            float	    Volume in lots or null if not allowed to view
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                closePrice	        float	    IB close price or null if not allowed to view
+                login	            string	    IB user login or null if not allowed to view
+                nominal	            float	    IB nominal or null if not allowed to view
+                openPrice	        float	    IB open price or null if not allowed to view
+                side	            integer	    Operation code or null if not allowed to view
+                surname	            string	    IB user surname or null if not allowed to view
+                symbol	            string	    Symbol or null if not allowed to view
+                timestamp	        timestamp	Time the record was created or null if not allowed to view
+                volume	            float	    Volume in lots or null if not allowed to view
 
-        Possible values of side field:
-            name	            value   	description
-            BUY	                0	        buy
-            SELL	            1	        sell
-
+            Possible values of side field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                BUY	                0	        buy
+                SELL	            1	        sell
+        
+        Raises:
+            ValueError: If the start time is greater than the end time.
         """
+
+        # Convert the start and end times to unix time
         start_ux=datetime_to_unixtime(start)
         end_ux=datetime_to_unixtime(end)
 
+        # Check if the start time is greater than the end time
         if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
-            return False
+            raise ValueError("Start time is greater than end time.")
 
         return self._open_data_channel(command="IbsHistory", end=end_ux, start=start_ux)
     
-    def getMarginLevel(self):
+    def getMarginLevel(self) -> dict:
         """
         Returns various account indicators.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            balance	            float	    balance in account currency
-            credit	            float	    credit
-            currency	        string	    user currency
-            equity	            float	    sum of balance and all profits in account currency
-            margin	            float	    margin requirements in account currency
-            margin_free	        float	    free margin in account currency
-            margin_level	    float	    margin level percentage
+            Dictionary: A Dictionary with the account indicators.
 
-
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------    
+                balance	            float	    balance in account currency
+                credit	            float	    credit
+                currency	        string	    user currency
+                equity	            float	    sum of balance and all profits in account currency
+                margin	            float	    margin requirements in account currency
+                margin_free	        float	    free margin in account currency
+                margin_level	    float	    margin level percentage
         """
+
         return self._open_data_channel(command="MarginLevel")
     
-    def getMarginTrade(self, symbol: str, volume: float):
+    def getMarginTrade(self, symbol: str, volume: float) -> dict:
         """
-        Returns expected margin for given instrument and volume. The value is calculated as expected margin value, and therefore might not be perfectly accurate.
+        Returns expected margin for given instrument and volume. The value is calculated as expected margin value,
+        and therefore might not be perfectly accurate.
 
         Args:
-            symbol (str): The symbol for which to retrieve margin trade information.
-            volume (float): The volume of the trade.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol for which to retrieve margin trade information.
+            volume              float	    no          The volume of the trade.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description        
-            margin	            float	    calculated margin in account currency
-              
+            Dictionary: A Dictionary with the margin trade information.
+
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------    
+                margin	            float	    calculated margin in account currency
+
+        Raises:
+            ValueError: If the volume is less than or equal to 0.
         """
-        if volume < 0:
+
+        # Check if the volume is less than or equal to 0
+        if volume <= 0:
             self._logger.error("Volume must be greater than 0.")
-            return False
+            raise ValueError("Volume must be greater than 0.")
 
         return self._open_data_channel(command="MarginTrade", symbol=symbol, volume=volume)
     
-    def getNews(self, start: datetime, end: datetime):
+    def getNews(self, start: datetime, end: datetime) -> List[dict]:
         """
-        Retrieves news data from the XTB API within the specified time range.
+        Returns news from trading server which were sent within specified period of time.
 
         Args:
-            start (datetime): The start time of the news data range.
-            end (datetime): The end time of the news data range.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            start               datetime	no          Start of news data range
+            end                 datetime	no          End of news data range
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-	                            dictionary	NEWS_TOPIC_RECORD 
+            A list of dictionaries containing the news data.
 
-        Format of NEWS_TOPIC_RECORD:
-            name	            type	    description
-            body	            string      Body
-            bodylen	            integer	    Body length
-            key	                string      News key
-            time	            timestamp   Time
-            timeString	        string      Time string
-            title	            string      News title
-            
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                body	            string      Body
+                bodylen	            integer	    Body length
+                key	                string      News key
+                time	            timestamp   Time
+                timeString	        string      Time string
+                title	            string      News title
+
+        Raises:
+            ValueError: If the start time is greater than the end time.
         """
+
+        # Convert the start and end times to unix time
         start_ux=datetime_to_unixtime(start)
         end_ux=datetime_to_unixtime(end)
 
+        # Check if the start time is greater than the end time
         if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
-            return False
+            raise ValueError("Start time is greater than end time.")
 
         return self._open_data_channel(command="News", end=end_ux, start=start_ux)
     
-    def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int):
+    def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int) -> dict:
         """
         Calculates estimated profit for given deal data Should be used for calculator-like apps only.
         Profit for opened transactions should be taken from server, due to higher precision of server calculation.
 
         Args:
-            symbol (str): The symbol of the trade.
-            volume (float): The volume of the trade.
-            openPrice (float): The opening price of the trade.
-            closePrice (float): The closing price of the trade.
-            cmd (int): The command type of the trade.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol of the trade.
+            volume              float	    no          The volume of the trade.
+            openPrice           float	    no          theoretical open price of order
+            closePrice          float	    no          theoretical close price of order
+            cmd                 int	        no          Operation code
 
-        Possible values of cmd field:
-            name	            type	    description
-            BUY	                0	        buy
-            SELL	            1	        sell
-            BUY_LIMIT	        2	        buy limit
-            SELL_LIMIT	        3	        sell limit
-            BUY_STOP	        4	        buy stop
-            SELL_STOP	        5	        sell stop
-            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-            CREDIT	            7	        Read only
+            Possible values of cmd field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                BUY	                0	        buy
+                SELL	            1	        sell
+                BUY_LIMIT	        2	        buy limit
+                SELL_LIMIT	        3	        sell limit
+                BUY_STOP	        4	        buy stop
+                SELL_STOP	        5	        sell stop
+                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                CREDIT	            7	        Read only
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            profit	            float	    Profit in account currency
+            Dictionary: A Dictionary with the profit calculation.
 
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                profit	            float	    Profit in account currency
+        
+        Raises:
+            ValueError: If the command is invalid.
+            ValueError: If the volume is less than or equal to 0.
         """
+
+        # List of valid commands
         cmds = [0, 1, 2, 3, 4, 5, 6, 7]
 
+        # Check if the command is valid
         if cmd not in cmds:
             self._logger.error("Invalid cmd. Choose from: "+", ".join(cmds))
-            return False
+            raise ValueError("Invalid cmd. Choose from: "+", ".join(cmds))
         
-        if volume < 0:
+        # Check if the volume is less than or equal to 0
+        if volume <= 0:
             self._logger.error("Volume must be greater than 0.")
-            return False
+            raise ValueError("Volume must be greater than 0.")
 
         return self._open_data_channel(command="ProfitCalculation", closePrice=closePrice, cmd=cmd, openPrice=openPrice, symbol=symbol, volume=volume)
         
-    def getServerTime(self):
+    def getServerTime(self) -> dict:
         """
         Returns current time on trading server.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            time	            timestamp	Time
-            timeString	        string      Time described in form set on server (local time of server)
-        
+            Dictionary: A Dictionary with the server time.
+
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                time	            timestamp	Time
+                timeString	        string      Time described in form set on server (local time of server)
         """
+
         return self._open_data_channel(command="ServerTime")
     
-    def getStepRules(self):
+    def getStepRules(self) -> List[dict]:
         """
         Returns a list of step rules for DMAs.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-        	                    dictionary	STEP_RULE_RECORD
+            A list of dictionaries containing the step rules.
 
-        Format of STEP_RULE_RECORD:
-            name	            type	    description
-            id	                integer	    Step rule ID
-            name	            string      Step rule name
-            steps	            dictionary	STEP_RECORD
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                id	                integer	    Step rule ID
+                name	            string      Step rule name
+                steps	            list	    List of dictionaries containing the step records
 
-        Format of STEP_RECORD:
-            name	            type	    description
-            fromValue	        float	    Lower border of the volume range
-            step	            float	    lotStep value in the given volume range
-
+            Format of the step record dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                fromValue	        float	    Lower border of the volume range
+                step	            float	    lotStep value in the given volume range
         """
+
         return self._open_data_channel(command="StepRules")
 
-    def getSymbol(self, symbol: str):
+    def getSymbol(self, symbol: str) -> dict:
         """
         Returns information about symbol available for the user.
 
         Args:
-            symbol (str): The symbol to retrieve information for.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbol              string	    no          The symbol to retrieve information for.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            ask	                float	    Ask price in base currency
-            bid	                float	    Bid price in base currency
-            categoryName	    string	    Category name
-            contractSize	    integer     Size of 1 lot
-            currency	        string	    Currency
-            currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
-            currencyProfit	    string	    The currency of calculated profit
-            description	        string	    Description
-            expiration	        timestamp	Null if not applicable
-            groupName	        string	    Symbol group name
-            high	            float	    The highest price of the day in base currency
-            initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
-            instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
-            leverage	        float	    Symbol leverage
-            longOnly	        boolean	    Long only
-            lotMax	            float	    Maximum size of trade
-            lotMin	            float	    Minimum size of trade
-            lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
-            low	                float	    The lowest price of the day in base currency
-            marginHedged	    integer	    Used for profit calculation
-            marginHedgedStrong  boolean	    For margin calculation
-            marginMaintenance   integer	    For margin calculation, null if not applicable
-            marginMode	        integer	    For margin calculation
-            percentage	        float	    Percentage
-            pipsPrecision	    integer	    Number of symbol's pip decimal places
-            precision	        integer	    Number of symbol's price decimal places
-            profitMode	        integer	    For profit calculation
-            quoteId     	    integer	    Source of price
-            shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
-            spreadRaw	        float	    The difference between raw ask and bid prices
-            spreadTable	        float	    Spread representation
-            starting	        timestamp	Null if not applicable
-            stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
-            stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
-            swap_rollover3days	integer	    timestamp when additional swap is accounted for weekend
-            swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
-            swapLong	        float	    Swap value for long positions in pips
-            swapShort	        float	    Swap value for short positions in pips
-            swapType	        integer	    Type of swap calculated
-            symbol	            string	    Symbol name
-            tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
-            tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
-            time	            timestamp	Ask & bid tick time
-            timeString	        string	    Time in String
-            trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
-            type	            integer	    Instrument class number
+            Dictionary: A Dictionary with the symbol information.
 
-        Possible values of quoteId field:
-            name	            value	    description
-            fixed	            1	        fixed
-            float	            2	        float
-            depth	            3	        depth
-            cross	            4	        cross
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                ask	                float	    Ask price in base currency
+                bid	                float	    Bid price in base currency
+                categoryName	    string	    Category name
+                contractSize	    integer     Size of 1 lot
+                currency	        string	    Currency
+                currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
+                currencyProfit	    string	    The currency of calculated profit
+                description	        string	    Description
+                expiration	        timestamp	Null if not applicable
+                groupName	        string	    Symbol group name
+                high	            float	    The highest price of the day in base currency
+                initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
+                instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
+                leverage	        float	    Symbol leverage
+                longOnly	        boolean	    Long only
+                lotMax	            float	    Maximum size of trade
+                lotMin	            float	    Minimum size of trade
+                lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
+                low	                float	    The lowest price of the day in base currency
+                marginHedged	    integer	    Used for profit calculation
+                marginHedgedStrong  boolean	    For margin calculation
+                marginMaintenance   integer	    For margin calculation, null if not applicable
+                marginMode	        integer	    For margin calculation
+                percentage	        float	    Percentage
+                pipsPrecision	    integer	    Number of symbol's pip decimal places
+                precision	        integer	    Number of symbol's price decimal places
+                profitMode	        integer	    For profit calculation
+                quoteId     	    integer	    Source of price
+                shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
+                spreadRaw	        float	    The difference between raw ask and bid prices
+                spreadTable	        float	    Spread representation
+                starting	        timestamp	Null if not applicable
+                stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
+                stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
+                swap_rollover3days	integer	    timestamp when additional swap is accounted for weekend
+                swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
+                swapLong	        float	    Swap value for long positions in pips
+                swapShort	        float	    Swap value for short positions in pips
+                swapType	        integer	    Type of swap calculated
+                symbol	            string	    Symbol name
+                tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
+                tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
+                time	            timestamp	Ask & bid tick time
+                timeString	        string	    Time in String
+                trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
+                type	            integer	    Instrument class number
 
-        Possible values of marginMode field:
-            name	            value	    description
-            Forex	            101	        Forex
-            CFD leveraged	    102	        CFD leveraged
-            CFD	                103	        CFD
+            Possible values of quoteId field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                fixed	            1	        fixed
+                float	            2	        float
+                depth	            3	        depth
+                cross	            4	        cross
 
-        Possible values of profitMode field:
-            name	            value	    description
-            FOREX	            5	        FOREX
-            CFD	                6	        CFD
+            Possible values of marginMode field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                Forex	            101	        Forex
+                CFD leveraged	    102	        CFD leveraged
+                CFD	                103	        CFD
 
+            Possible values of profitMode field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                FOREX	            5	        FOREX
+                CFD	                6	        CFD
         """
+
         return self._open_data_channel(command="Symbol", symbol=symbol)
     
     def getTickPrices(self, symbols: list, time: datetime, level: int=-1):
         """
-        Retrieves tick prices for the specified symbols at the given time.
+        Returns array of current quotations for given symbols, only quotations that changed from given timestamp are returned.
+        New timestamp obtained from output will be used as an argument of the next call of this command.
 
         Args:
-            symbols (list): A list of symbols for which tick prices are to be retrieved.
-            time (datetime): The timestamp at which tick prices are to be retrieved.
-            level (int, optional): The level of tick prices to retrieve. Defaults to -1.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbols             list	    no          A list of symbols for which tick prices are to be retrieved.
+            time                datetime	no          The time from which the most recent tick should be looked for. 
+            level               int	        yes         The level of tick prices to retrieve. Defaults to -1.
 
-        Possible values of level field:
-            name	            type	    description
-                                -1	        all available levels
-                                 0	        base level bid and ask price for instrument
-                                >0	        specified level      
+            Possible values of level field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                                    -1	        all available levels
+                                    0	        base level bid and ask price for instrument
+                                    >0	        specified level      
 
         Returns:
             Dictionary: A Dictionary containing the following fields:

@@ -197,7 +197,7 @@ def pretty(command: str) -> str:
 
     return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
 
-def calculate_timedelta(start: datetime, end: datetime, period: str = 'minutes') -> float:
+def calculate_timesteps(start: datetime, end: datetime, period: str = 'minutes') -> float:
     """
     Calculate the time difference between two datetime objects.
 
@@ -225,19 +225,21 @@ def calculate_timedelta(start: datetime, end: datetime, period: str = 'minutes')
 
     # Return the difference in the desired unit
     if period == 'minutes':
-        return delta.total_seconds() / 60
+        steps = delta.total_seconds() / 60
     elif period == 'hours':
-        return delta.total_seconds() / 3600
+        steps = delta.total_seconds() / 3600
     elif period == 'days':
-        return delta.days
+        steps = delta.days
     elif period == 'weeks':
-        return delta.days / 7
+        steps = delta.days / 7
     elif period == 'months':
         # Use relativedelta to calculate the number of months
         rd = relativedelta(end, start)
-        return rd.years * 12 + rd.months
+        steps = rd.years * 12 + rd.months
     else:
         raise ValueError("Unsupported unit. Please choose from 'minutes', 'hours', 'days', 'weeks', or 'months'.")
+    
+    return steps
 
 def datetime_to_unixtime(dt: datetime.datetime) -> int:
     """
