@@ -596,7 +596,7 @@ class Wrapper(HandlerManager):
         Returns calendar with market events.
 
         Returns:
-            A list of dictionaries containing market events data.
+            A list of dictionaries containing the calendar data.
 
             Format of the dictionary: 
                 name	            type	    description
@@ -882,10 +882,10 @@ class Wrapper(HandlerManager):
             Dictionary: A Dictionary with the commission definition.
 
             Format of the dictionary:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------    
-            commission	        float	    calculated commission in account currency, could be null if not applicable
-            rateOfExchange	    float	    rate of exchange between account currency and instrument base currency, could be null if not applicable
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------    
+                commission	        float	    calculated commission in account currency, could be null if not applicable
+                rateOfExchange	    float	    rate of exchange between account currency and instrument base currency, could be null if not applicable
         
         Raises:
             ValueError: If the volume is less than or equal to 0.
@@ -1126,7 +1126,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="ServerTime")
     
-    def getStepRules(self) -> List[dict]:
+    def getStepRules(self) -> List[Dict[int, str, List[dict]]]:
         """
         Returns a list of step rules for DMAs.
 
@@ -1485,149 +1485,212 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="TradeHistory", start=start_ux, end=end_ux)
 
-    def getTradingHours(self, symbols: list):
+    def getTradingHours(self, symbols: List[str]) -> List[Dict[List[dict], str, List[dict]]]:
         """
         Returns quotes and trading times.
 
         Args:
-            symbols (list): A list of symbols for which to retrieve trading hours.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            symbols             list	    no          A list of symbols for which to retrieve trading hours.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            quotes	            dictionary	QUOTES_RECORD 
-            symbol	            string      Symbol
-            trading	            dictionary	TRADING_RECORD 
+            A list of dictionaries containing the trading hours.
 
-        Format of QUOTES_RECORD:
-            name	            type	    description
-            day	                integer	    Day of week
-            fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
-            toT	                timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                quotes	            list        List of dictionaries containing the quotes records
+                symbol	            string      Symbol
+                trading	            list        List of dictionaries containing the trading records
 
-        Format of TRADING_RECORD:
-            name	            type	    description
-            day	                integer	    Day of week
-            fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
-            toT             	timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+            Format of the quote record dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                day	                integer	    Day of week
+                fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+                toT	                timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
 
-        Possible values of day field:
-            name	            type	    description
-                                1	        Monday
-                                2	        Tuesday
-                                3	        Wednesday
-                                4	        Thursday
-                                5	        Friday
-                                6	        Saturday
-                                7	        Sunday
-            
+            Format of the trading record dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                day	                integer	    Day of week
+                fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+                toT             	timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
+
+            Possible values of day field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                                    1	        Monday
+                                    2	        Tuesday
+                                    3	        Wednesday
+                                    4	        Thursday
+                                    5	        Friday
+                                    6	        Saturday
+                                    7	        Sunday
         """
-        if not all(isinstance(item, str) for item in symbols):
-            self._logger.error("Invalid symbols. All symbols must be strings.")
-            return False
 
         return self._open_data_channel(command="TradingHours", symbols=symbols)
 
-    def getVersion(self):
+    def getVersion(self) -> dict:
         """
         Returns the current API version.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            version	            string	    API versionversion	String	current API version      
+            Dictionary: A Dictionary with the API version.
 
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                version	            string	    current API version      
         """
+
         return self._open_data_channel(command="Version")
     
-    def tradeTransaction(self, cmd: int, customComment: str, expiration: datetime, offset: int, order: int, price: float, sl: float, symbol: str, tp: float, type: int, volume: float):
+    def tradeTransaction(self,
+        cmd: int,
+        customComment: str,
+        expiration: datetime,
+        offset: int,
+        order: int,
+        price: float,
+        sl: float,
+        symbol: str,
+        tp: float,
+        type: int,
+        volume: float
+        ) -> dict:
         """
-        Executes a trade transaction.
+       Starts trade transaction. tradeTransaction sends main transaction information to the server.
 
         Args:
-            cmd (int): Operation code
-            customComment (str): The value the customer may provide in order to retrieve it later.
-            expiration (datetime): Pending order expiration time
-            offset (int): Trailing offset
-            order (int): 0 or position number for closing/modifications
-            price (float): Trade price
-            sl (float): Stop loss
-            symbol (str): Trade symbol
-            tp (float): Take profit
-            type (int): Trade transaction type
-            volume (float): Trade volume
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            cmd                 int	        no          Operation code
+            customComment       string	    no          The value the customer may provide in order to retrieve it later.
+            expiration          datetime	no          Pending order expiration time
+            offset              int	        no          Trailing offset
+            order               int	        no          0 or position number for closing/modifications
+            price               float	    no          Trade price
+            sl                  float	    no          Stop loss
+            symbol              string	    no          Trade symbol
+            tp                  float	    no          Take profit
+            type                int	        no          Trade transaction type
+            volume              float	    no          Trade volume
 
-        Possible values of cmd field:
-            name	            type	    description
-            BUY	                0	        buy
-            SELL	            1	        sell
-            BUY_LIMIT	        2	        buy limit
-            SELL_LIMIT	        3	        sell limit
-            BUY_STOP	        4	        buy stop
-            SELL_STOP	        5	        sell stop
-            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-            CREDIT	            7	        Read only
 
-        Possible values of type field:
-            name	            type	    description
-            OPEN	            0	        order open, used for opening orders
-            PENDING	            1	        order pending, only used in the streaming getTrades  command
-            CLOSE	            2	        order close
-            MODIFY	            3	        order modify, only used in the tradeTransaction  command
-            DELETE	            4	        order delete, only used in the tradeTransaction  command
+            Possible values of cmd field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                BUY	                0	        buy
+                SELL	            1	        sell
+                BUY_LIMIT	        2	        buy limit
+                SELL_LIMIT	        3	        sell limit
+                BUY_STOP	        4	        buy stop
+                SELL_STOP	        5	        sell stop
+                BALANCE	            6	        Read only. Used in getTradesHistory for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                CREDIT	            7	        Read only
+
+            Possible values of type field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                OPEN	            0	        order open, used for opening orders
+                PENDING	            1	        order pending, only used in the streaming getTrades command
+                CLOSE	            2	        order close
+                MODIFY	            3	        order modify, only used in the tradeTransaction command
+                DELETE	            4	        order delete, only used in the tradeTransaction command
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            order	            integer	    order
+            Dictionary: A Dictionary with the symbol information.
 
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                order	            integer	    order
+
+                To analyse the status of the transaction (for example to verify if it was accepted or rejected) use the 
+                tradeTransactionStatus  command with the order number, that came back with the response 
+
+        Raises:
+            ValueError: If the command is invalid.
+            ValueError: If the type is invalid.
+            ValueError: If the expiration time is in the past.
+            ValueError: If the volume is less than or equal to 0.
         """
+
+        # List of valid commands and types
         cmds = [0, 1, 2, 3, 4, 5, 6, 7]
         types = [0, 1, 2, 3, 4]
 
+        # Check if the command is valid
         if cmd not in cmds:
             self._logger.error("Invalid cmd. Choose from: "+", ".join(cmds))
-            return False
+            raise ValueError("Invalid cmd. Choose from: "+", ".join(cmds))
         
+        # Check if the type is valid
         if type not in types:
             self._logger.error("Invalid type. Choose from: "+", ".join(types))
-            return False
+            raise ValueError("Invalid type. Choose from: "+", ".join(types))
         
-        if expiration < datetime.datetime.now():
+        # Check if the expiration time is in the past
+        if expiration < datetime.now():
             self._logger.error("Expiration time is in the past.")
-            return False
+            raise ValueError("Expiration time is in the past.")
         
-        if volume < 0:
+        # Check if the volume is less than or equal to 0
+        if volume <= 0:
             self._logger.error("Volume must be greater than 0.")
-            return False
+            raise ValueError("Volume must be greater than 0.")
 
+        # Convert the expiration time to unix time
         expiration_ux= datetime_to_unixtime(expiration)
 
-        return self._open_data_channel(command="tradeTransaction", tradeTransInf=dict(cmd=cmd, customCommand=customComment, expiration=expiration_ux, offset=offset, order=order, price=price, sl=sl, symbol=symbol, tp=tp, type=type, volume=volume))
+        return self._open_data_channel(
+            command="tradeTransaction",
+            tradeTransInfo=dict(
+                cmd=cmd,
+                customCommand=customComment,
+                expiration=expiration_ux,
+                offset=offset,
+                order=order,
+                price=price,
+                sl=sl,
+                symbol=symbol,
+                tp=tp,
+                type=type,
+                volume=volume
+            )
+        )
     
-    def tradeTransactionStatus(self, order: int):
+    def tradeTransactionStatus(self, order: int) -> dict:
         """
         Returns current transaction status.
 
-        Parameters:
-        order (int): The order ID for which to retrieve the transaction status.
+        Args:
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            order               int	        no          The order ID for which to retrieve the transaction status.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            ask	                float	    Price in base currency
-            bid	                float	    Price in base currency
-            customComment	    string	    The value the customer may provide in order to retrieve it later.
-            message	            string	    Can be null
-            order	            integer	    Unique order number
-            requestStatus	    integer	    Request status code, described below
+            Dictionary: A Dictionary with the transaction status.
 
-        Possible values of requestStatus field:
-            name	            type	    description
-            ERROR	            0	        error
-            PENDING	            1	        pending
-            ACCEPTED	        3	        The transaction has been executed successfully
-            REJECTED	        4       	The transaction has been rejected
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                ask	                float	    Price in base currency
+                bid	                float	    Price in base currency
+                customComment	    string	    The value the customer may provide in order to retrieve it later.
+                message	            string	    Can be null
+                order	            integer	    Unique order number
+                requestStatus	    integer	    Request status code, described below
 
+            Possible values of requestStatus field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                ERROR	            0	        error
+                PENDING	            1	        pending
+                ACCEPTED	        3	        The transaction has been executed successfully
+                REJECTED	        4       	The transaction has been rejected
         """
+
         return self._open_data_channel(command="tradeTransactionStatus", order=order)
