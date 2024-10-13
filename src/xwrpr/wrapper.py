@@ -114,9 +114,9 @@ class Wrapper(HandlerManager):
         max_connections: int=MAX_CONNECTIONS,
         max_send_data: int = MAX_SEND_DATA,
         max_received_data: int = MAX_RECEIVED_DATA,
-        min_request_interval: int = MIN_REQUEST_INTERVAL,
+        min_request_interval: float = MIN_REQUEST_INTERVAL,
         max_retries: int = MAX_RETRIES,
-        max_reaction_time: int = MAX_REACTION_TIME,
+        max_reaction_time: float = MAX_REACTION_TIME,
 
         logger: Optional[logging.Logger]=None,
     ) -> None:
@@ -131,9 +131,9 @@ class Wrapper(HandlerManager):
             max_connections (int): The maximum number of connections to the server allowed at the same time.
             max_send_data (int): The maximum number of bytes to send.
             max_received_data (int): The maximum number of bytes to receive.
-            min_request_interval (int): The minimum request interval in seconds.
+            min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
-            max_reaction_time (int): The maximum reaction time in seconds.
+            max_reaction_time (float): The maximum reaction time in seconds.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
 
         Raises:
