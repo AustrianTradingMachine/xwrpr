@@ -1300,63 +1300,60 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="TickPrices", level=level, symbols=symbols, timestamp=timestamp)
     
-    def getTradeRecords(self, orders: list):
+    def getTradeRecords(self, orders: List[int]) -> List[dict]:
         """
         Returns array of trades listed in orders argument.
 
         Args:
-            orders (list): A list of order IDs.
+            name                type        optional    description
+            -----------------------------------------------------------------------------------------------
+            orders              list	    no          A list of order IDs.
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-	                            dictionary	TRADE_RECORD
-        
-        Format of TRADE_RECORD:
-            name	            type	    description
-            close_price	        float       Close price in base currency
-            close_time	        timestamp	Null if order is not closed
-            close_timeString	string      Null if order is not closed
-            closed	            boolean	    Closed
-            cmd	                integer	    Operation code
-            comment	            string      Comment
-            commission	        float       Commission in account currency, null if not applicable
-            customComment	    string      The value the customer may provide in order to retrieve it later.
-            digits	            integer	    Number of decimal places
-            expiration	        timestamp	Null if order is not closed
-            expirationString	string      Null if order is not closed
-            margin_rate     	float       Margin rate
-            offset	            integer	    Trailing offset
-            open_price	        float       Open price in base currency
-            open_time	        timestamp	Open time
-            open_timeString	    string      Open time string
-            order	            integer	    Order number for opened transaction
-            order2	            integer	    Order number for closed transaction
-            position	        integer	    Order number common both for opened and closed transaction
-            profit	            float       Profit in account currency
-            sl	                float       Zero if stop loss is not set (in base currency)
-            storage	            float       Order swaps in account currency
-            symbol	            string      Symbol name or null for deposit/withdrawal operations
-            timestamp	        timestamp	Timestamp
-            tp	                float       Zero if take profit is not set (in base currency)
-            volume	            float       Volume in lots
+            A list of dictionaries containing the trade records.
 
-        Possible values of cmd field:
-            name	            value	    description
-            BUY	                0	        buy
-            SELL	            1	        sell
-            BUY_LIMIT	        2	        buy limit
-            SELL_LIMIT	        3	        sell limit
-            BUY_STOP	        4	        buy stop
-            SELL_STOP	        5	        sell stop
-            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-            CREDIT	            7	        Read only
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                close_price	        float       Close price in base currency
+                close_time	        timestamp	Null if order is not closed
+                close_timeString	string      Null if order is not closed
+                closed	            boolean	    Closed
+                cmd	                integer	    Operation code
+                comment	            string      Comment
+                commission	        float       Commission in account currency, null if not applicable
+                customComment	    string      The value the customer may provide in order to retrieve it later.
+                digits	            integer	    Number of decimal places
+                expiration	        timestamp	Null if order is not closed
+                expirationString	string      Null if order is not closed
+                margin_rate     	float       Margin rate
+                offset	            integer	    Trailing offset
+                open_price	        float       Open price in base currency
+                open_time	        timestamp	Open time
+                open_timeString	    string      Open time string
+                order	            integer	    Order number for opened transaction
+                order2	            integer	    Order number for closed transaction
+                position	        integer	    Order number common both for opened and closed transaction
+                profit	            float       Profit in account currency
+                sl	                float       Zero if stop loss is not set (in base currency)
+                storage	            float       Order swaps in account currency
+                symbol	            string      Symbol name or null for deposit/withdrawal operations
+                timestamp	        timestamp	Timestamp
+                tp	                float       Zero if take profit is not set (in base currency)
+                volume	            float       Volume in lots
 
-            
+            Possible values of cmd field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                BUY	                0	        buy
+                SELL	            1	        sell
+                BUY_LIMIT	        2	        buy limit
+                SELL_LIMIT	        3	        sell limit
+                BUY_STOP	        4	        buy stop
+                SELL_STOP	        5	        sell stop
+                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                CREDIT	            7	        Read only
         """
-        if not all(isinstance(item, int) for item in orders):
-            self._logger.error("Invalid order. All orders must be integers.")
-            return False
 
         return self._open_data_channel(command="TradeRecords", orders=orders)
     
