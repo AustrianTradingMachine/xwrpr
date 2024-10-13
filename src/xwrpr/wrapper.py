@@ -358,7 +358,7 @@ class Wrapper(HandlerManager):
 
         return self._open_stream_channel(command="Profits")
 
-    def streamTickPrices(self, symbol: str, minArrivalTime: Optional[int]=None, maxLevel: Optional[int]=None) -> dict:
+    def streamTickPrices(self, symbol: str, min_arrival_time: Optional[int]=None, max_level: Optional[int]=None) -> dict:
         """
         Establishes subscription for quotations and allows to obtain the relevant information in real-time,
         as soon as it is available in the system.
@@ -367,14 +367,14 @@ class Wrapper(HandlerManager):
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
             symbol              string	    no          The symbol for which to retrieve the tick prices.
-            minArrivalTime      integer     yes         The minimal interval in milliseconds between any two consecutive updates  
-            maxLevel            integer     yes         The maximum level of the tick prices
+            min_arrival_time    integer     yes         The minimal interval in milliseconds between any two consecutive updates  
+            max_level           integer     yes         The maximum level of the tick prices
 
-            minArrivalTime: If this field is not present, or it is set to 0 (zero), ticks - if available - are sent to the
+            min_arrival_time: If this field is not present, or it is set to 0 (zero), ticks - if available - are sent to the
                             client with interval equal to 200 milliseconds. In order to obtain ticks as frequently as
                             server allows you, set it to 1 (one).
             
-            maxLevel: The maximum level of the tick prices. If this field is not specified, the subscription is active for all
+            max_level: The maximum level of the tick prices. If this field is not specified, the subscription is active for all
                       levels that are managed in the system.
 
         Returns:
@@ -407,15 +407,15 @@ class Wrapper(HandlerManager):
                 cross	            4	        cross
         """
 
-        if minArrivalTime is not None and minArrivalTime < 0:
-            minArrivalTime=1
+        if min_arrival_time is not None and min_arrival_time < 0:
+            min_arrival_time=1
             self._logger.warning("minArrivalTime must greater than 0. Setting minArrivalTime to 1")
         
-        if maxLevel is not None and maxLevel < 1:
-            maxLevel=1
+        if max_level is not None and max_level < 1:
+            max_level=1
             self._logger.warning("maxLevel must be at least 1. Setting maxLevel to 1")
 
-        return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
+        return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=min_arrival_time, maxLevel=max_level)
 
     def streamTrades(self) -> dict:
         """
@@ -1129,7 +1129,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="News", end=end_ux, start=start_ux)
     
-    def getProfitCalculation(self, symbol: str, volume: float, openPrice: float, closePrice: float, cmd: int) -> dict:
+    def getProfitCalculation(self, symbol: str, volume: float, open_price: float, close_price: float, cmd: int) -> dict:
         """
         Calculates estimated profit for given deal data. Should be used for calculator-like apps only.
         Profit for opened transactions should be taken from server, due to higher precision of server calculation.
@@ -1139,8 +1139,8 @@ class Wrapper(HandlerManager):
             -----------------------------------------------------------------------------------------------
             symbol              string	    no          The symbol of the trade.
             volume              float	    no          The volume of the trade.
-            openPrice           float	    no          theoretical open price of order
-            closePrice          float	    no          theoretical close price of order
+            open_price          float	    no          theoretical open price of order
+            close_price         float	    no          theoretical close price of order
             cmd                 int	        no          Operation code
 
             Possible values of "cmd" field:
@@ -1183,9 +1183,9 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(
             command="ProfitCalculation",
-            closePrice=closePrice,
+            closePrice=close_price,
             cmd=cmd,
-            openPrice=openPrice,
+            openPrice=open_price,
             symbol=symbol,
             volume=volume
         )
@@ -1437,14 +1437,14 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="TradeRecords", orders=orders)
     
-    def getTrades(self, openedOnly: bool) -> List[dict]:
+    def getTrades(self, opened_only: bool) -> List[dict]:
         """
         Returns array of user's trades.
 
         Args:
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
-            openedOnly          bool	    no          If True, only retrieves opened trades. If False, retrieves all trades.
+            opened_only         bool	    no          If True, only retrieves opened trades. If False, retrieves all trades.
 
         Returns:
             A list of dictionaries containing the trades.
@@ -1493,7 +1493,7 @@ class Wrapper(HandlerManager):
 
         """
         
-        return self._open_data_channel(command="Trades", openedOnly=openedOnly)
+        return self._open_data_channel(command="Trades", openedOnly=opened_only)
     
     def getTradesHistory(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
         """
@@ -1639,7 +1639,7 @@ class Wrapper(HandlerManager):
     
     def tradeTransaction(self,
         cmd: int,
-        customComment: str,
+        custom_comment: str,
         expiration: datetime,
         offset: int,
         order: int,
@@ -1657,7 +1657,7 @@ class Wrapper(HandlerManager):
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
             cmd                 int	        no          Operation code
-            customComment       string	    no          The value the customer may provide in order to retrieve it later.
+            custom_comment      string	    no          The value the customer may provide in order to retrieve it later.
             expiration          datetime	no          Pending order expiration time
             offset              int	        no          Trailing offset
             order               int	        no          0 or position number for closing/modifications
@@ -1739,7 +1739,7 @@ class Wrapper(HandlerManager):
             command="tradeTransaction",
             tradeTransInfo=dict(
                 cmd=cmd,
-                customComment=customComment,
+                customComment=custom_comment,
                 expiration=expiration_ux,
                 offset=offset,
                 order=order,

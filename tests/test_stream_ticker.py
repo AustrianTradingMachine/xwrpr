@@ -39,7 +39,7 @@ XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
 
 
 # Streaming data an reading the df
-exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
+exchange=XTBData.streamTickPrices(symbol='ETHEREUM', min_arrival_time=0, max_level=1)
 
 # Streaming data an reading the df
 later = datetime.now() + timedelta(seconds=30)

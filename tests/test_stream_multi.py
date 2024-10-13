@@ -42,7 +42,7 @@ XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
 # Target function for Ticker
 def Ticker(later: datetime):
 
-    exchange=XTBData.streamTickPrices(symbol='ETHEREUM', minArrivalTime=0, maxLevel=1)
+    exchange=XTBData.streamTickPrices(symbol='ETHEREUM', min_arrival_time=0, max_level=1)
 
     while datetime.now() < later:
         exchange['lock'].acquire(blocking=True)
