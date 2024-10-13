@@ -237,7 +237,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
                 - thread (Thread): Starting the Thread will terminate the stream
-                - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+                - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
         Raises:
             None
@@ -264,7 +264,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary:
                 name	            type	    description
@@ -292,7 +292,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary: 
                 name	            type	    description
@@ -325,7 +325,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary: 
                 name	            type	    description
@@ -345,7 +345,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary: 
                 name	            type	    description
@@ -374,13 +374,13 @@ class Wrapper(HandlerManager):
                             client with interval equal to 200 milliseconds. In order to obtain ticks as frequently as
                             server allows you, set it to 1 (one).
             
-            maxLevel: The maximum level of the tick prices. If this field is not specified, the subscription isactive for all
+            maxLevel: The maximum level of the tick prices. If this field is not specified, the subscription is active for all
                       levels that are managed in the system.
 
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary:
                 name	            type	    description
@@ -431,7 +431,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary:
                 name	            type	    description
@@ -491,10 +491,10 @@ class Wrapper(HandlerManager):
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 OPEN	            0	        order open, used for opening orders
-                PENDING	            1	        order pending, only used in the streamTrades  command
+                PENDING	            1	        order pending, only used in the "streamTrades"  command
                 CLOSE	            2	        order close
-                MODIFY	            3	        order modify, only used in the tradeTransaction  command
-                DELETE	            4	        order delete, only used in the tradeTransaction  command
+                MODIFY	            3	        order modify, only used in the "tradeTransaction"  command
+                DELETE	            4	        order delete, only used in the "tradeTransaction"  command
         """
 
         return self._open_stream_channel(command="Trades")
@@ -506,7 +506,7 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
             - thread (Thread): Starting the Thread will terminate the stream
-            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries.
 
             Format of the dictionary:
                 name	            type	    description
@@ -517,7 +517,7 @@ class Wrapper(HandlerManager):
                 price	            float	    Price in base currency
                 requestStatus	    integer     Request status code, described below
 
-            Possible values of requestStatus field:
+            Possible values of "requestStatus" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 ERROR	            0	        error
@@ -571,7 +571,7 @@ class Wrapper(HandlerManager):
                 longOnly	        boolean	    Long only
                 lotMax	            float	    Maximum size of trade
                 lotMin	            float	    Minimum size of trade
-                lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
+                lotStep	            float	    A value of minimum step by which the size of trade can be changed (within "lotMin" - "lotMax" range)
                 low	                float	    The lowest price of the day in base currency
                 marginHedged	    integer	    Used for profit calculation
                 marginHedgedStrong  boolean	    For margin calculation
@@ -586,7 +586,7 @@ class Wrapper(HandlerManager):
                 spreadRaw	        float	    The difference between raw ask and bid prices
                 spreadTable	        float	    Spread representation
                 starting	        timestamp	Null if not applicable
-                stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
+                stepRuleId	        integer	    Appropriate step rule ID from "getStepRules" command response
                 stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
                 swap_rollover3days  integer	    Time when additional swap is accounted for weekend
                 swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
@@ -601,7 +601,7 @@ class Wrapper(HandlerManager):
                 trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
                 type	            integer	    Instrument class number
 
-            Possible values of quoteId field:
+            Possible values of "quoteId" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 fixed	            1	        fixed
@@ -609,14 +609,14 @@ class Wrapper(HandlerManager):
                 depth	            3	        depth
                 cross	            4	        cross
 
-            Possible values of marginMode field:
+            Possible values of "marginMode" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 Forex	            101	        Forex
                 CFD leveraged	    102	        CFD leveraged
                 CFD	                103	        CFD
 
-            Possible values of profitMode field:
+            Possible values of "profitMode" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 FOREX	            5	        FOREX
@@ -644,7 +644,7 @@ class Wrapper(HandlerManager):
                 time	            timestamp	Time, when the information will be released (in this time empty "current" value should be changed with exact released value)
                 title           	String	    Name of the indicator for which values will be released
 
-            Possible values of impact field:
+            Possible values of "impact" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 low	                1	        low
@@ -664,6 +664,7 @@ class Wrapper(HandlerManager):
             symbol              string	    no          The symbol for which to retrieve the chart data.
             period              string	    no          Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
             start               datetime	yes         Start of chart block (rounded down to the nearest interval and excluding)
+                                                        Default: 0001-01-01 00:00:00
 
             Limitations: there are limitations in charts data availability. Detailed ranges for charts data, what can be accessed
             with specific period, are as follows:
@@ -695,8 +696,8 @@ class Wrapper(HandlerManager):
 
                 Price values must be divided by 10 to the power of digits in order to obtain exact prices.
 
-                If the chosen period is greater than 1 minute, the last candle returned by the API can change until the end of the period.
-                the candle is being automatically updated every minute.
+                If the chosen period is greater than 1 minute, the last candle returned by the API can change until the end
+                of the period. The candle is being automatically updated every minute.
 
         Raises:
             ValueError: If the period is invalid.
@@ -729,8 +730,7 @@ class Wrapper(HandlerManager):
         
         # Convert the start time to unix time
         if not start:
-            # If no start time is given, set it to the minimum time
-            # 0001-01-01 00:00:00
+            # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
             start_ux=datetime_to_unixtime(datetime.min)
         else:
             start_ux=datetime_to_unixtime(start)
@@ -745,7 +745,14 @@ class Wrapper(HandlerManager):
             start_ux=limit_ux
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
-        return self._open_data_channel(command="ChartLastRequest",info=dict(period=periods[period],start=start_ux,symbol=symbol))
+        return self._open_data_channel(
+            command="ChartLastRequest",
+            info=dict(
+                period=periods[period],
+                start=start_ux,
+                symbol=symbol
+            )
+        )
 
     def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime]=None, end: Optional[datetime]=None, ticks: int=0) -> Dict[int,List[dict]]:
         """
@@ -757,8 +764,11 @@ class Wrapper(HandlerManager):
             symbol              string	    no          The symbol for which to retrieve the chart data.
             period              string	    no          Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
             start               datetime	yes         Start of chart block (rounded down to the nearest interval and excluding)
+                                                        Default: 0001-01-01 00:00:00
             end                 datetime	yes         End of chart block (rounded down to the nearest interval and excluding)
+                                                        Default: current time
             ticks               integer     yes         The number of ticks to retrieve. If set to 0, the start and end times are used.
+                                                        Default: 0
 
             If ticks >0 (e.g. N) then API returns N candles from time start.
             If ticks <0 then API returns N candles to time start.
@@ -826,8 +836,7 @@ class Wrapper(HandlerManager):
 
         # Convert the start time to unix time
         if not start:
-            # If no start time is given, set it to the minimum time
-            # 0001-01-01 00:00:00
+            # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
             start_ux=datetime_to_unixtime(datetime.min)
         else:
             start_ux=datetime_to_unixtime(start)
@@ -901,7 +910,16 @@ class Wrapper(HandlerManager):
                     ticks = delta
                     self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
 
-        return self._open_data_channel(command="ChartRangeRequest", info=dict(end=end_ux, period=periods[period], start=start_ux, symbol=symbol, ticks=ticks))
+        return self._open_data_channel(
+            command="ChartRangeRequest",
+            info=dict(
+                end=end_ux,
+                period=periods[period],
+                start=start_ux,
+                symbol=symbol,
+                ticks=ticks
+            )
+        )
 
     def getCommissionDef(self, symbol: str, volume: float) -> dict:
         """
@@ -955,15 +973,15 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="CurrentUserData")
     
-    def getIbsHistory(self, start: datetime, end: datetime) -> List[dict]:
+    def getIbsHistory(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
         """
         Returns IBs data from the given time range.
 
         Args:
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
-            start               datetime	no          Start of IBs history block
-            end                 datetime	no          End of IBs history block
+            start               datetime	yes          Start of IBs history block. Default: 0001-01-01 00:00:00
+            end                 datetime	yes          End of IBs history block. Default: current time
 
         Returns:
             A list of dictionaries containing the IBs data.
@@ -981,7 +999,7 @@ class Wrapper(HandlerManager):
                 timestamp	        timestamp	Time the record was created or null if not allowed to view
                 volume	            float	    Volume in lots or null if not allowed to view
 
-            Possible values of side field:
+            Possible values of "side" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -991,9 +1009,19 @@ class Wrapper(HandlerManager):
             ValueError: If the start time is greater than the end time.
         """
 
-        # Convert the start and end times to unix time
-        start_ux=datetime_to_unixtime(start)
-        end_ux=datetime_to_unixtime(end)
+        # Convert the start time to unix time
+        if not start:
+            # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
+            start_ux=datetime_to_unixtime(datetime.min)
+        else:
+            start_ux=datetime_to_unixtime(start)
+
+        # Convert the end time to unix time
+        if not end:
+            # If no end time is given, set it to the current time
+            end_ux=datetime_to_unixtime(datetime.now())
+        else:
+            end_ux=datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
         if start_ux> end_ux:
@@ -1053,15 +1081,15 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="MarginTrade", symbol=symbol, volume=volume)
     
-    def getNews(self, start: datetime, end: datetime) -> List[dict]:
+    def getNews(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
         """
         Returns news from trading server which were sent within specified period of time.
 
         Args:
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
-            start               datetime	no          Start of news data range
-            end                 datetime	no          End of news data range
+            start               datetime	yes          Start of news data range. Default: 0001-01-01 00:00:00
+            end                 datetime	yes          End of news data range. Default: current time
 
         Returns:
             A list of dictionaries containing the news data.
@@ -1080,9 +1108,19 @@ class Wrapper(HandlerManager):
             ValueError: If the start time is greater than the end time.
         """
 
-        # Convert the start and end times to unix time
-        start_ux=datetime_to_unixtime(start)
-        end_ux=datetime_to_unixtime(end)
+        # Convert the start time to unix time
+        if not start:
+            # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
+            start_ux=datetime_to_unixtime(datetime.min)
+        else:
+            start_ux=datetime_to_unixtime(start)
+
+        # Convert the end time to unix time
+        if not end:
+            # If no end time is given, set it to the current time
+            end_ux=datetime_to_unixtime(datetime.now())
+        else:
+            end_ux=datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
         if start_ux> end_ux:
@@ -1105,7 +1143,7 @@ class Wrapper(HandlerManager):
             closePrice          float	    no          theoretical close price of order
             cmd                 int	        no          Operation code
 
-            Possible values of cmd field:
+            Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -1114,7 +1152,7 @@ class Wrapper(HandlerManager):
                 SELL_LIMIT	        3	        sell limit
                 BUY_STOP	        4	        buy stop
                 SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                BALANCE	            6	        Read only
                 CREDIT	            7	        Read only
 
         Returns:
@@ -1143,7 +1181,14 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
 
-        return self._open_data_channel(command="ProfitCalculation", closePrice=closePrice, cmd=cmd, openPrice=openPrice, symbol=symbol, volume=volume)
+        return self._open_data_channel(
+            command="ProfitCalculation",
+            closePrice=closePrice,
+            cmd=cmd,
+            openPrice=openPrice,
+            symbol=symbol,
+            volume=volume
+        )
         
     def getServerTime(self) -> dict:
         """
@@ -1175,7 +1220,7 @@ class Wrapper(HandlerManager):
                 name	            string      Step rule name
                 steps	            list	    List of dictionaries containing the step records
 
-            Format of the step record dictionary:
+            Format of the "step record" dictionary:
                 name	            type	    description
                 -----------------------------------------------------------------------------------------------
                 fromValue	        float	    Lower border of the volume range
@@ -1216,7 +1261,7 @@ class Wrapper(HandlerManager):
                 longOnly	        boolean	    Long only
                 lotMax	            float	    Maximum size of trade
                 lotMin	            float	    Minimum size of trade
-                lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
+                lotStep	            float	    A value of minimum step by which the size of trade can be changed (within "lotMin" - "lotMax" range)
                 low	                float	    The lowest price of the day in base currency
                 marginHedged	    integer	    Used for profit calculation
                 marginHedgedStrong  boolean	    For margin calculation
@@ -1231,7 +1276,7 @@ class Wrapper(HandlerManager):
                 spreadRaw	        float	    The difference between raw ask and bid prices
                 spreadTable	        float	    Spread representation
                 starting	        timestamp	Null if not applicable
-                stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
+                stepRuleId	        integer	    Appropriate step rule ID from "getStepRules" command response
                 stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
                 swap_rollover3days	integer	    timestamp when additional swap is accounted for weekend
                 swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
@@ -1246,7 +1291,7 @@ class Wrapper(HandlerManager):
                 trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
                 type	            integer	    Instrument class number
 
-            Possible values of quoteId field:
+            Possible values of "quoteId" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 fixed	            1	        fixed
@@ -1254,14 +1299,14 @@ class Wrapper(HandlerManager):
                 depth	            3	        depth
                 cross	            4	        cross
 
-            Possible values of marginMode field:
+            Possible values of "marginMode" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 Forex	            101	        Forex
                 CFD leveraged	    102	        CFD leveraged
                 CFD	                103	        CFD
 
-            Possible values of profitMode field:
+            Possible values of "profitMode" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 FOREX	            5	        FOREX
@@ -1282,7 +1327,7 @@ class Wrapper(HandlerManager):
             time                datetime	no          The time from which the most recent tick should be looked for. 
             level               int	        yes         The level of tick prices to retrieve. Defaults to -1.
 
-            Possible values of level field:
+            Possible values of "level" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                                     -1	        all available levels
@@ -1312,7 +1357,7 @@ class Wrapper(HandlerManager):
                 symbol	            string	    Symbol
                 timestamp	        timestamp	Timestamp
 
-                Possible values of level field correspond to the level field in the input arguments.
+                Possible values of "level" field correspond to the level field in the input arguments.
 
         Raises:
             ValueError: If the level is invalid.
@@ -1377,7 +1422,7 @@ class Wrapper(HandlerManager):
                 tp	                float       Zero if take profit is not set (in base currency)
                 volume	            float       Volume in lots
 
-            Possible values of cmd field:
+            Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -1386,7 +1431,7 @@ class Wrapper(HandlerManager):
                 SELL_LIMIT	        3	        sell limit
                 BUY_STOP	        4	        buy stop
                 SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                BALANCE	            6	        Read only
                 CREDIT	            7	        Read only
         """
 
@@ -1434,7 +1479,7 @@ class Wrapper(HandlerManager):
                 tp	                float       Zero if take profit is not set (in base currency)
                 volume	            float       Volume in lots
 
-            Possible values of cmd field:
+            Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -1443,22 +1488,22 @@ class Wrapper(HandlerManager):
                 SELL_LIMIT	        3	        sell limit
                 BUY_STOP	        4	        buy stop
                 SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                BALANCE	            6	        Read only
                 CREDIT	            7	        Read only
 
         """
         
         return self._open_data_channel(command="Trades", openedOnly=openedOnly)
     
-    def getTradesHistory(self, start: datetime, end: datetime) -> List[dict]:
+    def getTradesHistory(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
         """
         Returns array of user's trades which were closed within specified period of time.
 
         Args:
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
-            start               datetime	no          Start of trade history block
-            end                 datetime	no          End of trade history block
+            start               datetime	yes          Start of trade history block. Default: 0001-01-01 00:00:00
+            end                 datetime	yes          End of trade history block. Default: current time
 
         Returns:
             A list of dictionaries containing the trade history.
@@ -1493,7 +1538,7 @@ class Wrapper(HandlerManager):
                 tp	                float       Zero if take profit is not set (in base currency)
                 volume	            float       Volume in lots
 
-            Possible values of cmd field:
+            Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -1502,16 +1547,26 @@ class Wrapper(HandlerManager):
                 SELL_LIMIT	        3	        sell limit
                 BUY_STOP	        4	        buy stop
                 SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                BALANCE	            6	        Read only
                 CREDIT	            7	        Read only
 
         Raises:
             ValueError: If the start time is greater than the end time.
         """
 
-        # Convert the start and end times to unix time
-        start_ux= datetime_to_unixtime(start)
-        end_ux= datetime_to_unixtime(end)
+        # Convert the start time to unix time
+        if not start:
+            # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
+            start_ux=datetime_to_unixtime(datetime.min)
+        else:
+            start_ux=datetime_to_unixtime(start)
+
+        # Convert the end time to unix time
+        if not end:
+            # If no end time is given, set it to the current time
+            end_ux=datetime_to_unixtime(datetime.now())
+        else:
+            end_ux=datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
         if start_ux> end_ux:
@@ -1539,21 +1594,21 @@ class Wrapper(HandlerManager):
                 symbol	            string      Symbol
                 trading	            list        List of dictionaries containing the trading records
 
-            Format of the quote record dictionary:
+            Format of the "quote record" dictionary:
                 name	            type	    description
                 -----------------------------------------------------------------------------------------------
                 day	                integer	    Day of week
                 fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
                 toT	                timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
 
-            Format of the trading record dictionary:
+            Format of the "trading record" dictionary:
                 name	            type	    description
                 -----------------------------------------------------------------------------------------------
                 day	                integer	    Day of week
                 fromT	            timestamp	Start time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
                 toT             	timestamp	End time in ms from 00:00 CET / CEST time zone (see Daylight Saving Time, DST)
 
-            Possible values of day field:
+            Possible values of "day" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                                     1	        Monday
@@ -1614,7 +1669,7 @@ class Wrapper(HandlerManager):
             volume              float	    no          Trade volume
 
 
-            Possible values of cmd field:
+            Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 BUY	                0	        buy
@@ -1623,17 +1678,17 @@ class Wrapper(HandlerManager):
                 SELL_LIMIT	        3	        sell limit
                 BUY_STOP	        4	        buy stop
                 SELL_STOP	        5	        sell stop
-                BALANCE	            6	        Read only. Used in getTradesHistory for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                BALANCE	            6	        Read only
                 CREDIT	            7	        Read only
 
-            Possible values of type field:
+            Possible values of "type" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 OPEN	            0	        order open, used for opening orders
-                PENDING	            1	        order pending, only used in the streaming getTrades command
+                PENDING	            1	        order pending, only used in the "streamTrades" command
                 CLOSE	            2	        order close
-                MODIFY	            3	        order modify, only used in the tradeTransaction command
-                DELETE	            4	        order delete, only used in the tradeTransaction command
+                MODIFY	            3	        order modify, only used in the "tradeTransaction" command
+                DELETE	            4	        order delete, only used in the "tradeTransaction" command
 
         Returns:
             Dictionary: A Dictionary with the symbol information.
@@ -1719,7 +1774,7 @@ class Wrapper(HandlerManager):
                 order	            integer	    Unique order number
                 requestStatus	    integer	    Request status code, described below
 
-            Possible values of requestStatus field:
+            Possible values of "requestStatus" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                 ERROR	            0	        error
