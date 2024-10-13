@@ -24,5 +24,5 @@
 from xwrpr.wrapper import Wrapper
 
 API_VERSION = '2.5.0'
-__version__ = '0.2.0'
+__version__ = '1.0.0'
 __all__ = ['Wrapper', 'API_VERSION']
