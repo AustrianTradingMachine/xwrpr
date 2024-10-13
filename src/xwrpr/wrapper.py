@@ -236,15 +236,15 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            balance	            float	    balance in account currency
-            credit	            float	    credit in account currency
-            equity	            float	    sum of balance and all profits in account currency
-            margin	            float	    margin requirements
-            marginFree	        float	    free margin
-            marginLevel	        float	    margin level percentage
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                balance	            float	    balance in account currency
+                credit	            float	    credit in account currency
+                equity	            float	    sum of balance and all profits in account currency
+                margin	            float	    margin requirements
+                marginFree	        float	    free margin
+                marginLevel	        float	    margin level percentage
         """
 
         return self._open_stream_channel(command="Balance")
@@ -262,26 +262,26 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary: 
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            close	            float	    Close price in base currency
-            ctm	                timestamp	Candle  start time in CET time zone (Central European Time)
-            ctmString	        string	    String representation of the ctm field
-            high	            float	    Highest value in the given period in base currency
-            low	                float	    Lowest  value in the given period in base currency
-            open	            float	    Open price in base currency
-            quoteId	            integer     Source of price
-            symbol	            string	    Symbol
-            vol	                float	    Volume in lots
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                close	            float	    Close price in base currency
+                ctm	                timestamp	Candle  start time in CET time zone (Central European Time)
+                ctmString	        string	    String representation of the ctm field
+                high	            float	    Highest value in the given period in base currency
+                low	                float	    Lowest  value in the given period in base currency
+                open	            float	    Open price in base currency
+                quoteId	            integer     Source of price
+                symbol	            string	    Symbol
+                vol	                float	    Volume in lots
 
-        Possible values of quoteId field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            fixed	            1	        fixed
-            float	            2	        float
-            depth	            3	        depth
-            cross	            4	        cross
+            Possible values of quoteId field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                fixed	            1	        fixed
+                float	            2	        float
+                depth	            3	        depth
+                cross	            4	        cross
         """
 
         return self._open_stream_channel(command="Candles", symbol=symbol)
@@ -295,13 +295,13 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary: 
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            body	            string	    Body
-            key	                string	    News key
-            time	            timestamp   Time
-            title	            string	    News title
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                body	            string	    Body
+                key	                string	    News key
+                time	            timestamp   Time
+                title	            string	    News title
         """
 
         return self._open_stream_channel(command="News")
@@ -315,13 +315,13 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary: 
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            order	            integer 	Order number
-            order2	            integer     Transaction ID
-            position	        integer     Position number
-            profit	            float	    Profit in account currency
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                order	            integer 	Order number
+                order2	            integer     Transaction ID
+                position	        integer     Position number
+                profit	            float	    Profit in account currency
         """
 
         return self._open_stream_channel(command="Profits")
@@ -345,29 +345,29 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            ask	                float	    Ask price in base currency
-            askVolume	        integer     Number of available lots to buy at given price or null if not applicable
-            bid	                float	    Bid price in base currency
-            bidVolume	        integer 	Number of available lots to buy at given price or null if not applicable
-            high	            float	    The highest price of the day in base currency
-            level	            integer 	Price level
-            low	                float	    The lowest price of the day in base currency
-            quoteId	            integer     Source of price, detailed description below
-            spreadRaw	        float	    The difference between raw ask and bid prices
-            spreadTable	        float	    Spread representation
-            symbol	            string	    Symbol
-            timestamp	        timestamp   Timestamp
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                ask	                float	    Ask price in base currency
+                askVolume	        integer     Number of available lots to buy at given price or null if not applicable
+                bid	                float	    Bid price in base currency
+                bidVolume	        integer 	Number of available lots to buy at given price or null if not applicable
+                high	            float	    The highest price of the day in base currency
+                level	            integer 	Price level
+                low	                float	    The lowest price of the day in base currency
+                quoteId	            integer     Source of price, detailed description below
+                spreadRaw	        float	    The difference between raw ask and bid prices
+                spreadTable	        float	    Spread representation
+                symbol	            string	    Symbol
+                timestamp	        timestamp   Timestamp
 
-        Possible values of quoteId field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            fixed	            1	        fixed
-            float	            2	        float
-            depth	            3	        depth
-            cross	            4	        cross
+            Possible values of quoteId field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                fixed	            1	        fixed
+                float	            2	        float
+                depth	            3	        depth
+                cross	            4	        cross
         """
 
         if minArrivalTime is not None and minArrivalTime < 0:
@@ -396,66 +396,66 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            close_price	        float	    Close price in base currency
-            close_time	        timestamp   Null if order is not closed
-            closed	            boolean	    Closed
-            cmd	                integer     Operation code
-            comment	            string	    Comment
-            commission	        float	    Commission in account currency, null if not applicable
-            customComment	    string	    The value the customer may provide in order to retrieve it later.
-            digits	            integer     Number of decimal places
-            expiration	        timestamp	Null if order is not closed
-            margin_rate	        float	    Margin rate
-            offset	            integer     Trailing offset
-            open_price	        float	    Open price in base currency
-            open_time	        timestamp	Open time
-            order	            integer 	Order number for opened transaction
-            order2	            integer     Transaction id
-            position	        integer     Position number (if type is 0 and 2) or transaction parameter (if type is 1)
-            profit	            float	    null unless the trade is closed (type=2) or opened (type=0)
-            sl	                float	    Zero if stop loss is not set (in base currency)
-            state	            string	    Trade state, should be used for detecting pending order's cancellation
-            storage	            float	    Storage
-            symbol	            string	    Symbol
-            tp	                float	    Zero if take profit is not set (in base currency)
-            type	            integer     type
-            volume	            float	    Volume in lots
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                close_price	        float	    Close price in base currency
+                close_time	        timestamp   Null if order is not closed
+                closed	            boolean	    Closed
+                cmd	                integer     Operation code
+                comment	            string	    Comment
+                commission	        float	    Commission in account currency, null if not applicable
+                customComment	    string	    The value the customer may provide in order to retrieve it later.
+                digits	            integer     Number of decimal places
+                expiration	        timestamp	Null if order is not closed
+                margin_rate	        float	    Margin rate
+                offset	            integer     Trailing offset
+                open_price	        float	    Open price in base currency
+                open_time	        timestamp	Open time
+                order	            integer 	Order number for opened transaction
+                order2	            integer     Transaction id
+                position	        integer     Position number (if type is 0 and 2) or transaction parameter (if type is 1)
+                profit	            float	    null unless the trade is closed (type=2) or opened (type=0)
+                sl	                float	    Zero if stop loss is not set (in base currency)
+                state	            string	    Trade state, should be used for detecting pending order's cancellation
+                storage	            float	    Storage
+                symbol	            string	    Symbol
+                tp	                float	    Zero if take profit is not set (in base currency)
+                type	            integer     type
+                volume	            float	    Volume in lots
 
-        Possible values of cmd field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            BUY	                0	        buy
-            SELL	            1	        sell
-            BUY_LIMIT	        2	        buy limit
-            SELL_LIMIT	        3	        sell limit
-            BUY_STOP	        4	        buy stop
-            SELL_STOP	        5	        sell stop
-            BALANCE	            6	        Read only. Used in getTradesHistory for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
-            CREDIT	            7	        Read only
+            Possible values of cmd field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                BUY	                0	        buy
+                SELL	            1	        sell
+                BUY_LIMIT	        2	        buy limit
+                SELL_LIMIT	        3	        sell limit
+                BUY_STOP	        4	        buy stop
+                SELL_STOP	        5	        sell stop
+                BALANCE	            6	        Read only. Used in getTradesHistory for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+                CREDIT	            7	        Read only
 
-        Possible values of comment field:
-            - "[S/L]", then the trade was closed by stop loss
-            - "[T/P]", then the trade was closed by take profit
-            - "[S/O margin level% equity / margin (currency)]", then the trade was closed because of Stop Out
-            - If the comment remained unchanged from that of opened order, then the order was closed by user
+            Possible values of comment field:
+                - "[S/L]", then the trade was closed by stop loss
+                - "[T/P]", then the trade was closed by take profit
+                - "[S/O margin level% equity / margin (currency)]", then the trade was closed because of Stop Out
+                - If the comment remained unchanged from that of opened order, then the order was closed by user
 
-        Possible values of state field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            MODIFIED	        "Modified"  modified
-            DELETED	            "Deleted"   deleted
+            Possible values of state field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                MODIFIED	        "Modified"  modified
+                DELETED	            "Deleted"   deleted
 
-        Possible values of type field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            OPEN	            0	        order open, used for opening orders
-            PENDING	            1	        order pending, only used in the streaming getTrades  command
-            CLOSE	            2	        order close
-            MODIFY	            3	        order modify, only used in the tradeTransaction  command
-            DELETE	            4	        order delete, only used in the tradeTransaction  command
+            Possible values of type field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                OPEN	            0	        order open, used for opening orders
+                PENDING	            1	        order pending, only used in the streaming getTrades  command
+                CLOSE	            2	        order close
+                MODIFY	            3	        order modify, only used in the tradeTransaction  command
+                DELETE	            4	        order delete, only used in the tradeTransaction  command
         """
 
         return self._open_stream_channel(command="Trades")
@@ -469,22 +469,22 @@ class Wrapper(HandlerManager):
             - thread (Thread): Starting the Thread will terminate the stream
             - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of the dictionary:
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            customComment	    string	    The value the customer may provide in order to retrieve it later.
-            message	            string	    Can be null
-            order	            integer     Unique order number
-            price	            float	    Price in base currency
-            requestStatus	    integer     Request status code, described below
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                customComment	    string	    The value the customer may provide in order to retrieve it later.
+                message	            string	    Can be null
+                order	            integer     Unique order number
+                price	            float	    Price in base currency
+                requestStatus	    integer     Request status code, described below
 
-        Possible values of requestStatus field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            ERROR	            0	        error
-            PENDING	            1	        pending
-            ACCEPTED	        3	        The transaction has been executed successfully
-            REJECTED	        4	        The transaction has been rejected
+            Possible values of requestStatus field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                ERROR	            0	        error
+                PENDING	            1	        pending
+                ACCEPTED	        3	        The transaction has been executed successfully
+                REJECTED	        4	        The transaction has been rejected
         """
 
         return self._open_stream_channel(command="TradeStatus")
@@ -512,76 +512,76 @@ class Wrapper(HandlerManager):
         Returns:
             A list of dictionaries containing the symbol data.
 
-        Format of the dictionary: 
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            ask	                float	    Ask price in base currency
-            bid	                float	    Bid price in base currency
-            categoryName	    string	    Category name
-            contractSize	    integer     Size of 1 lot
-            currency	        string	    Currency
-            currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
-            currencyProfit	    string	    The currency of calculated profit
-            description	        string	    Description
-            expiration	        timestamp   Null if not applicable
-            groupName	        string	    Symbol group name
-            high	            float	    The highest price of the day in base currency
-            initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
-            instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
-            leverage	        float	    Symbol leverage
-            longOnly	        boolean	    Long only
-            lotMax	            float	    Maximum size of trade
-            lotMin	            float	    Minimum size of trade
-            lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
-            low	                float	    The lowest price of the day in base currency
-            marginHedged	    integer	    Used for profit calculation
-            marginHedgedStrong  boolean	    For margin calculation
-            marginMaintenance   integer	    For margin calculation, null if not applicable
-            marginMode	        integer	    For margin calculation
-            percentage	        float	    Percentage
-            pipsPrecision	    integer	    Number of symbol's pip decimal places
-            precision	        integer	    Number of symbol's price decimal places
-            profitMode	        integer	    For profit calculation
-            quoteId     	    integer	    Source of price
-            shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
-            spreadRaw	        float	    The difference between raw ask and bid prices
-            spreadTable	        float	    Spread representation
-            starting	        timestamp	Null if not applicable
-            stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
-            stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
-            swap_rollover3days  integer	    Time when additional swap is accounted for weekend
-            swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
-            swapLong	        float	    Swap value for long positions in pips
-            swapShort	        float	    Swap value for short positions in pips
-            swapType	        integer	    Type of swap calculated
-            symbol	            string	    Symbol name
-            tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
-            tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
-            time	            timestamp	Ask & bid tick time
-            timeString	        string	    Time in String
-            trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
-            type	            integer	    Instrument class number
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                ask	                float	    Ask price in base currency
+                bid	                float	    Bid price in base currency
+                categoryName	    string	    Category name
+                contractSize	    integer     Size of 1 lot
+                currency	        string	    Currency
+                currencyPair	    boolean	    Indicates whether the symbol represents a currency pair
+                currencyProfit	    string	    The currency of calculated profit
+                description	        string	    Description
+                expiration	        timestamp   Null if not applicable
+                groupName	        string	    Symbol group name
+                high	            float	    The highest price of the day in base currency
+                initialMargin	    integer    	Initial margin for 1 lot order, used for profit/margin calculation
+                instantMaxVolume    integer	    Maximum instant volume multiplied by 100 (in lots)
+                leverage	        float	    Symbol leverage
+                longOnly	        boolean	    Long only
+                lotMax	            float	    Maximum size of trade
+                lotMin	            float	    Minimum size of trade
+                lotStep	            float	    A value of minimum step by which the size of trade can be changed (within lotMin - lotMax range)
+                low	                float	    The lowest price of the day in base currency
+                marginHedged	    integer	    Used for profit calculation
+                marginHedgedStrong  boolean	    For margin calculation
+                marginMaintenance   integer	    For margin calculation, null if not applicable
+                marginMode	        integer	    For margin calculation
+                percentage	        float	    Percentage
+                pipsPrecision	    integer	    Number of symbol's pip decimal places
+                precision	        integer	    Number of symbol's price decimal places
+                profitMode	        integer	    For profit calculation
+                quoteId     	    integer	    Source of price
+                shortSelling	    boolean	    Indicates whether short selling is allowed on the instrument
+                spreadRaw	        float	    The difference between raw ask and bid prices
+                spreadTable	        float	    Spread representation
+                starting	        timestamp	Null if not applicable
+                stepRuleId	        integer	    Appropriate step rule ID from getStepRules  command response
+                stopsLevel	        integer	    Minimal distance (in pips) from the current price where the stopLoss/takeProfit can be set
+                swap_rollover3days  integer	    Time when additional swap is accounted for weekend
+                swapEnable	        boolean	    Indicates whether swap value is added to position on end of day
+                swapLong	        float	    Swap value for long positions in pips
+                swapShort	        float	    Swap value for short positions in pips
+                swapType	        integer	    Type of swap calculated
+                symbol	            string	    Symbol name
+                tickSize	        float	    Smallest possible price change, used for profit/margin calculation, null if not applicable
+                tickValue	        float	    Value of smallest possible price change (in base currency), used for profit/margin calculation, null if not applicable
+                time	            timestamp	Ask & bid tick time
+                timeString	        string	    Time in String
+                trailingEnabled	    boolean 	Indicates whether trailing stop (offset) is applicable to the instrument.
+                type	            integer	    Instrument class number
 
-        Possible values of quoteId field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            fixed	            1	        fixed
-            float	            2	        float
-            depth	            3	        depth
-            cross	            4	        cross
+            Possible values of quoteId field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                fixed	            1	        fixed
+                float	            2	        float
+                depth	            3	        depth
+                cross	            4	        cross
 
-        Possible values of marginMode field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            Forex	            101	        Forex
-            CFD leveraged	    102	        CFD leveraged
-            CFD	                103	        CFD
+            Possible values of marginMode field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                Forex	            101	        Forex
+                CFD leveraged	    102	        CFD leveraged
+                CFD	                103	        CFD
 
-        Possible values of profitMode field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            FOREX	            5	        FOREX
-            CFD	                6	        CFD
+            Possible values of profitMode field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                FOREX	            5	        FOREX
+                CFD	                6	        CFD
         """
 
         return self._open_data_channel(command="AllSymbols")
@@ -593,29 +593,29 @@ class Wrapper(HandlerManager):
         Returns:
             A list of dictionaries containing market events data.
 
-        Format of the dictionary: 
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            country	            string	    Two letter country code
-            current	            string	    Market value (current), empty before time of release of this value (time from "time" record)
-            forecast	        string	    Forecasted value
-            impact	            string	    Impact on market
-            period	            string	    Information period
-            previous	        string	    Value from previous information release
-            time	            timestamp	Time, when the information will be released (in this time empty "current" value should be changed with exact released value)
-            title           	String	    Name of the indicator for which values will be released
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                country	            string	    Two letter country code
+                current	            string	    Market value (current), empty before time of release of this value (time from "time" record)
+                forecast	        string	    Forecasted value
+                impact	            string	    Impact on market
+                period	            string	    Information period
+                previous	        string	    Value from previous information release
+                time	            timestamp	Time, when the information will be released (in this time empty "current" value should be changed with exact released value)
+                title           	String	    Name of the indicator for which values will be released
 
-        Possible values of impact field:
-            name	            value	    description
-            -----------------------------------------------------------------------------------------------
-            low	                1	        low
-            medium	            2	        medium
-            high	            3	        high
+            Possible values of impact field:
+                name	            value	    description
+                -----------------------------------------------------------------------------------------------
+                low	                1	        low
+                medium	            2	        medium
+                high	            3	        high
         """
 
         return self._open_data_channel(command="Calendar")
     
-    def getChartLastRequest(self, symbol: str, period: str, start: datetime=None) -> dict:
+    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime]=None) -> dict:
         """
         Returns chart info, from start date to the current time. If the chosen period is greater than 1 minute, 
         the last candle returned by the API can change until the end of the period.
@@ -623,8 +623,106 @@ class Wrapper(HandlerManager):
 
         Args:
             symbol (str): The symbol for which to retrieve the chart data.
-            period (str): The period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
-            start (datetime, optional): The start time of the chart data. Default is 0 AD
+            period (str): The period of the chart data. Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            start (datetime, optional): The start time of the chart data. Default is 0001-01-01 00:00:00
+
+            Limitations: there are limitations in charts data availability. Detailed ranges for charts data, what can be accessed
+            with specific period, are as follows:
+
+            PERIOD_M1 --- <0-1) month, i.e. one month time
+            PERIOD_M30 --- <1-7) month, six months time
+            PERIOD_H4 --- <7-13) month, six months time
+            PERIOD_D1 --- 13 month, and earlier on
+            
+        Returns:
+            Dictionary: A Dictionary containing the following fields:
+            name	            type	    description
+            -----------------------------------------------------------------------------------------------
+            digits	            integer	    Number of decimal places
+            rateInfos	        list        List of dictionaries containing the candle data 
+
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                close	            float	    Value of close price (shift from open price)
+                ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
+                ctmString	        string	    String representation of the 'ctm' field
+                high	            float   	Highest value in the given period (shift from open price)
+                low	                float	    Lowest value in the given period (shift from open price)
+                open            	float	    Open price (in base currency * 10 to the power of digits)
+                vol	                float	    Volume in lots
+
+                Price values must be divided by 10 to the power of digits in order to obtain exact prices.
+
+        Raises:
+            ValueError: If the period is invalid.
+        """
+
+        # Dictionary for transforming periods to seconds
+        periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
+
+        # Check if the period is valid
+        if period not in periods:
+            self._logger.error("Invalid period. Choose from: "+", ".join(periods))
+            raise ValueError("Invalid period. Choose from: "+", ".join(periods))
+        
+        # Get the current time
+        now=datetime.now()
+        # Convert the current time to unix time
+        now_ux= datetime_to_unixtime(now)
+
+        # Set the limit time based on the period
+        if periods[period] >= 1140:
+            limit=datetime(1900,1,1)
+        elif periods[period] >= 240:
+            limit=now - relativedelta(years=13)
+        elif periods[period] >= 30:
+            limit=now - relativedelta(months=7)
+        else:
+            limit=now - relativedelta(months=1)
+        limit_ux=datetime_to_unixtime(limit)
+        
+        # Convert the start time to unix time
+        if not start:
+            # If no start time is given, set it to the minimum time
+            # 0001-01-01 00:00:00
+            start_ux=datetime_to_unixtime(datetime.min)
+        else:
+            start_ux=datetime_to_unixtime(start)
+
+        # Check if the start time is in the past
+        if start_ux> now_ux:
+            self._logger.error("Start time is greater than current time.")
+            raise ValueError("Start time is greater than current time.")
+
+        # Check if the start time is too far in the past
+        if start_ux< limit_ux:
+            start_ux=limit_ux
+            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
+
+        return self._open_data_channel(command="ChartLastRequest",info=dict(period=periods[period],start=start_ux,symbol=symbol))
+
+    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime]=None, end: Optional[datetime]=None, ticks: int=0) -> dict:
+        """
+        Returns chart info with data between given start and end dates.
+
+        Args:
+            symbol (str): The symbol for which to retrieve the chart data.
+            period (str): The time period of the chart data. Must be one of : "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            start (datetime, optional): The start time of the chart data. Default is 0001-01-01 00:00:00
+            end (datetime, optional): The end time of the chart data. Default is now.
+            ticks (int, optional): The number of ticks to retrieve. If set to 0, the start and end times are used.
+                                   If ticks >0 (e.g. N) then API returns N candles from time start.
+                                   If ticks <0 then API returns N candles to time start.
+                                   It is possible for API to return fewer chart candles than set in tick field.
+
+            Limitations: there are limitations in charts data availability. Detailed ranges for charts data, what can be accessed
+            with specific period, are as follows:
+
+            PERIOD_M1 --- <0-1) month, i.e. one month time
+            PERIOD_M30 --- <1-7) month, six months time
+            PERIOD_H4 --- <7-13) month, six months time
+            PERIOD_D1 --- 13 month, and earlier on
 
         Returns:
             Dictionary: A Dictionary containing the following fields:
@@ -633,89 +731,33 @@ class Wrapper(HandlerManager):
             digits	            integer	    Number of decimal places
             rateInfos	        list        List of dictionaries containing the candle data 
 
-        Format of the dictionary: 
-            name	            type	    description
-            -----------------------------------------------------------------------------------------------
-            close	            float	    Value of close price (shift from open price)
-            ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
-            ctmString	        string	    String representation of the 'ctm' field
-            high	            float   	Highest value in the given period (shift from open price)
-            low	                float	    Lowest value in the given period (shift from open price)
-            open            	float	    Open price (in base currency * 10 to the power of digits)
-            vol	                float	    Volume in lots
-
-            Price values must be divided by 10 to the power of digits in order to obtain exact prices.
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                close	            float	    Value of close price (shift from open price)
+                ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
+                ctmString	        string	    String representation of the 'ctm' field
+                high	            float   	Highest value in the given period (shift from open price)
+                low	                float	    Lowest value in the given period (shift from open price)
+                open            	float	    Open price (in base currency * 10 to the power of digits)
+                vol	                float	    Volume in lots
+            
+                Price values must be divided by 10 to the power of digits in order to obtain exact prices.
         """
 
+        # Dictionary for transforming periods to seconds
         periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
 
         if period not in periods:
             self._logger("Invalid period. Choose from: "+", ".join(periods))
             return False
         
+        # Get the current time
         now=datetime.now()
+        # Convert the current time to unix time
         now_ux= datetime_to_unixtime(now)
-        if periods[period] >= 1140:
-            limit=datetime(1900,1,1)
-        elif periods[period] >= 240:
-            limit=now - relativedelta(years=13)
-        elif periods[period] >= 30:
-            limit=now - relativedelta(months=7)
-        else:
-            limit=now - relativedelta(months=1)
-        limit_ux=datetime_to_unixtime(limit)
-        
-        if not start:
-            start_ux=datetime_to_unixtime(datetime.min)
-        else:
-            start_ux=datetime_to_unixtime(start)
 
-        if start_ux> now_ux:
-            self._logger.error("Start time is greater than current time.")
-            return False
-
-        if start_ux< limit_ux:
-            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
-            start_ux=limit_ux
-
-        return self._open_data_channel(command="ChartLastRequest", info=dict(period=periods[period], start=start_ux, symbol=symbol))
-
-    def getChartRangeRequest(self, symbol: str, period: str, start: datetime=None, end: datetime=None, ticks: int=0):
-        """
-        Returns chart info with data between given start and end dates.
-
-        Args:
-            symbol (str): The symbol for which to retrieve the chart data.
-            period (str): The time period of the chart data. Must be one of the following: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
-            start (datetime, optional): The start time of the chart data. Default 0 AD
-            end (datetime, optional): The end time of the chart data. Default is now.
-            ticks (int, optional): The number of ticks to retrieve. If set to 0, the start and end times are used. Defaults to 0.
-
-        Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            digits	            integer	    Number of decimal places
-            rateInfos	        dictionary	RATE_INFO_RECORD
-
-        Format of RATE_INFO_RECORD:
-            name	            type	    description
-            close	            float	    Value of close price (shift from open price)
-            ctm	                timestamp	Candle start time in CET / CEST time zone (see Daylight Saving Time, DST)
-            ctmString	        string	    String representation of the 'ctm' field
-            high	            float   	Highest value in the given period (shift from open price)
-            low	                float	    Lowest value in the given period (shift from open price)
-            open            	float	    Open price (in base currency * 10 to the power of digits)
-            vol	                float	    Volume in lots
-        
-        """
-        periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
-
-        if period not in periods:
-            self._logger("Invalid period. Choose from: "+", ".join(periods))
-            return False
-        
-        now=datetime.now()
-        now_ux= datetime_to_unixtime(datetime.now())
+        # Set the limit time based on the period
         if periods[period] >= 1140:
             limit=datetime(1900,1,1)
         elif periods[period] >= 240:
@@ -726,18 +768,23 @@ class Wrapper(HandlerManager):
             limit=now - relativedelta(months=1)
         limit_ux=datetime_to_unixtime(limit)
 
+        # Convert the start time to unix time
         if not start:
+            # If no start time is given, set it to the minimum time
+            # 0001-01-01 00:00:00
             start_ux=datetime_to_unixtime(datetime.min)
         else:
             start_ux=datetime_to_unixtime(start)
 
-        if start_ux< limit_ux:
-            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
-            start_ux=limit_ux
-
+        # Check if the start time is in the past
         if start_ux> now_ux:
             self._logger.error("Start time is greater than current time.")
-            return False
+            raise ValueError("Start time is greater than current time.")
+
+        # Check if the start time is too far in the past
+        if start_ux< limit_ux:
+            start_ux=limit_ux
+            self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
         if ticks == 0:
             if not end:
