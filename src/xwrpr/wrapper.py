@@ -1235,7 +1235,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command="Symbol", symbol=symbol)
     
-    def getTickPrices(self, symbols: list, time: datetime, level: int=-1):
+    def getTickPrices(self, symbols: List[str], time: datetime, level: int=-1) -> Dict[List[dict]]:
         """
         Returns array of current quotations for given symbols, only quotations that changed from given timestamp are returned.
         New timestamp obtained from output will be used as an argument of the next call of this command.
@@ -1251,40 +1251,52 @@ class Wrapper(HandlerManager):
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
                                     -1	        all available levels
-                                    0	        base level bid and ask price for instrument
+                                     0	        base level bid and ask price for instrument
                                     >0	        specified level      
 
         Returns:
-            Dictionary: A Dictionary containing the following fields:
-            name	            type	    description
-            quotations  	    dictionary	TICK_RECORD 
+            Dictionary: A Dictionary with the tick prices.
 
-        Format of TICK_RECORD:
-            name	            type	    description
-            ask	                float	    Ask price in base currency
-            askVolume	        int	        Number of available lots to buy at given price or null if not applicable
-            bid	                float	    Bid price in base currency
-            bidVolume	        int	        Number of available lots to buy at given price or null if not applicable
-            high	            float	    The highest price of the day in base currency
-            level	            int	        Price level
-            low	                float	    The lowest price of the day in base currency
-            spreadRaw	        float	    The difference between raw ask and bid prices
-            spreadTable	        float	    Spread representation
-            symbol	            string	    Symbol
-            timestamp	        timestamp	Timestamp
-            
+            Format of the dictionary:
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                quotations  	    list        List of dictionaries containing the tick prices
+
+            Format of the dictionary: 
+                name	            type	    description
+                -----------------------------------------------------------------------------------------------
+                ask	                float	    Ask price in base currency
+                askVolume	        int	        Number of available lots to buy at given price or null if not applicable
+                bid	                float	    Bid price in base currency
+                bidVolume	        int	        Number of available lots to buy at given price or null if not applicable
+                high	            float	    The highest price of the day in base currency
+                level	            int	        Price level
+                low	                float	    The lowest price of the day in base currency
+                spreadRaw	        float	    The difference between raw ask and bid prices
+                spreadTable	        float	    Spread representation
+                symbol	            string	    Symbol
+                timestamp	        timestamp	Timestamp
+
+                Possible values of level field correspond to the level field in the input arguments.
+
+        Raises:
+            ValueError: If the level is invalid.
+            ValueError: If the time lies in the future.
         """
-        levels = [-1, 0]
 
+        # Check if the level is valid
+        levels = [-1, 0]
         if level not in levels or level > 0:
-            self._logger.error("Invalid level. Choose from: "+", ".join(levels))
-            return False
+            self._logger.error("Invalid level. Must be -1, 0 or greater than 0.")
+            raise ValueError("Invalid level. Must be -1, 0 or greater than 0.")
         
-        if not all(isinstance(item, str) for item in symbols):
-            self._logger.error("Invalid symbols. All symbols must be strings.")
-            return False
-        
+        # Convert the time to unix time
         timestamp = datetime_to_unixtime(time)
+
+        # Check if time lies in the future
+        if timestamp > datetime_to_unixtime(datetime.now()):
+            self._logger.error("Time lies in the future.")
+            raise ValueError("Time lies in the future.")
 
         return self._open_data_channel(command="TickPrices", level=level, symbols=symbols, timestamp=timestamp)
     
