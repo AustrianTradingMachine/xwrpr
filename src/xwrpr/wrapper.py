@@ -201,7 +201,7 @@ class Wrapper(HandlerManager):
 
     def _open_stream_channel(self, **kwargs) -> dict:
         """
-        Opens a stream channel for receiving data.
+        Opens a channel for the strreaming of data.
 
         Args:
             **kwargs: Additional keyword arguments to be passed to the `streamData` method.
@@ -209,16 +209,23 @@ class Wrapper(HandlerManager):
         Returns:
             A dictionary, containing the following elements:
                 - thread (Thread): Starting the Thread will terminate the stream
-                - queue (Queue): The queue that contains the streamed data. (limited to the last 1000 elements)
+                - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
         Raises:
             None
         """
         
-        return self.stream_data(
-            exchange={},
+        # Create a new dictionary for the exchange data
+        exchange = {}
+        # Call the streamData method of the HandlerManager
+        # and store the returned dictionary in the exchange dictionary
+        self.stream_data(
+            exchange=exchange,
             **kwargs
         )
+        # Return the exchange dictionary
+        return exchange
+
     
     def streamBalance(self):
         """
@@ -226,11 +233,12 @@ class Wrapper(HandlerManager):
 
         Returns:
             A dictionary, containing the following elements:
-                - thread (Thread): Starting the Thread will terminate the stream
-                - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
         Format of the dictionary:
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             balance	            float	    balance in account currency
             credit	            float	    credit in account currency
             equity	            float	    sum of balance and all profits in account currency
@@ -244,19 +252,20 @@ class Wrapper(HandlerManager):
 
     def streamCandles(self, symbol: str):
         """
-        Subscribes for and unsubscribes from API chart candles. The interval of every candle is 1 minute. A new candle arrives every minute
+        Subscribes for and unsubscribes from API chart candles. The interval of every candle is 1 minute.
+        A new candle arrives every minute
 
-        Parameters:
-        symbol (str): The symbol for which to retrieve the candles.
+        Args:
+            symbol (str): The symbol for which to retrieve the candles.
 
         Returns:
             A dictionary, containing the following elements:
-                - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Starting the Thread will terminate the stream
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of Dataframe: 
+        Format of the dictionary: 
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             close	            float	    Close price in base currency
             ctm	                timestamp	Candle  start time in CET time zone (Central European Time)
             ctmString	        string	    String representation of the ctm field
@@ -269,12 +278,14 @@ class Wrapper(HandlerManager):
 
         Possible values of quoteId field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             fixed	            1	        fixed
             float	            2	        float
             depth	            3	        depth
             cross	            4	        cross
 
         """
+
         return self._open_stream_channel(command="Candles", symbol=symbol)
     
     def streamNews(self):
@@ -283,18 +294,19 @@ class Wrapper(HandlerManager):
 
         Returns:
             A dictionary, containing the following elements:
-                - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Starting the Thread will terminate the stream
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of Dataframe: 
+        Format of the dictionary: 
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             body	            string	    Body
             key	                string	    News key
             time	            timestamp   Time
             title	            string	    News title
 
         """
+
         return self._open_stream_channel(command="News")
 
     def streamProfits(self):
@@ -303,37 +315,43 @@ class Wrapper(HandlerManager):
 
         Returns:
             A dictionary, containing the following elements:
-                - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Starting the Thread will terminate the stream
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of Dataframe: 
+        Format of the dictionary: 
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             order	            integer 	Order number
             order2	            integer     Transaction ID
             position	        integer     Position number
             profit	            float	    Profit in account currency
 
         """
+
         return self._open_stream_channel(command="Profits")
 
-    def streamTickPrices(self, symbol: str, minArrivalTime: int, maxLevel: int=1):
+    def streamTickPrices(self, symbol: str, minArrivalTime: Optional[int]=None, maxLevel: Optional[int]=None):
         """
-        Establishes subscription for quotations and allows to obtain the relevant information in real-time, as soon as it is available in the system.
+        Establishes subscription for quotations and allows to obtain the relevant information in real-time,
+        as soon as it is available in the system.
 
         Args:
             symbol (str): The symbol for which to retrieve tick prices.
-            minArrivalTime (int): The minimum arrival time for the tick prices.
-            maxLevel (int, optional): The maximum level of tick prices to retrieve. Defaults to 1.
+            minArrivalTime (int, optional)): The minimum the minimal interval in milliseconds between any two consecutive updates. If
+                                             this field is not present, or it is set to 0 (zero), ticks - if available - are sent to the
+                                             client with interval equal to 200 milliseconds. In order to obtain ticks as frequently as
+                                             server allows you, set it to 1 (one).
+            maxLevel (int, optional): The maximum level of the tick prices.If this field is not specified, the subscription is
+                                      active for all levels that are managed in the system.
 
         Returns:
             A dictionary, containing the following elements:
-                - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Starting the Thread will terminate the stream
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of Dataframe:
+        Format of the dictionary:
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             ask	                float	    Ask price in base currency
             askVolume	        integer     Number of available lots to buy at given price or null if not applicable
             bid	                float	    Bid price in base currency
@@ -349,26 +367,30 @@ class Wrapper(HandlerManager):
 
         Possible values of quoteId field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             fixed	            1	        fixed
             float	            2	        float
             depth	            3	        depth
             cross	            4	        cross
 
         """
-        if minArrivalTime < SEND_INTERVAL:
-            minArrivalTime=SEND_INTERVAL
-            self._logger.warning("minArrivalTime must be greater than " + str(SEND_INTERVAL) + ". Setting minArrivalTime to " + str(SEND_INTERVAL))
 
-        if maxLevel < 1:
+        if minArrivalTime is not None and minArrivalTime < 0:
+            minArrivalTime=1
+            self._logger.warning("minArrivalTime must greater than 0. Setting minArrivalTime to 1")
+        
+        if maxLevel is not None and maxLevel < 1:
             maxLevel=1
-            self._logger.warning("maxLevel must be greater than 1. Setting maxLevel to 1")
+            self._logger.warning("maxLevel must be at least 1. Setting maxLevel to 1")
 
         return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=minArrivalTime, maxLevel=maxLevel)
 
     def streamTrades(self):
         """
-        Establishes subscription for user trade status data and allows to obtain the relevant information in real-time, as soon as it is available in the system.
-        New  are sent by streaming socket only in several cases:
+        Establishes subscription for user trade status data and allows to obtain the relevant information in real-time, as soon as
+        it is available in the system.
+
+        New data is sent by streaming socket only in several cases:
             - Opening the trade
             - Closing the trade
             - Modification of trade parameters
@@ -376,13 +398,12 @@ class Wrapper(HandlerManager):
 
         Returns:
             A dictionary, containing the following elements:
-                - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Starting the Thread will terminate the stream
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of Dataframe:
-            Dictionary with the following fields:
+        Format of the dictionary:
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             close_price	        float	    Close price in base currency
             close_time	        timestamp   Null if order is not closed
             closed	            boolean	    Closed
@@ -410,13 +431,14 @@ class Wrapper(HandlerManager):
 
         Possible values of cmd field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             BUY	                0	        buy
             SELL	            1	        sell
             BUY_LIMIT	        2	        buy limit
             SELL_LIMIT	        3	        sell limit
             BUY_STOP	        4	        buy stop
             SELL_STOP	        5	        sell stop
-            BALANCE	            6	        Read only. Used in getTradesHistory  for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
+            BALANCE	            6	        Read only. Used in getTradesHistory for manager's deposit/withdrawal operations (profit>0 for deposit, profit<0 for withdrawal).
             CREDIT	            7	        Read only
 
         Possible values of comment field:
@@ -427,19 +449,20 @@ class Wrapper(HandlerManager):
 
         Possible values of state field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             MODIFIED	        "Modified"  modified
             DELETED	            "Deleted"   deleted
 
         Possible values of type field:
             name	            value	    description
+            -----------------------------------------------------------------------------------------------
             OPEN	            0	        order open, used for opening orders
             PENDING	            1	        order pending, only used in the streaming getTrades  command
             CLOSE	            2	        order close
             MODIFY	            3	        order modify, only used in the tradeTransaction  command
             DELETE	            4	        order delete, only used in the tradeTransaction  command
-
-        
         """
+
         return self._open_stream_channel(command="Trades")
     
     def streamTradeStatus(self):
@@ -448,20 +471,27 @@ class Wrapper(HandlerManager):
 
         Returns:
             A dictionary, containing the following elements:
-                - df (pandas.DataFrame): The DataFrame to store the streamed data.
-                - lock (threading.Lock): A lock object for synchronization of DataFrame Access.
-                - thread (Thread): Starting the Thread will terminate the stream
+            - thread (Thread): Starting the Thread will terminate the stream
+            - queue (Queue): The queue that contains the streamed data as list of dictionaries. (limited to the last 1000 elements)
 
-        Format of Dataframe:
-            Dictionary with the following fields:
+        Format of the dictionary:
             name	            type	    description
+            -----------------------------------------------------------------------------------------------
             customComment	    string	    The value the customer may provide in order to retrieve it later.
             message	            string	    Can be null
             order	            integer     Unique order number
             price	            float	    Price in base currency
             requestStatus	    integer     Request status code, described below
 
+        Possible values of requestStatus field:
+            name	            value	    description
+            -----------------------------------------------------------------------------------------------
+            ERROR	            0	        error
+            PENDING	            1	        pending
+            ACCEPTED	        3	        The transaction has been executed successfully
+            REJECTED	        4	        The transaction has been rejected
         """
+
         return self._open_stream_channel(command="TradeStatus")
 
     def _open_data_channel(self, **kwargs):
