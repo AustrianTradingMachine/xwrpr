@@ -149,18 +149,38 @@ class Wrapper(HandlerManager):
 
         self._logger.info("Initializing wrapper ...")
 
-        # Check the values that are limited by the server
+        # Check the input parameters
         if max_connections > MAX_CONNECTIONS:
             max_connections=MAX_CONNECTIONS
             self._logger.warning("Max connections must be less than " + str(MAX_CONNECTIONS) + ". Setting max connections to " + str(MAX_CONNECTIONS))
+
+        if max_connections < 1:
+            max_connections=1
+            self._logger.warning("Max connections must be at least 1. Setting max connections to 1")
 
         if max_send_data > MAX_SEND_DATA:
             max_send_data=MAX_SEND_DATA
             self._logger.warning("Max send data must be less than " + str(MAX_SEND_DATA) + ". Setting max send data to " + str(MAX_SEND_DATA))
 
+        if max_send_data < 1:
+            max_send_data=1
+            self._logger.warning("Max send data must be at least 1. Setting max send data to 1")
+
+        if max_received_data < 1:
+            max_received_data=1
+            self._logger.warning("Max received data must be at least 1. Setting max received data to 1")
+
         if min_request_interval < MIN_REQUEST_INTERVAL:
             min_request_interval=MIN_REQUEST_INTERVAL
             self._logger.warning("Min request interval must be greater than " + str(MIN_REQUEST_INTERVAL) + ". Setting min request interval to " + str(MIN_REQUEST_INTERVAL))
+
+        if max_retries < 0:
+            max_retries=0
+            self._logger.warning("Max retries must be at least 0. Setting max retries to 0")
+
+        if max_reaction_time < 0:
+            max_reaction_time=0
+            self._logger.warning("Max reaction time must be at least 0. Setting max reaction time to 0")
 
         # Initialize the HandlerManager
         super().__init__(
