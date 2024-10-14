@@ -45,7 +45,7 @@ classifiers=[
     ]
 keywords=["XTB","API","trading","finance","development"]
 dependencies=[
-    "tzlocal"
+    "tzlocal==5.2"
     ]
 requires-python = ">=3.9"
 
@@ -54,7 +54,7 @@ Homepage = "https://github.com/AustrianTradingMachine/xwrpr"
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
+    "pytest==6.2.5",
     ]
 
 [tool.pytest.ini_options]
