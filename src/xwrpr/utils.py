@@ -67,13 +67,13 @@ def generate_logger(
     # Create a stream handler for the console output
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(_validate_level(stream_level, default="warning"))
+    stream_handler.setLevel(_validate_level(stream_level, default = "warning"))
     logger.addHandler(stream_handler)
 
     if path is not None:
         try:
             # Checks if the path exists, if not, creates it
-            path.mkdir(parents=True)
+            path.mkdir(parents = True)
         except Exception as e:
             raise ValueError(f"Could not create the directory {path}. Error: {e}")
 
@@ -81,7 +81,7 @@ def generate_logger(
         log_file_path = path / f"{name}.log"
         file_handler = logging.FileHandler(log_file_path)
         file_handler.setFormatter(formatter)
-        file_handler.setLevel(_validate_level(file_level, default="debug"))
+        file_handler.setLevel(_validate_level(file_level, default = "debug"))
         logger.addHandler(file_handler)
 
     return logger
@@ -162,10 +162,10 @@ class CustomThread(threading.Thread):
 
         # Create a new instance of the threading.Thread class
         super().__init__(
-            target=self._target,
-            args=self._args,
-            daemon=self._daemon,
-            kwargs=self._kwargs
+            target = self._target,
+            args = self._args,
+            daemon = self._daemon,
+            kwargs = self._kwargs
         )
 
     @property
@@ -258,7 +258,7 @@ def datetime_to_unixtime(dt: datetime.datetime) -> int:
         # Get the local timezone
         local_timezone = tzlocal.get_localzone()
         # Convert the naive datetime to the local timezone
-        dt = dt.replace(tzinfo=local_timezone)
+        dt = dt.replace(tzinfo = local_timezone)
 
     # Ensure the datetime is in UTC
     dt_utc = dt.astimezone(datetime.timezone.utc)
@@ -283,7 +283,7 @@ def local_to_utc(dt_local: datetime.datetime) -> datetime.datetime:
         # Get the local timezone
         local_timezone = tzlocal.get_localzone()
         # Convert the naive datetime to the local timezone
-        dt_local = dt_local.replace(tzinfo=local_timezone)
+        dt_local = dt_local.replace(tzinfo = local_timezone)
     
     # Convert to UTC
     return dt_local.astimezone(datetime.timezone.utc)

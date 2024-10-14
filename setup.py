@@ -91,7 +91,7 @@ setup(
     # Set the path to the package's root directory
     package_dir = {"": "src"},
     # Find all packages in the src directory (including subpackages)
-    packages = find_packages(where="src"),
+    packages = find_packages(where = "src"),
     # Define the package's metadata
     package_data = {
         'xwrpr': ['user.ini','src/xwrpr/api.ini']

@@ -80,14 +80,14 @@ class Client():
         
         encrypted: bool,
         timeout: float,
-        reaction_time: float=2.0,
+        reaction_time: float = 2.0,
         
-        interval: float=0.5,
-        max_fails: int=10,
-        bytes_out: int=1024,
-        bytes_in: int=1024,
+        interval: float = 0.5,
+        max_fails: int = 10,
+        bytes_out: int = 1024,
+        bytes_in: int = 1024,
         
-        logger: Optional[logging.Logger]=None
+        logger: Optional[logging.Logger] = None
     ) -> None:
         """
         Initializes a new instance of the Client class.
@@ -113,7 +113,7 @@ class Client():
             self._logger = logger
         else:
             # Generate a new logger
-            self._logger = generate_logger(name='Client', path=Path.cwd() / "logs")
+            self._logger = generate_logger(name = 'Client', path = Path.cwd() / "logs")
 
         self._logger.info("Initializing the client ...")
         
@@ -131,7 +131,7 @@ class Client():
         self._lock = Lock()
 
         # Initialize the JSON decoder
-        self._decoder=json.JSONDecoder()
+        self._decoder = json.JSONDecoder()
 
         # A dictionary of available addresses for the socket connection.
         self._addresses = {}
@@ -156,7 +156,7 @@ class Client():
 
         try:
             # Get address info from the socket
-            avl_addresses=socket.getaddrinfo(
+            avl_addresses = socket.getaddrinfo(
                 host = self._host,
                 port = self._port,
                 family = socket.AF_UNSPEC,
@@ -350,9 +350,9 @@ class Client():
                     try:
                         self._logger.info("Wrapping socket with SSL ...")
                         context = ssl.create_default_context()
-                        self._socket=context.wrap_socket(
+                        self._socket = context.wrap_socket(
                             sock = self._socket,
-                            server_hostname=self._host)
+                            server_hostname = self._host)
                     except socket.error as e:
                         self._logger.error(f"Failed to wrap socket: {e}")
                         # Log the failure cause
@@ -447,7 +447,7 @@ class Client():
                     if recreate:
                         # Try to create a new socket
                         self._logger.error("Attempting to recreate socket ...")
-                        self.create(excluded_errors=['all'])
+                        self.create(excluded_errors = ['all'])
 
             self._logger.info("Connection opened")
 
@@ -505,14 +505,14 @@ class Client():
                     if not blocking:
                         # Check if the socket is ready for writing
                         self._logger.warning("Socket not ready for sending, checking writability...")
-                        self.check(mode='writable')
+                        self.check(mode = 'writable')
                     else:
                         # For blocking mode, raise an exception
                         self._logger.error(f"Unexpected BlockingIOError in blocking socket mode: {e}")
                         raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
                 except socket.error as e:
                     self._logger.error(f"Error sending message: {e}")
-                    self.check(mode='basic')
+                    self.check(mode = 'basic')
                 
             self._logger.info("Message sent")
 
@@ -538,7 +538,7 @@ class Client():
 
         # Initialize the full message and buffer
         full_msg = ''
-        buffer=''
+        buffer = ''
 
         # Loop until the entire message is received
         # Or an error occurs
@@ -570,7 +570,7 @@ class Client():
                 if not blocking:
                     # Check if the socket is ready for reading
                     self._logger.warning("Socket not ready for receiving, checking readability...")
-                    self.check(mode='readable')
+                    self.check(mode = 'readable')
                     # Continue receiving data
                     continue
                 else:
@@ -582,7 +582,7 @@ class Client():
                 raise Exception("Error decoding message") from e
             except socket.error as e:
                 self._logger.error(f"Error receiving message: {e}")
-                self.check(mode='basic')
+                self.check(mode = 'basic')
 
             # Thanks to the JSON format we can easily check if the message is complete
             try:
@@ -595,7 +595,7 @@ class Client():
                 
                 if pos == len(buffer):
                     # Entire buffer has been successfully decoded
-                    buffer=''
+                    buffer = ''
                     # Exit the loop
                     break
                 elif pos < len(buffer):

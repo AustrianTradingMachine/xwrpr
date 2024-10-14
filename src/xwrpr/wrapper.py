@@ -34,16 +34,16 @@ from xwrpr.utils import generate_logger, calculate_timesteps, datetime_to_unixti
 
 # Read the configuration file
 config = configparser.ConfigParser()
-config_path=Path(__file__).parent.absolute()/ 'api.ini'
+config_path = Path(__file__).parent.absolute()/'api.ini'
 config.read(config_path)
 
-MAX_CONNECTIONS=config.getint('CONNECTION','MAX_CONNECTIONS')
-MAX_SEND_DATA=config.getint('CONNECTION','MAX_SEND_DATA')
-MAX_RECEIVED_DATA=config.getint('CONNECTION','MAX_RECEIVED_DATA')
-MIN_REQUEST_INTERVAL=config.getint('CONNECTION','MIN_REQUEST_INTERVAL')/1000
-MAX_RETRIES=config.getint('CONNECTION','MAX_RETRIES')
-MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')/1000
-MAX_QUEUE_ELEMENTS=config.getint('HANDLER','MAX_QUEUE_ELEMENTS')
+MAX_CONNECTIONS = config.getint('CONNECTION','MAX_CONNECTIONS')
+MAX_SEND_DATA = config.getint('CONNECTION','MAX_SEND_DATA')
+MAX_RECEIVED_DATA = config.getint('CONNECTION','MAX_RECEIVED_DATA')
+MIN_REQUEST_INTERVAL = config.getint('CONNECTION','MIN_REQUEST_INTERVAL')/1000
+MAX_RETRIES = config.getint('CONNECTION','MAX_RETRIES')
+MAX_REACTION_TIME = config.getint('CONNECTION','MAX_REACTION_TIME')/1000
+MAX_QUEUE_ELEMENTS = config.getint('HANDLER','MAX_QUEUE_ELEMENTS')
 
 class Status(Enum):
     """
@@ -105,13 +105,13 @@ class Wrapper(HandlerManager):
     """
 
     def __init__(self,
-        demo: bool=True,
+        demo: bool = True,
 
-        username: Optional[str]=None,
-        password: Optional[str]=None,
-        path: Optional[str]=None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        path: Optional[str] = None,
 
-        max_connections: int=MAX_CONNECTIONS,
+        max_connections: int = MAX_CONNECTIONS,
         max_send_data: int = MAX_SEND_DATA,
         max_received_data: int = MAX_RECEIVED_DATA,
         min_request_interval: float = MIN_REQUEST_INTERVAL,
@@ -119,7 +119,7 @@ class Wrapper(HandlerManager):
         max_reaction_time: float = MAX_REACTION_TIME,
         max_queue_elements: int = MAX_QUEUE_ELEMENTS,
 
-        logger: Optional[logging.Logger]=None,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         """
         Initializes a new instance of the Wrapper class.
@@ -147,45 +147,45 @@ class Wrapper(HandlerManager):
             self._logger = logger.getChild('Wrp')
         else:
             # Create a new logger
-            self._logger=generate_logger(name='Wrp', path=Path.cwd() / "logs")
+            self._logger = generate_logger(name = 'Wrp', path = Path.cwd() / "logs")
 
         self._logger.info("Initializing wrapper ...")
 
         # Check the input parameters
         if max_connections > MAX_CONNECTIONS:
-            max_connections=MAX_CONNECTIONS
+            max_connections = MAX_CONNECTIONS
             self._logger.warning("Max connections must be less than " + str(MAX_CONNECTIONS) + ". Setting max connections to " + str(MAX_CONNECTIONS))
 
         if max_connections < 1:
-            max_connections=1
+            max_connections = 1
             self._logger.warning("Max connections must be at least 1. Setting max connections to 1")
 
         if max_send_data > MAX_SEND_DATA:
-            max_send_data=MAX_SEND_DATA
+            max_send_data  =MAX_SEND_DATA
             self._logger.warning("Max send data must be less than " + str(MAX_SEND_DATA) + ". Setting max send data to " + str(MAX_SEND_DATA))
 
         if max_send_data < 1:
-            max_send_data=1
+            max_send_data = 1
             self._logger.warning("Max send data must be at least 1. Setting max send data to 1")
 
         if max_received_data < 1:
-            max_received_data=1
+            max_received_data = 1
             self._logger.warning("Max received data must be at least 1. Setting max received data to 1")
 
         if min_request_interval < MIN_REQUEST_INTERVAL:
-            min_request_interval=MIN_REQUEST_INTERVAL
+            min_request_interval = MIN_REQUEST_INTERVAL
             self._logger.warning("Min request interval must be greater than " + str(MIN_REQUEST_INTERVAL) + ". Setting min request interval to " + str(MIN_REQUEST_INTERVAL))
 
         if max_retries < 0:
-            max_retries=0
+            max_retries = 0
             self._logger.warning("Max retries must be at least 0. Setting max retries to 0")
 
         if max_reaction_time < 0:
-            max_reaction_time=0
+            max_reaction_time = 0
             self._logger.warning("Max reaction time must be at least 0. Setting max reaction time to 0")
 
         if max_queue_elements < 1:
-            max_queue_elements=1
+            max_queue_elements = 1
             self._logger.warning("Max queue elements must be at least 1. Setting max queue elements to 1")
 
         # Initialize the HandlerManager
@@ -198,11 +198,11 @@ class Wrapper(HandlerManager):
             max_reaction_time = max_reaction_time,
             max_queue_elements = max_queue_elements,
 
-            demo=demo,
+            demo = demo,
             
-            username=username,
-            password=password,
-            path=path,
+            username = username,
+            password = password,
+            path = path,
 
             logger = self._logger
         )
@@ -277,7 +277,7 @@ class Wrapper(HandlerManager):
         # Call the streamData method of the HandlerManager
         # and store the returned dictionary in the exchange dictionary
         self.stream_data(
-            exchange=exchange,
+            exchange = exchange,
             **kwargs
         )
 
@@ -305,7 +305,7 @@ class Wrapper(HandlerManager):
                 marginLevel	        float	    margin level percentage
         """
 
-        return self._open_stream_channel(command="Balance")
+        return self._open_stream_channel(command = "Balance")
 
     def streamCandles(self, symbol: str) -> dict:
         """
@@ -344,7 +344,7 @@ class Wrapper(HandlerManager):
                 cross	            4	        cross
         """
 
-        return self._open_stream_channel(command="Candles", symbol=symbol)
+        return self._open_stream_channel(command = "Candles", symbol = symbol)
     
     def streamNews(self) -> dict:
         """
@@ -364,7 +364,7 @@ class Wrapper(HandlerManager):
                 title	            string	    News title
         """
 
-        return self._open_stream_channel(command="News")
+        return self._open_stream_channel(command = "News")
 
     def streamProfits(self) -> dict:
         """
@@ -384,9 +384,9 @@ class Wrapper(HandlerManager):
                 profit	            float	    Profit in account currency
         """
 
-        return self._open_stream_channel(command="Profits")
+        return self._open_stream_channel(command = "Profits")
 
-    def streamTickPrices(self, symbol: str, min_arrival_time: Optional[int]=None, max_level: Optional[int]=None) -> dict:
+    def streamTickPrices(self, symbol: str, min_arrival_time: Optional[int] = None, max_level: Optional[int] = None) -> dict:
         """
         Establishes subscription for quotations and allows to obtain the relevant information in real-time,
         as soon as it is available in the system.
@@ -436,14 +436,14 @@ class Wrapper(HandlerManager):
         """
 
         if min_arrival_time is not None and min_arrival_time < 0:
-            min_arrival_time=1
+            min_arrival_time = 1
             self._logger.warning("minArrivalTime must greater than 0. Setting minArrivalTime to 1")
         
         if max_level is not None and max_level < 1:
-            max_level=1
+            max_level = 1
             self._logger.warning("maxLevel must be at least 1. Setting maxLevel to 1")
 
-        return self._open_stream_channel(command="TickPrices", symbol=symbol, minArrivalTime=min_arrival_time, maxLevel=max_level)
+        return self._open_stream_channel(command = "TickPrices", symbol = symbol, minArrivalTime = min_arrival_time, maxLevel = max_level)
 
     def streamTrades(self) -> dict:
         """
@@ -480,7 +480,7 @@ class Wrapper(HandlerManager):
                 order	            integer 	Order number for opened transaction
                 order2	            integer     Transaction id
                 position	        integer     Position number (if type is 0 and 2) or transaction parameter (if type is 1)
-                profit	            float	    null unless the trade is closed (type=2) or opened (type=0)
+                profit	            float	    null unless the trade is closed (type = 2) or opened (type = 0)
                 sl	                float	    Zero if stop loss is not set (in base currency)
                 state	            string	    Trade state, should be used for detecting pending order's cancellation
                 storage	            float	    Storage
@@ -525,7 +525,7 @@ class Wrapper(HandlerManager):
                 DELETE	            4	        order delete, only used in the "tradeTransaction"  command
         """
 
-        return self._open_stream_channel(command="Trades")
+        return self._open_stream_channel(command = "Trades")
     
     def streamTradeStatus(self) -> dict:
         """
@@ -554,7 +554,7 @@ class Wrapper(HandlerManager):
                 REJECTED	        4	        The transaction has been rejected
         """
 
-        return self._open_stream_channel(command="TradeStatus")
+        return self._open_stream_channel(command = "TradeStatus")
 
     def _open_data_channel(self, **kwargs) -> Union[List[dict], dict]:
         """
@@ -651,7 +651,7 @@ class Wrapper(HandlerManager):
                 CFD	                6	        CFD
         """
 
-        return self._open_data_channel(command="AllSymbols")
+        return self._open_data_channel(command = "AllSymbols")
     
     def getCalendar(self) -> List[dict]:
         """
@@ -680,9 +680,9 @@ class Wrapper(HandlerManager):
                 high	            3	        high
         """
 
-        return self._open_data_channel(command="Calendar")
+        return self._open_data_channel(command = "Calendar")
     
-    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime]=None) -> Dict[int,List[dict]]:
+    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime] = None) -> Dict[int,List[dict]]:
         """
         Returns chart info, from start date to the current time.
 
@@ -733,7 +733,7 @@ class Wrapper(HandlerManager):
         """
 
         # Dictionary for transforming periods to seconds
-        periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
+        periods = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
 
         # Check if the period is valid
         if period not in periods:
@@ -741,27 +741,27 @@ class Wrapper(HandlerManager):
             raise ValueError("Invalid period. Choose from: "+", ".join(periods))
         
         # Get the current time
-        now=datetime.now()
+        now = datetime.now()
         # Convert the current time to unix time
-        now_ux= datetime_to_unixtime(now)
+        now_ux = datetime_to_unixtime(now)
 
         # Set the limit time based on the period
         if periods[period] >= 1140:
-            limit=datetime(1900,1,1)
+            limit = datetime(1900,1,1)
         elif periods[period] >= 240:
-            limit=now - relativedelta(years=13)
+            limit = now - relativedelta(years = 13)
         elif periods[period] >= 30:
-            limit=now - relativedelta(months=7)
+            limit = now - relativedelta(months = 7)
         else:
-            limit=now - relativedelta(months=1)
-        limit_ux=datetime_to_unixtime(limit)
+            limit = now - relativedelta(months = 1)
+        limit_ux = datetime_to_unixtime(limit)
         
         # Convert the start time to unix time
         if not start:
             # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
-            start_ux=datetime_to_unixtime(datetime.min)
+            start_ux = datetime_to_unixtime(datetime.min)
         else:
-            start_ux=datetime_to_unixtime(start)
+            start_ux = datetime_to_unixtime(start)
 
         # Check if the start time is in the past
         if start_ux> now_ux:
@@ -770,19 +770,19 @@ class Wrapper(HandlerManager):
 
         # Check if the start time is too far in the past
         if start_ux< limit_ux:
-            start_ux=limit_ux
+            start_ux = limit_ux
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
         return self._open_data_channel(
-            command="ChartLastRequest",
-            info=dict(
-                period=periods[period],
-                start=start_ux,
-                symbol=symbol
+            command = "ChartLastRequest",
+            info = dict(
+                period = periods[period],
+                start = start_ux,
+                symbol = symbol
             )
         )
 
-    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime]=None, end: Optional[datetime]=None, ticks: int=0) -> Dict[int,List[dict]]:
+    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime] = None, end: Optional[datetime] = None, ticks: int = 0) -> Dict[int,List[dict]]:
         """
         Returns chart info with data between given start and end dates.
 
@@ -840,34 +840,34 @@ class Wrapper(HandlerManager):
         """
 
         # Dictionary for transforming periods to seconds
-        periods={'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
+        periods = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
 
         if period not in periods:
             self._logger("Invalid period. Choose from: "+", ".join(periods))
             raise ValueError("Invalid period. Choose from: "+", ".join(periods))
         
         # Get the current time
-        now=datetime.now()
+        now = datetime.now()
         # Convert the current time to unix time
-        now_ux= datetime_to_unixtime(now)
+        now_ux = datetime_to_unixtime(now)
 
         # Set the limit time based on the period
         if periods[period] >= 1140:
-            limit=datetime(1900,1,1)
+            limit = datetime(1900,1,1)
         elif periods[period] >= 240:
-            limit=now - relativedelta(years=13)
+            limit  =now - relativedelta(years = 13)
         elif periods[period] >= 30:
-            limit=now - relativedelta(months=7)
+            limit = now - relativedelta(months = 7)
         else:
-            limit=now - relativedelta(months=1)
-        limit_ux=datetime_to_unixtime(limit)
+            limit = now - relativedelta(months = 1)
+        limit_ux = datetime_to_unixtime(limit)
 
         # Convert the start time to unix time
         if not start:
             # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
-            start_ux=datetime_to_unixtime(datetime.min)
+            start_ux = datetime_to_unixtime(datetime.min)
         else:
-            start_ux=datetime_to_unixtime(start)
+            start_ux = datetime_to_unixtime(start)
 
         # Check if the start time is in the past
         if start_ux> now_ux:
@@ -876,16 +876,16 @@ class Wrapper(HandlerManager):
 
         # Check if the start time is too far in the past
         if start_ux< limit_ux:
-            start_ux=limit_ux
+            start_ux = limit_ux
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
         if ticks == 0:
             # Convert the end time to unix time
             if not end:
                 # If no end time is given, set it to the current time
-                end_ux=now_ux
+                end_ux = now_ux
             else:
-                end_ux=datetime_to_unixtime(end)
+                end_ux = datetime_to_unixtime(end)
             
             # Check if the end time is in the future
             if end_ux> now_ux:
@@ -893,7 +893,7 @@ class Wrapper(HandlerManager):
                 raise ValueError("End time is greater than current time.")
 
             # Check if the start time is greater or equal to the end time
-            if start_ux>= end_ux:
+            if start_ux >= end_ux:
                 self._logger.error("Start time is greater or equal than end time.")
                 raise ValueError("Start time is greater or equal than end time.")
         else:
@@ -905,15 +905,15 @@ class Wrapper(HandlerManager):
             if ticks < 0:
                 # If ticks is negative, the limit time lies in the past
                 if period in ["M1", "M5", "M15", "M30"]:
-                    delta = calculate_timesteps(limit,reference, period='minutes')
+                    delta = calculate_timesteps(limit,reference, period = 'minutes')
                 elif period in ["H1", "H4"]:
-                    delta = calculate_timesteps(limit,reference, period='hours')
+                    delta = calculate_timesteps(limit,reference, period = 'hours')
                 elif period == "D1":
-                    delta = calculate_timesteps(limit,reference, period='days')
+                    delta = calculate_timesteps(limit,reference, period = 'days')
                 elif period == "W1":
-                    delta = calculate_timesteps(limit,reference, period='weeks')
+                    delta = calculate_timesteps(limit,reference, period = 'weeks')
                 else:
-                    delta = calculate_timesteps(limit,reference,period='months')
+                    delta = calculate_timesteps(limit,reference,period = 'months')
 
                 # Check if the ticks reach too far in the past
                 if delta < abs(ticks):
@@ -923,15 +923,15 @@ class Wrapper(HandlerManager):
             else:
                 # If ticks is positive, the limit time lies in the future
                 if period in ["M1", "M5", "M15", "M30"]:
-                    delta = calculate_timesteps(reference, now, period='minutes')
+                    delta = calculate_timesteps(reference, now, period = 'minutes')
                 elif period in ["H1", "H4"]:
-                    delta = calculate_timesteps(reference, now, period='hours')
+                    delta = calculate_timesteps(reference, now, period = 'hours')
                 elif period == "D1":
-                    delta = calculate_timesteps(reference, now, period='days')
+                    delta = calculate_timesteps(reference, now, period = 'days')
                 elif period == "W1":
-                    delta = calculate_timesteps(reference, now, period='weeks')
+                    delta = calculate_timesteps(reference, now, period = 'weeks')
                 else:
-                    delta = calculate_timesteps(reference, now, period='months')
+                    delta = calculate_timesteps(reference, now, period = 'months')
                 
                 # Check if the ticks reach too far in the future
                 if delta < ticks:
@@ -939,13 +939,13 @@ class Wrapper(HandlerManager):
                     self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
 
         return self._open_data_channel(
-            command="ChartRangeRequest",
-            info=dict(
-                end=end_ux,
-                period=periods[period],
-                start=start_ux,
-                symbol=symbol,
-                ticks=ticks
+            command = "ChartRangeRequest",
+            info = dict(
+                end = end_ux,
+                period = periods[period],
+                start = start_ux,
+                symbol = symbol,
+                ticks = ticks
             )
         )
 
@@ -977,7 +977,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
 
-        return self._open_data_channel(command="CommissionDef", symbol=symbol, volume=volume)
+        return self._open_data_channel(command = "CommissionDef", symbol = symbol, volume = volume)
     
     def getCurrentUserData(self) -> dict:
         """
@@ -999,9 +999,9 @@ class Wrapper(HandlerManager):
                 trailingStop	    boolean	    Indicates whether this account is enabled to use trailing stop   
         """
 
-        return self._open_data_channel(command="CurrentUserData")
+        return self._open_data_channel(command = "CurrentUserData")
     
-    def getIbsHistory(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
+    def getIbsHistory(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
         """
         Returns IBs data from the given time range.
 
@@ -1040,23 +1040,23 @@ class Wrapper(HandlerManager):
         # Convert the start time to unix time
         if not start:
             # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
-            start_ux=datetime_to_unixtime(datetime.min)
+            start_ux = datetime_to_unixtime(datetime.min)
         else:
-            start_ux=datetime_to_unixtime(start)
+            start_ux = datetime_to_unixtime(start)
 
         # Convert the end time to unix time
         if not end:
             # If no end time is given, set it to the current time
-            end_ux=datetime_to_unixtime(datetime.now())
+            end_ux = datetime_to_unixtime(datetime.now())
         else:
-            end_ux=datetime_to_unixtime(end) 
+            end_ux = datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
         if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
-        return self._open_data_channel(command="IbsHistory", end=end_ux, start=start_ux)
+        return self._open_data_channel(command = "IbsHistory", end = end_ux, start = start_ux)
     
     def getMarginLevel(self) -> dict:
         """
@@ -1077,7 +1077,7 @@ class Wrapper(HandlerManager):
                 margin_level	    float	    margin level percentage
         """
 
-        return self._open_data_channel(command="MarginLevel")
+        return self._open_data_channel(command = "MarginLevel")
     
     def getMarginTrade(self, symbol: str, volume: float) -> dict:
         """
@@ -1107,9 +1107,9 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
 
-        return self._open_data_channel(command="MarginTrade", symbol=symbol, volume=volume)
+        return self._open_data_channel(command = "MarginTrade", symbol = symbol, volume = volume)
     
-    def getNews(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
+    def getNews(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
         """
         Returns news from trading server which were sent within specified period of time.
 
@@ -1139,23 +1139,23 @@ class Wrapper(HandlerManager):
         # Convert the start time to unix time
         if not start:
             # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
-            start_ux=datetime_to_unixtime(datetime.min)
+            start_ux = datetime_to_unixtime(datetime.min)
         else:
-            start_ux=datetime_to_unixtime(start)
+            start_ux = datetime_to_unixtime(start)
 
         # Convert the end time to unix time
         if not end:
             # If no end time is given, set it to the current time
-            end_ux=datetime_to_unixtime(datetime.now())
+            end_ux = datetime_to_unixtime(datetime.now())
         else:
-            end_ux=datetime_to_unixtime(end) 
+            end_ux = datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
         if start_ux> end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
-        return self._open_data_channel(command="News", end=end_ux, start=start_ux)
+        return self._open_data_channel(command = "News", end = end_ux, start = start_ux)
     
     def getProfitCalculation(self, symbol: str, volume: float, open_price: float, close_price: float, cmd: int) -> dict:
         """
@@ -1210,12 +1210,12 @@ class Wrapper(HandlerManager):
             raise ValueError("Volume must be greater than 0.")
 
         return self._open_data_channel(
-            command="ProfitCalculation",
-            closePrice=close_price,
-            cmd=cmd,
-            openPrice=open_price,
-            symbol=symbol,
-            volume=volume
+            command = "ProfitCalculation",
+            closePrice = close_price,
+            cmd = cmd,
+            openPrice = open_price,
+            symbol = symbol,
+            volume = volume
         )
         
     def getServerTime(self) -> dict:
@@ -1232,7 +1232,7 @@ class Wrapper(HandlerManager):
                 timeString	        string      Time described in form set on server (local time of server)
         """
 
-        return self._open_data_channel(command="ServerTime")
+        return self._open_data_channel(command = "ServerTime")
     
     def getStepRules(self) -> List[Dict[int, str, List[dict]]]:
         """
@@ -1255,7 +1255,7 @@ class Wrapper(HandlerManager):
                 step	            float	    lotStep value in the given volume range
         """
 
-        return self._open_data_channel(command="StepRules")
+        return self._open_data_channel(command = "StepRules")
 
     def getSymbol(self, symbol: str) -> dict:
         """
@@ -1341,9 +1341,9 @@ class Wrapper(HandlerManager):
                 CFD	                6	        CFD
         """
 
-        return self._open_data_channel(command="Symbol", symbol=symbol)
+        return self._open_data_channel(command = "Symbol", symbol = symbol)
     
-    def getTickPrices(self, symbols: List[str], time: datetime, level: int=-1) -> Dict[List[dict]]:
+    def getTickPrices(self, symbols: List[str], time: datetime, level: int = -1) -> Dict[List[dict]]:
         """
         Returns array of current quotations for given symbols, only quotations that changed from given timestamp are returned.
         New timestamp obtained from output will be used as an argument of the next call of this command.
@@ -1406,7 +1406,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Time lies in the future.")
             raise ValueError("Time lies in the future.")
 
-        return self._open_data_channel(command="TickPrices", level=level, symbols=symbols, timestamp=timestamp)
+        return self._open_data_channel(command = "TickPrices", level = level, symbols = symbols, timestamp = timestamp)
     
     def getTradeRecords(self, orders: List[int]) -> List[dict]:
         """
@@ -1463,7 +1463,7 @@ class Wrapper(HandlerManager):
                 CREDIT	            7	        Read only
         """
 
-        return self._open_data_channel(command="TradeRecords", orders=orders)
+        return self._open_data_channel(command = "TradeRecords", orders = orders)
     
     def getTrades(self, opened_only: bool) -> List[dict]:
         """
@@ -1521,9 +1521,9 @@ class Wrapper(HandlerManager):
 
         """
         
-        return self._open_data_channel(command="Trades", openedOnly=opened_only)
+        return self._open_data_channel(command = "Trades", openedOnly = opened_only)
     
-    def getTradesHistory(self, start: Optional[datetime]=None, end: Optional[datetime]=None) -> List[dict]:
+    def getTradesHistory(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
         """
         Returns array of user's trades which were closed within specified period of time.
 
@@ -1585,23 +1585,23 @@ class Wrapper(HandlerManager):
         # Convert the start time to unix time
         if not start:
             # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
-            start_ux=datetime_to_unixtime(datetime.min)
+            start_ux = datetime_to_unixtime(datetime.min)
         else:
-            start_ux=datetime_to_unixtime(start)
+            start_ux = datetime_to_unixtime(start)
 
         # Convert the end time to unix time
         if not end:
             # If no end time is given, set it to the current time
-            end_ux=datetime_to_unixtime(datetime.now())
+            end_ux = datetime_to_unixtime(datetime.now())
         else:
-            end_ux=datetime_to_unixtime(end) 
+            end_ux = datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
-        if start_ux> end_ux:
+        if start_ux > end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
-        return self._open_data_channel(command="TradesHistory", end=end_ux, start=start_ux)
+        return self._open_data_channel(command = "TradesHistory", end = end_ux, start = start_ux)
 
     def getTradingHours(self, symbols: List[str]) -> List[Dict[List[dict], str, List[dict]]]:
         """
@@ -1648,7 +1648,7 @@ class Wrapper(HandlerManager):
                                     7	        Sunday
         """
 
-        return self._open_data_channel(command="TradingHours", symbols=symbols)
+        return self._open_data_channel(command = "TradingHours", symbols = symbols)
 
     def getVersion(self) -> dict:
         """
@@ -1663,7 +1663,7 @@ class Wrapper(HandlerManager):
                 version	            string	    current API version      
         """
 
-        return self._open_data_channel(command="Version")
+        return self._open_data_channel(command = "Version")
     
     def tradeTransaction(self,
         cmd: int,
@@ -1761,22 +1761,22 @@ class Wrapper(HandlerManager):
             raise ValueError("Volume must be greater than 0.")
 
         # Convert the expiration time to unix time
-        expiration_ux= datetime_to_unixtime(expiration)
+        expiration_ux = datetime_to_unixtime(expiration)
 
         return self._open_data_channel(
-            command="tradeTransaction",
-            tradeTransInfo=dict(
-                cmd=cmd,
-                customComment=custom_comment,
-                expiration=expiration_ux,
-                offset=offset,
-                order=order,
-                price=price,
-                sl=sl,
-                symbol=symbol,
-                tp=tp,
-                type=type,
-                volume=volume
+            command = "tradeTransaction",
+            tradeTransInfo = dict(
+                cmd = cmd,
+                customComment = custom_comment,
+                expiration = expiration_ux,
+                offset = offset,
+                order = order,
+                price = price,
+                sl = sl,
+                symbol = symbol,
+                tp = tp,
+                type = type,
+                volume = volume
             )
         )
     
@@ -1811,4 +1811,4 @@ class Wrapper(HandlerManager):
                 REJECTED	        4       	The transaction has been rejected
         """
 
-        return self._open_data_channel(command="tradeTransactionStatus", order=order)
+        return self._open_data_channel(command = "tradeTransactionStatus", order = order)
