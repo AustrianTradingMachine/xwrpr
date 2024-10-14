@@ -20,11 +20,8 @@ else
   echo "'twine' is installed."
 fi
 
-
-
-# Build the package
+# Build the source distribution
 python3 -m build --sdist
 
+# Build the wheel
 python3 -m build --wheel
-
-python3 -m twine upload --repository testpypi dist/*

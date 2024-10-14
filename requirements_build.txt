@@ -1,3 +1,2 @@
 twine
-wheel
 build
