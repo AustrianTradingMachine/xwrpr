@@ -31,9 +31,26 @@ import shutil
 this_directory = Path(__file__).parent
 
 class CustomBuildPy(build_py):
-    """Custom build process for the package"""
+    """
+    Custom build process for the package.
+
+    Methods:
+        run: Run the custom build process for the package.
+    """
 
     def run(self):
+        """
+        Run the custom build process for the package.
+
+        Returns:
+            None
+
+        Raises:
+            FileNotFoundError: If the source configuration file does not exist.
+            PermissionError: If the target directory cannot be created.
+            IOError: If the source configuration file cannot be copied to the target directory.
+        """
+
         try:
             # Define the source path for the user.ini file
             source_config_path = this_directory / 'user.ini'
@@ -63,6 +80,7 @@ class CustomBuildPy(build_py):
         finally:
             # Run the standard install process
             build_py.run(self)
+
 
 # Read the package's long description from the README file
 long_description = (this_directory / "README.md").read_text()
