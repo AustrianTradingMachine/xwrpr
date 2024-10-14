@@ -25,9 +25,9 @@ from enum import Enum
 import logging
 from pathlib import Path
 import configparser
+from typing import Union, List, Optional, Dict
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from typing import Union, List, Optional, Dict
 from xwrpr.handler import HandlerManager
 from xwrpr.utils import generate_logger, calculate_timesteps, datetime_to_unixtime
 
