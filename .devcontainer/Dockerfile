@@ -13,8 +13,8 @@ FROM debian:11
 # Set the metadata
 #------------------------------------------------
 #
-LABEL name="debian11_python3.9"
-LABEL description="Dockerfile for python 3.9 development environment"
+LABEL name = "debian11_python3.9"
+LABEL description = "Dockerfile for python 3.9 development environment"
 #
 #------------------------------------------------
 # Define arguments for the base image
@@ -27,8 +27,8 @@ ARG TARGETARCH
 ARG DEBIAN_FRONTEND noninteractive
 #
 # Set the language environment variable
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
+ENV LANG = C.UTF-8
+ENV LC_ALL = C.UTF-8
 #
 #------------------------------------------------
 # Set the working directory for software installation
@@ -97,14 +97,14 @@ COPY .. .
 #
 # Install the reqirements
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements_test.txt && \
+    pip install --no-cache-dir -r requirements_dev.txt && \
     pip install --no-cache-dir -r requirements_build.txt
 #
 # make sure all messages always reach console
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED = 1
 #
 # Set the encoding to UTF-8
-ENV PYTHONIOENCODING=UTF-8
+ENV PYTHONIOENCODING = UTF-8
 #
 #------------------------------------------------
 # Create a non-root user

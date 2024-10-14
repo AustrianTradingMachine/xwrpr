@@ -65,7 +65,7 @@ class CustomBuildPy(build_py):
             
             # Create the target directory if it does not exist
             try:
-                target_config_dir.mkdir(parents=True, exist_ok=True)
+                target_config_dir.mkdir(parents = True, exist_ok = True)
             except PermissionError as e:
                 raise PermissionError(f"Permission denied while creating directory: {target_config_dir}") from e
             
@@ -87,17 +87,17 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     # Define the location of the packages description
-    long_description=long_description,
+    long_description = long_description,
     # Set the path to the package's root directory
-    package_dir={"": "src"},
+    package_dir = {"": "src"},
     # Find all packages in the src directory (including subpackages)
-    packages=find_packages(where="src"),
+    packages = find_packages(where="src"),
     # Define the package's metadata
-    package_data={
+    package_data = {
         'xwrpr': ['user.ini','src/xwrpr/api.ini']
     },
     # Defin a custom build process
-    cmdclass={
+    cmdclass = {
         'build_py': CustomBuildPy,
         },
 )

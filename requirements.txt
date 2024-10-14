@@ -1,1 +1,1 @@
-tzlocal==5.2
+tzlocal == 5.2

@@ -20,17 +20,17 @@
 ###########################################################################
 
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
+requires = ["setuptools >= 61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="xwrpr"
-version="1.0.0"
-description="A wrapper for the XTB API"
+name = "xwrpr"
+version = "1.0.0"
+description = "A wrapper for the XTB API"
 readme = {file = "README.md", content-type = "text/markdown"}
 authors = [{ name = "AustrianTradingMachine"}]
 license = { file = "LICENSE" }
-classifiers=[
+classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
@@ -43,9 +43,9 @@ classifiers=[
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
     ]
-keywords=["XTB","API","trading","finance","development"]
-dependencies=[
-    "tzlocal==5.2"
+keywords = ["XTB","API","trading","finance","development"]
+dependencies = [
+    "tzlocal == 5.2"
     ]
 requires-python = ">=3.9"
 
@@ -54,7 +54,7 @@ Homepage = "https://github.com/AustrianTradingMachine/xwrpr"
 
 [project.optional-dependencies]
 dev = [
-    "pytest==6.2.5",
+    "pytest == 6.2.5",
     ]
 
 [tool.pytest.ini_options]
