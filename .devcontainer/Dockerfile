@@ -97,7 +97,8 @@ COPY .. .
 #
 # Install the reqirements
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements_dev.txt
+    pip install --no-cache-dir -r requirements_test.txt && \
+    pip install --no-cache-dir -r requirements_build.txt
 #
 # make sure all messages always reach console
 ENV PYTHONUNBUFFERED=1
