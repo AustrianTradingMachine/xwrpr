@@ -43,7 +43,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
     ]
-keywords = ["XTB","API","trading","finance","development"]
+keywords = ["XTB", "API", "trading", "finance", "development"]
 dependencies = [
     "tzlocal == 5.2"
     ]

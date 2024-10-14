@@ -37,13 +37,13 @@ config = configparser.ConfigParser()
 config_path = Path(__file__).parent.absolute()/'api.ini'
 config.read(config_path)
 
-MAX_CONNECTIONS = config.getint('CONNECTION','MAX_CONNECTIONS')
-MAX_SEND_DATA = config.getint('CONNECTION','MAX_SEND_DATA')
-MAX_RECEIVED_DATA = config.getint('CONNECTION','MAX_RECEIVED_DATA')
-MIN_REQUEST_INTERVAL = config.getint('CONNECTION','MIN_REQUEST_INTERVAL')/1000
-MAX_RETRIES = config.getint('CONNECTION','MAX_RETRIES')
-MAX_REACTION_TIME = config.getint('CONNECTION','MAX_REACTION_TIME')/1000
-MAX_QUEUE_ELEMENTS = config.getint('HANDLER','MAX_QUEUE_ELEMENTS')
+MAX_CONNECTIONS = config.getint('CONNECTION', 'MAX_CONNECTIONS')
+MAX_SEND_DATA = config.getint('CONNECTION', 'MAX_SEND_DATA')
+MAX_RECEIVED_DATA = config.getint('CONNECTION', 'MAX_RECEIVED_DATA')
+MIN_REQUEST_INTERVAL = config.getint('CONNECTION', 'MIN_REQUEST_INTERVAL')/1000
+MAX_RETRIES = config.getint('CONNECTION', 'MAX_RETRIES')
+MAX_REACTION_TIME = config.getint('CONNECTION', 'MAX_REACTION_TIME')/1000
+MAX_QUEUE_ELEMENTS = config.getint('HANDLER', 'MAX_QUEUE_ELEMENTS')
 
 class Status(Enum):
     """
@@ -682,7 +682,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command = "Calendar")
     
-    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime] = None) -> Dict[int,List[dict]]:
+    def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime] = None) -> Dict[int, List[dict]]:
         """
         Returns chart info, from start date to the current time.
 
@@ -690,7 +690,7 @@ class Wrapper(HandlerManager):
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
             symbol              string	    no          The symbol for which to retrieve the chart data.
-            period              string	    no          Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            period              string	    no          Must be one of: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
             start               datetime	yes         Start of chart block (rounded down to the nearest interval and excluding)
                                                         Default: 0001-01-01 00:00:00
 
@@ -733,7 +733,7 @@ class Wrapper(HandlerManager):
         """
 
         # Dictionary for transforming periods to seconds
-        periods = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
+        periods = {'M1':1, 'M5':5, 'M15':15, 'M30':30, 'H1':60, 'H4':240, 'D1':1440, 'W1':10080, 'MN1':43200}    
 
         # Check if the period is valid
         if period not in periods:
@@ -747,7 +747,7 @@ class Wrapper(HandlerManager):
 
         # Set the limit time based on the period
         if periods[period] >= 1140:
-            limit = datetime(1900,1,1)
+            limit = datetime(1900, 1, 1)
         elif periods[period] >= 240:
             limit = now - relativedelta(years = 13)
         elif periods[period] >= 30:
@@ -769,7 +769,7 @@ class Wrapper(HandlerManager):
             raise ValueError("Start time is greater than current time.")
 
         # Check if the start time is too far in the past
-        if start_ux< limit_ux:
+        if start_ux < limit_ux:
             start_ux = limit_ux
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
@@ -782,7 +782,7 @@ class Wrapper(HandlerManager):
             )
         )
 
-    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime] = None, end: Optional[datetime] = None, ticks: int = 0) -> Dict[int,List[dict]]:
+    def getChartRangeRequest(self, symbol: str, period: str, start: Optional[datetime] = None, end: Optional[datetime] = None, ticks: int = 0) -> Dict[int, List[dict]]:
         """
         Returns chart info with data between given start and end dates.
 
@@ -790,7 +790,7 @@ class Wrapper(HandlerManager):
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
             symbol              string	    no          The symbol for which to retrieve the chart data.
-            period              string	    no          Must be one of :"M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
+            period              string	    no          Must be one of: "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1".
             start               datetime	yes         Start of chart block (rounded down to the nearest interval and excluding)
                                                         Default: 0001-01-01 00:00:00
             end                 datetime	yes         End of chart block (rounded down to the nearest interval and excluding)
@@ -840,7 +840,7 @@ class Wrapper(HandlerManager):
         """
 
         # Dictionary for transforming periods to seconds
-        periods = {'M1':1,'M5':5,'M15':15,'M30':30,'H1':60,'H4':240,'D1':1440,'W1':10080,'MN1':43200}    
+        periods = {'M1':1, 'M5':5, 'M15':15, 'M30':30, 'H1':60, 'H4':240, 'D1':1440, 'W1':10080, 'MN1':43200}    
 
         if period not in periods:
             self._logger("Invalid period. Choose from: "+", ".join(periods))
@@ -853,7 +853,7 @@ class Wrapper(HandlerManager):
 
         # Set the limit time based on the period
         if periods[period] >= 1140:
-            limit = datetime(1900,1,1)
+            limit = datetime(1900, 1, 1)
         elif periods[period] >= 240:
             limit  =now - relativedelta(years = 13)
         elif periods[period] >= 30:
@@ -875,7 +875,7 @@ class Wrapper(HandlerManager):
             raise ValueError("Start time is greater than current time.")
 
         # Check if the start time is too far in the past
-        if start_ux< limit_ux:
+        if start_ux < limit_ux:
             start_ux = limit_ux
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
@@ -888,7 +888,7 @@ class Wrapper(HandlerManager):
                 end_ux = datetime_to_unixtime(end)
             
             # Check if the end time is in the future
-            if end_ux> now_ux:
+            if end_ux > now_ux:
                 self._logger.error("End time is greater than current time.")
                 raise ValueError("End time is greater than current time.")
 
@@ -1052,7 +1052,7 @@ class Wrapper(HandlerManager):
             end_ux = datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
-        if start_ux> end_ux:
+        if start_ux > end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
@@ -1151,7 +1151,7 @@ class Wrapper(HandlerManager):
             end_ux = datetime_to_unixtime(end) 
 
         # Check if the start time is greater than the end time
-        if start_ux> end_ux:
+        if start_ux > end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
