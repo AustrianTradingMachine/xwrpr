@@ -410,14 +410,19 @@ class _GeneralHandler(Client):
                     else:
                         ssid = None
 
-                    # Stream handler have to send their ssid with every request to the host
-                    self.send_request(command='ping', ssid=ssid)
+                    try:
+                        # Stream handler have to send their ssid with every request to the host
+                        self.send_request(command='ping', ssid=ssid)
 
-                    if not ssid:
-                        # None stream pings receive a response
-                        self.receive_response()
+                        if not ssid:
+                            # None stream pings receive a response
+                            self.receive_response()
 
-                    self._logger.info("Ping")
+                        self._logger.info("Ping")
+                    except ValueError as e:
+                        # If the ping fails, raise an exception
+                        self._logger.error(f"Ping failed: {e}")
+                        break
 
                     # reset the ping timer
                     elapsed_time = 0
@@ -870,9 +875,10 @@ class _DataHandler(_GeneralHandler):
         if not self._stream_handler:
             self._logger.info("No StreamHandlers to close")
         else:
+            # Delete all connected stream handlers
+            # Detaching is only executed by StreamHandler itself
             for handler in list(self._stream_handler):
                 handler.delete()
-                # detaching is only executed by StreamHandler itself
 
     @property
     def stream_handler(self) -> List['_StreamHandler']:
@@ -1095,9 +1101,14 @@ class _StreamHandler(_GeneralHandler):
         
         # Check if the specific stream is already open
         for index in self._stream_tasks:
-            if self._stream_tasks[index]['command'] == command and self._stream_tasks[index]['arguments'] == kwargs:
-                self._logger.warning("Stream for data already open")
-                raise ValueError("Stream for data already open")
+            if self._stream_tasks[index]['command'] == command:
+                if 'symbol' in kwargs:
+                    if set(kwargs['symbol']) == set(self._stream_tasks[index]['arguments']['symbol']):
+                        self._logger.warning("Stream for data already open")
+                        return
+                else:
+                    self._logger.warning("Stream for data already open")
+                    return
             
         # Start the stream for the specified command
         self._start_stream(command, **kwargs)

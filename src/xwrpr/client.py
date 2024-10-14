@@ -214,10 +214,12 @@ class Client():
 
         # Check the number of suitable addresses
         num_addresses = len(self._addresses)
+        self._logger.debug(f"{num_addresses} suitable addresses found")
+
+        # Check if there are any suitable addresses
         if num_addresses == 0:
             self._logger.error("No suitable addresses found")
             raise ValueError("No suitable addresses found")
-        self._logger.debug(f"{num_addresses} suitable addresses found")
 
     def check(self, mode: str) -> None:
         """
@@ -278,6 +280,7 @@ class Client():
             excluded_errorors (List[str], optional): A list of error values to exclude from retrying. Defaults to [].
 
         Raises:
+            RuntimeError: If no available addresses are found.
             RuntimeError: If all attempts to create the socket fail.
 
         Returns:
@@ -308,6 +311,11 @@ class Client():
             for error in [None] + errors:
                 avl_addresses.extend([key for key, value in self._addresses.items() if value['last_error'] == error])
             self._logger.debug(f"Available addresses: {avl_addresses}")
+
+            # Check if there are any available addresses
+            if not avl_addresses:
+                self._logger.error("No available addresses found")
+                raise RuntimeError("No available addresses found")
 
             # Try to create the socket
             created = False
