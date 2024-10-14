@@ -898,6 +898,7 @@ class _StreamHandler(_GeneralHandler):
     Attributes:
         _logger (logging.Logger): The logger object used for logging.
         _dh (_DataHandler): The data handler object.
+        _max_queue_elements (int): The maximum number of elements in the queue.
         _status (Status): The status of the stream handler.
         _stream (dict): The stream dictionary.
         _stream_tasks (dict): The dictionary of stream tasks.
@@ -933,6 +934,7 @@ class _StreamHandler(_GeneralHandler):
         min_request_interval: int,
         max_retries: int,
         max_reaction_time: int,
+        max_queue_elements: int,
 
         logger: Optional[logging.Logger] = None
         ) -> None:
@@ -947,6 +949,7 @@ class _StreamHandler(_GeneralHandler):
             min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (float): The maximum reaction time in seconds.
+            max_queue_elements (int): The maximum number of elements in the queue
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
         
         Raises:
@@ -980,6 +983,9 @@ class _StreamHandler(_GeneralHandler):
         # Attach the StreamHandler to the DataHandler
         self._dh = data_handler
         self._dh.attach_stream_handler(self)
+
+        # Set the maximum number of elements in the queue
+        self._max_queue_elements = max_queue_elements
 
         # Open connection to the server
         self.open()
@@ -1130,7 +1136,7 @@ class _StreamHandler(_GeneralHandler):
                 daemon=True
             )
             # Put the queue for the exchange into the exchange dictionary
-            exchange['queue'] = Queue(maxsize=1000)
+            exchange['queue'] = Queue(maxsize=self._max_queue_elements)
 
             # The data from the stream is put into the queue for the exchange
             self._stream_tasks[index]['queue'] = exchange['queue']
@@ -1561,6 +1567,7 @@ class HandlerManager():
         _min_request_interval (float): The minimum request interval in seconds.
         _max_retries (int): The maximum number of retries.
         _max_reaction_time (float): The maximum reaction time in seconds.
+        _max_queue_elements (int): The maximum number of elements in the queue.
         _handler_register (dict): The dictionary of registered handlers.
         _status (Status): The status of the handler manager.
         _handler_management_thread (CustomThread): The handler management thread.
@@ -1590,6 +1597,7 @@ class HandlerManager():
         min_request_interval: float,
         max_retries: int,
         max_reaction_time: float,
+        max_queue_elements: int,
 
         demo: bool=True,
 
@@ -1609,6 +1617,7 @@ class HandlerManager():
             min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (float): The maximum reaction time in seconds.
+            max_queue_elements (int): The maximum number of elements in the queue.
             demo (bool, optional): Specifies whether the handlers are for demo purposes. Defaults to True.
             username (str, optional): The username for the XTB trading platform. Defaults to None.
             password (str, optional): The password for the XTB trading platform. Defaults to None.
@@ -1650,6 +1659,7 @@ class HandlerManager():
         self._min_request_interval=min_request_interval
         self._max_retries=max_retries
         self._max_reaction_time=max_reaction_time
+        self._max_queue_elements=max_queue_elements
 
         # Initialize the handlers dictionary
         self._handler_register = {'data': {}, 'stream': {}}
@@ -1864,6 +1874,7 @@ class HandlerManager():
             min_request_interval=self._min_request_interval,
             max_retries=self._max_retries,
             max_reaction_time=self._max_reaction_time,
+            max_queue_elements=self._max_queue_elements,
 
             logger=sh_logger
         )

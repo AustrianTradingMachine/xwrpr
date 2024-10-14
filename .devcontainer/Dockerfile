@@ -14,7 +14,6 @@ FROM debian:11
 #------------------------------------------------
 #
 LABEL name="debian11_python3.9"
-LABEL version="0.0.1"
 LABEL description="Dockerfile for python 3.9 development environment"
 #
 #------------------------------------------------

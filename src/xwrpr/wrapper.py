@@ -43,7 +43,7 @@ MAX_RECEIVED_DATA=config.getint('CONNECTION','MAX_RECEIVED_DATA')
 MIN_REQUEST_INTERVAL=config.getint('CONNECTION','MIN_REQUEST_INTERVAL')/1000
 MAX_RETRIES=config.getint('CONNECTION','MAX_RETRIES')
 MAX_REACTION_TIME=config.getint('CONNECTION','MAX_REACTION_TIME')/1000
-
+MAX_QUEUE_ELEMENTS=config.getint('HANDLER','MAX_QUEUE_ELEMENTS')
 
 class Status(Enum):
     """
@@ -117,6 +117,7 @@ class Wrapper(HandlerManager):
         min_request_interval: float = MIN_REQUEST_INTERVAL,
         max_retries: int = MAX_RETRIES,
         max_reaction_time: float = MAX_REACTION_TIME,
+        max_queue_elements: int = MAX_QUEUE_ELEMENTS,
 
         logger: Optional[logging.Logger]=None,
     ) -> None:
@@ -134,6 +135,7 @@ class Wrapper(HandlerManager):
             min_request_interval (float): The minimum request interval in seconds.
             max_retries (int): The maximum number of retries.
             max_reaction_time (float): The maximum reaction time in seconds.
+            max_queue_elements (int): The maximum number of elements in the queue.
             logger (logging.Logger, optional): The logger object to use for logging. Defaults to None.
 
         Raises:
@@ -182,6 +184,10 @@ class Wrapper(HandlerManager):
             max_reaction_time=0
             self._logger.warning("Max reaction time must be at least 0. Setting max reaction time to 0")
 
+        if max_queue_elements < 1:
+            max_queue_elements=1
+            self._logger.warning("Max queue elements must be at least 1. Setting max queue elements to 1")
+
         # Initialize the HandlerManager
         super().__init__(
             max_connections = max_connections,
@@ -190,6 +196,7 @@ class Wrapper(HandlerManager):
             min_request_interval = min_request_interval,
             max_retries = max_retries,
             max_reaction_time = max_reaction_time,
+            max_queue_elements = max_queue_elements,
 
             demo=demo,
             
