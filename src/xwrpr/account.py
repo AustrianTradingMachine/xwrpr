@@ -24,7 +24,39 @@
 from pathlib import Path
 import configparser
 
+# Path to the configuration directory
 PATH = Path('~/.xwrpr').expanduser()
+
+# Cache for configparser object to avoid reloading
+_config_cache = None
+
+
+def _load_config() -> configparser.ConfigParser:
+    """
+    Loads the configuration file from the user.ini file.
+
+    Returns:
+        configparser.ConfigParser: The configuration object.
+
+    Raises:
+        FileNotFoundError: If the configuration file is not found.
+    """
+
+    # Use the global _config_cache variable
+    global _config_cache
+
+    # Define the path to the configuration file
+    config_path = PATH / 'user.ini'
+
+    # Ensure the configuration file exists
+    if not config_path.exists():
+        raise FileNotFoundError(f'Configuration file not found at {config_path}')
+    
+    # Load the configuration file
+    _config_cache = configparser.ConfigParser()
+    _config_cache.read(config_path)
+    
+    return _config_cache
 
 def _get_config(value: str) -> str:
     """
@@ -37,18 +69,18 @@ def _get_config(value: str) -> str:
         str: The value associated with the specified key.
 
     Raises:
-        FileNotFoundError: If the configuration file is not found.
-        KeyError: If the specified key is not found in the configuration file.
+        KeyError: If the key is not found in the configuration file.
+        KeyError: If the 'USER' section is not found in the configuration file.
     """
 
-    dir_path = PATH
-    config_path = dir_path / 'user.ini'
+    # Use the global _config_cache variable
+    global _config_cache
 
-    if not config_path.exists():
-        raise FileNotFoundError(f'Configuration file not found at {config_path}')
-    
-    config = configparser.ConfigParser()
-    config.read(config_path)
+    # Load the configuration file if not already loaded
+    if _config_cache is None:
+        config = _load_config()
+    else:
+        config = _config_cache
 
     # Ensure the 'USER' section exists
     if 'USER' not in config:
@@ -68,13 +100,16 @@ def get_userId(demo: bool) -> str:
 
     Returns:
     - str: The user ID based on the demo flag.
-    """
-    if demo:
-        userId = _get_config('DEMO_ID')
-    else:
-        userId = _get_config('REAL_ID')
 
-    return userId
+    Raises:
+    - KeyError: If the user ID is not found in the configuration
+    """
+
+    try:
+        userId = _get_config('DEMO_ID' if demo else 'REAL_ID')
+        return userId
+    except KeyError as e:
+        raise
 
 def get_password() -> str:
     """
@@ -82,8 +117,16 @@ def get_password() -> str:
 
     Returns:
         str: The password stored in the configuration file.
+
+    Raises:
+        KeyError: If the password is not found in the configuration
     """
-    return _get_config('PASSWORD')
+
+    try:
+        password = _get_config('PASSWORD')
+        return password
+    except KeyError as e:
+        raise
 
 def set_path(path: str) -> None:
     """
@@ -91,14 +134,27 @@ def set_path(path: str) -> None:
 
     Args:
         path (str): The path to the configuration directory.
+
+    Raises:
+        ValueError: If the specified path is not a directory.
+
+    Returns:
+        None
     """
     
+    # Use the global PATH variable
+    global PATH
+
+    # Define the new path
     config_path = Path(path).expanduser()
 
-    # Check if the path is valid and is a directory
+    # Ensure the path is a directory
     if not config_path.exists() or not config_path.is_dir():
         raise ValueError(f'Invalid path: {path} (must be a directory)')
+    
+    # Clear cache to load new config if path is updated
+    global _config_cache
+    _config_cache = None
 
-    # Set the global PATH variable
-    global PATH
+    # Update the global PATH variable
     PATH = config_path
