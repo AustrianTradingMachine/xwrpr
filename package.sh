@@ -1,5 +1,12 @@
 #!/bin/bash
 
+################################################################################
+# Script to automate common tasks for Python package development and distribution
+#
+# for execution permission: chmod +x package.sh
+# for execution: ./package.sh or bash package.sh
+################################################################################
+
 # Helper function to check if the token exists in .pypirc
 check_token_exists() {
     local repo=$1
@@ -38,7 +45,7 @@ build() {
     echo "Building the project..."
 
     # Check if 'build' is installed
-    if ! python -c "import build" &> /dev/null; then
+    if ! python3 -c "import build" &> /dev/null; then
       echo "Error: 'build' is not installed. Please install it with 'pip install build'."
       exit 1
     fi
@@ -61,7 +68,7 @@ upload_to_testpypi() {
     write_pypirc "testpypi"
 
     # Check if 'twine' is installed
-    if ! python -c "import twine" &> /dev/null; then
+    if ! python3 -c "import twine" &> /dev/null; then
       echo "Error: 'twine' is not installed. Please install it with 'pip install twine'."
       exit 1
     fi
