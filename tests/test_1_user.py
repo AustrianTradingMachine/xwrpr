@@ -21,39 +21,49 @@
 #
 ###########################################################################
 
+import logging
 import xwrpr
-from pathlib import Path
-
 
 # Setting DEMO to True will use the demo account
 DEMO=False
 
 
-# just example how to generate alogger. Feel free to use your own logger
-logger=xwrpr.generate_logger(name="TEST_check_user",path=Path('~/Logger/xwrpr').expanduser())
+# Create a logger with the specified name
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
-
-# Creating Wrapper
-XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
-
+try:
+    # Creating Wrapper
+    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
+except Exception as e:
+    logger.error("Error creating Wrapper: %s", e)
+    logger.info("Did you forget to enter your credentials?")
+    logger.info("Look in README.md for more information")
+    exit()
 
 # getting API version
 version=XTBData.getVersion()
 
 if version['version'] != xwrpr.API_VERSION:
-    print("API version is different")
+    logger.error("API version is different. Is %s, should be %s", version['version'], xwrpr.API_VERSION)
 else:
-    print("API version is correct")
+    logger.info("API version is correct")
 
 
 # get user data
 user=XTBData.getCurrentUserData()
-print(user)
+for key, value in user.items():
+    logger.info("%s: %s", key, value)
 
 
 # get server time
-server=XTBData.getServerTime()
-print(server)
+server_time=XTBData.getServerTime()
+for key, value in server_time.items():
+    logger.info("%s: %s", key, value)
 
 
 # Close Wrapper

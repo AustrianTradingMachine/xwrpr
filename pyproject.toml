@@ -20,7 +20,7 @@
 ###########################################################################
 
 [build-system]
-requires = ["setuptools >= 61.0.0", "wheel"]
+requires = ["setuptools >= 75.1.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -45,7 +45,9 @@ classifiers = [
     ]
 keywords = ["XTB", "API", "trading", "finance", "development"]
 dependencies = [
-    "tzlocal == 5.2"
+    "tzlocal == 5.2",
+    "six == 1.16.0",
+    "python-dateutil == 2.9.0.post0"
     ]
 requires-python = ">=3.9"
 

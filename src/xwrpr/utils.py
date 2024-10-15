@@ -53,8 +53,6 @@ def generate_logger(
     # Create a logger with the specified name
     logger = logging.getLogger(name)
 
-    # Check if the logger already has handlers attached
-
     # In case a logger with the same name is already created, return it
     if logger.hasHandlers():
         return logger
