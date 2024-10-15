@@ -7,6 +7,12 @@
 # for execution: ./package.sh or bash package.sh
 ################################################################################
 
+# Set the version you just uploaded
+PACKAGE_NAME="xwrpr"
+VERSION="1.0.0"
+
+################################################################################
+
 # Helper function to check if the token exists in .pypirc
 check_token_exists() {
     local repo=$1
@@ -78,8 +84,21 @@ upload_to_testpypi() {
     # Upload to TestPyPI
     python3 -m twine upload --repository testpypi dist/*
 
-    # Install the package from TestPyPI
-    python3 -m pip install --index-url https://test.pypi.org/simple/ --upgrade xwrpr
+    # Retry installation from TestPyPI with a short delay
+    max_attempts=5
+    attempt=1
+    while (( attempt <= max_attempts )); do
+        echo "Attempting to install $PACKAGE_NAME==$VERSION from TestPyPI (Attempt $attempt/$max_attempts)..."
+        python3 -m pip install --index-url https://test.pypi.org/simple/ --upgrade "$PACKAGE_NAME==$VERSION" && break
+        echo "Package version $VERSION not found yet, retrying in 10 seconds..."
+        sleep 10
+        attempt=$(( attempt + 1 ))
+    done
+
+    if (( attempt > max_attempts )); then
+        echo "Failed to install $PACKAGE_NAME==$VERSION after $max_attempts attempts."
+        exit 1
+    fi
 }
 
 # Function to upload to PyPI
@@ -97,11 +116,21 @@ upload_to_pypi() {
 
     echo "'twine' is installed."
 
-    # Upload to PyPI
-    python3 -m twine upload dist/*
+    # Retry installation from PyPI with a short delay
+    max_attempts=5
+    attempt=1
+    while (( attempt <= max_attempts )); do
+        echo "Attempting to install $PACKAGE_NAME==$VERSION from PyPI (Attempt $attempt/$max_attempts)..."
+        python3 -m pip install --upgrade "$PACKAGE_NAME==$VERSION" && break
+        echo "Package version $VERSION not found yet, retrying in 10 seconds..."
+        sleep 10
+        attempt=$(( attempt + 1 ))
+    done
 
-    # Install the package from PyPI
-    python3 -m pip install --upgrade xwrpr
+    if (( attempt > max_attempts )); then
+        echo "Failed to install $PACKAGE_NAME==$VERSION after $max_attempts attempts."
+        exit 1
+    fi
 }
 
 # Prompt user for action
