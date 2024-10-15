@@ -115,7 +115,7 @@ class Client():
             # Generate a new logger
             self._logger = generate_logger(name = 'Client', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing the client ...")
+        self._logger.info("Initializing Client ..")
         
         self._host = host
         self._port = port
@@ -329,9 +329,9 @@ class Client():
 
                 try:
                     # Create the socket
-                    self._socket = socket.sockt(
+                    self._socket = socket.socket(
                         family = self._addresses[self._address_key]['family'],
-                        type = self._addresses[self._address_key]['type'],
+                        type = self._addresses[self._address_key]['socktype'],
                         proto = self._addresses[self._address_key]['proto'],
                     )
                 except socket.error as e:
@@ -369,12 +369,12 @@ class Client():
                     # The socket is in non-blocking mode
                     # The timeout avoids that the socket is raising
                     # a timout exeption immediately
-                    self._socket.settimeout(value = self._timeout)
-                    self._socket.setblocking(flag = False)
+                    self._socket.settimeout(self._timeout)
+                    self._socket.setblocking(False)
                 else:
                     # The socket is in blocking mode
-                    self._socket.settimeout(value = None)
-                    self._socket.setblocking(flag = True)
+                    self._socket.settimeout(None)
+                    self._socket.setblocking(True)
 
                 self._logger.debug("Blocking mode: %s", self._socket.getblocking())
 

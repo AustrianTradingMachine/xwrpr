@@ -499,6 +499,7 @@ class _DataHandler(_GeneralHandler):
     def __init__(
         self,
         demo: bool,
+
         username: str,
         password: str,
 
@@ -1831,7 +1832,7 @@ class HandlerManager():
             password = self._password,
 
             max_send_data = self._max_send_data,
-            max_received_dat = self._max_received_data,
+            max_received_data = self._max_received_data,
             min_request_interval = self._min_request_interval,
             max_retries = self._max_retries,
             max_reaction_time = self._max_reaction_time,
