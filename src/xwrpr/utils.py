@@ -21,13 +21,13 @@
 #
 ###########################################################################
 
+from typing import Optional
 import logging
 from pathlib import Path
-import threading
 import re
+import threading
 import datetime
 import tzlocal
-from typing import Optional
 from dateutil.relativedelta import relativedelta
 
 
