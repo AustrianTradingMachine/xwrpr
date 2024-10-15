@@ -52,6 +52,7 @@ RUN apt-get update --fix-missing && \
         apt-transport-https \
         build-essential \
         ca-certificates \
+        iproute2 \
         wget \
         sudo \
         curl \
@@ -97,8 +98,7 @@ COPY .. .
 #
 # Install the reqirements
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements_dev.txt && \
-    pip install --no-cache-dir -r requirements_build.txt
+    pip install --no-cache-dir -r requirements_dev.txt
 #
 # make sure all messages always reach console
 ENV PYTHONUNBUFFERED = 1
