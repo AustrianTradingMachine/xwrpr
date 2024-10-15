@@ -1234,7 +1234,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command = "ServerTime")
     
-    def getStepRules(self) -> List[Dict[int, str, List[dict]]]:
+    def getStepRules(self) -> List[Dict[str, Union[int, str, List[dict]]]]:
         """
         Returns a list of step rules for DMAs.
 
@@ -1343,7 +1343,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command = "Symbol", symbol = symbol)
     
-    def getTickPrices(self, symbols: List[str], time: datetime, level: int = -1) -> Dict[List[dict]]:
+    def getTickPrices(self, symbols: List[str], time: datetime, level: int = -1) -> Dict[str, List[dict]]:
         """
         Returns array of current quotations for given symbols, only quotations that changed from given timestamp are returned.
         New timestamp obtained from output will be used as an argument of the next call of this command.
@@ -1603,7 +1603,7 @@ class Wrapper(HandlerManager):
 
         return self._open_data_channel(command = "TradesHistory", end = end_ux, start = start_ux)
 
-    def getTradingHours(self, symbols: List[str]) -> List[Dict[List[dict], str, List[dict]]]:
+    def getTradingHours(self, symbols: List[str]) -> List[Dict[str, Union[List[dict], str]]]:
         """
         Returns quotes and trading times.
 
