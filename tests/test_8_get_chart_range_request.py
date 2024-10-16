@@ -48,7 +48,7 @@ except Exception as e:
     logger.error(e)
 
 try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.now()+timedelta(days=1))
+    records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
 except Exception as e:
     logger.error("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
     logger.error(e)   
@@ -58,12 +58,12 @@ for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
     records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
 
     # Check if the return value is a list
-    if not isinstance(records, list):
+    if not isinstance(records, dict):
         logger.error("Error getting calendar")
         continue
 
     # Print chart
-    for record in records:
+    for record in records["rateInfos"]:
         line = ''
         for key, value in record.items():
             line += key + ': ' + str(value) + ', '
