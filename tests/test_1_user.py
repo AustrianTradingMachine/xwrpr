@@ -21,20 +21,14 @@
 #
 ###########################################################################
 
-import logging
+from helper.helper import generate_logger
 import xwrpr
 
 # Setting DEMO to True will use the demo account
 DEMO=False
 
-
 # Create a logger with the specified name
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+logger = generate_logger(filename=__file__)
 
 try:
     # Creating Wrapper

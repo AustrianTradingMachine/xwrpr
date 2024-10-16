@@ -23,7 +23,6 @@
 
 import logging
 from pathlib import Path
-import configparser
 import xwrpr
 
 # Setting DEMO to True will use the demo account
@@ -37,6 +36,10 @@ stream_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
+log_file_path = Path(__file__).parent.absolute()/'logs'/__file__.split('/')[-1].replace('.py', '.log')
+file_handler = logging.FileHandler(log_file_path)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 try:
     # Creating Wrapper

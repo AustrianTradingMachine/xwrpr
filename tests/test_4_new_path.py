@@ -29,7 +29,6 @@ import xwrpr
 # Setting DEMO to True will use the demo account
 DEMO=False
 
-
 # Create a logger with the specified name
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -37,11 +36,19 @@ stream_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
+log_file_path = Path(__file__).parent.absolute()/'logs'/__file__.split('/')[-1].replace('.py', '.log')
+try:
+    log_file_path.unlink()
+    logger.info(f"Removed {new_path}")
+except FileNotFoundError as e:
+    pass
+file_handler = logging.FileHandler(log_file_path)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 # Path to the configuration directory
 old_path = Path('~/.xwrpr').expanduser()/ 'user.ini'
 new_path = Path('~/.xwrpr_new').expanduser()/ 'user.ini'
-
 
 # Create new path
 new_path.parent.mkdir(parents=True, exist_ok=True)
