@@ -25,7 +25,7 @@ from pathlib import Path
 import configparser
 
 # Path to the configuration directory
-PATH = Path('~/.xwrpr').expanduser()
+PATH = Path('~/.xwrpr').expanduser() / 'user.ini'
 
 # Cache for configparser object to avoid reloading
 _config_cache = None
@@ -46,7 +46,7 @@ def _load_config() -> configparser.ConfigParser:
     global _config_cache
 
     # Define the path to the configuration file
-    config_path = PATH / 'user.ini'
+    config_path = PATH
 
     # Ensure the configuration file exists
     if not config_path.exists():
@@ -149,8 +149,8 @@ def set_path(path: str) -> None:
     config_path = Path(path).expanduser()
 
     # Ensure the path is a directory
-    if not config_path.exists() or not config_path.is_dir():
-        raise ValueError(f'Invalid path: {path} (must be a directory)')
+    if not config_path.exists():
+        raise ValueError(f'Invalid path: {path}')
     
     # Clear cache to load new config if path is updated
     global _config_cache

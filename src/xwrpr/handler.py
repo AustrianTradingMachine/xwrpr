@@ -1657,6 +1657,7 @@ class HandlerManager():
         else:
             # Sets the path to the credentials file
             if path:
+                self._logger.debug("Using provided path to credentials file")
                 set_path(path = path)
 
             # Get the username and password from the config file

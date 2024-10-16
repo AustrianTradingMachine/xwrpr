@@ -21,29 +21,41 @@
 #
 ###########################################################################
 
-import xwrpr
+import logging
 from pathlib import Path
-from datetime import datetime, timedelta
-
-
+import configparser
+import xwrpr
 
 # Setting DEMO to True will use the demo account
 DEMO=False
 
 
-# just example how to generate alogger. Feel free to use your own logger
-logger=xwrpr.generate_logger(name="TEST_get_ticker",path=Path('~/Logger/xwrpr').expanduser())
+# Create a logger with the specified name
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
+try:
+    # Creating Wrapper
+    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
+except Exception as e:
+    logger.error("Error creating Wrapper: %s", e)
+    logger.info("Did you forget to enter your credentials?")
+    logger.info("Look in README.md for more information")
+    exit()
 
-# Creating Wrapper
-XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
+symbols=XTBData.getAllSymbols()
 
-
-# getting all symbols
-# could take some time
-symbol=XTBData.getTickPrices(level=-1, time=datetime.now()-timedelta(days=365), symbols=['EURUSD', 'GBPUSD'])
-
-print(symbol)
+for symbol in symbols:
+    logger.info(" ")
+    logger.info("Symbol: %s", symbol['symbol'])
+    line = ''
+    for key, value in symbol.items():
+        line += key + ': ' + str(value) + ', '
+    logger.info(line)
 
 
 # Close Wrapper
