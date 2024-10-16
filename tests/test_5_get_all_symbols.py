@@ -42,7 +42,7 @@ except Exception as e:
 symbols=XTBData.getAllSymbols()
 
 for symbol in symbols:
-    logger.info(" ")
+    logger.info("")
     logger.info("Symbol: %s", symbol['symbol'])
     line = ''
     for key, value in symbol.items():

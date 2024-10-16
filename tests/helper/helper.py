@@ -36,7 +36,7 @@ def generate_logger(filename: str) -> logging.Logger:
     """
     
     # Create a logger with the specified name
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -45,11 +45,15 @@ def generate_logger(filename: str) -> logging.Logger:
 
     try:
         # Define the log file path in /tmp/xwrpr/logs
-        log_file_path = Path("/tmp/xwrpr/logs") / Path(__file__).name.replace('.py', '.log')
-
+        log_file_path = Path("/tmp/xwrpr/logs") / Path(filename).name.replace('.py', '.log')
         # Ensure the logs directory exists
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info("Log file path: %s", log_file_path)
+    except Exception as e:
+        logger.error("Error creating log directory: %s", e)
+        pass
 
+    try:
         # Remove the log file if it already exists
         log_file_path.unlink()
     except FileNotFoundError as e:
@@ -58,3 +62,5 @@ def generate_logger(filename: str) -> logging.Logger:
     file_handler = logging.FileHandler(log_file_path)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
+    return logger
