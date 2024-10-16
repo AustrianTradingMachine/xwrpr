@@ -40,12 +40,6 @@ write_pypirc() {
     fi
 }
 
-# Function for development task
-development() {
-    echo "Running development actions..."
-    python3 -m pip install -e .
-}
-
 # Function for build task
 build() {
     echo "Building the project..."
@@ -64,6 +58,20 @@ build() {
 
     # Build source distribution and wheel
     python3 -m build --sdist --wheel
+}
+
+# Function for development task
+development() {
+    echo "Running development actions..."
+
+    # Check if package is build
+    if [ ! -d "dist" ]; then
+        echo "Error: No build files found. Please run the build task first."
+        exit 1
+    fi
+
+    # Install the package in editable mode
+    python3 -m pip install -e .
 }
 
 # Function to upload to TestPyPI
@@ -135,19 +143,19 @@ upload_to_pypi() {
 
 # Prompt user for action
 echo "Select an action:"
-echo "d - Development"
 echo "b - Build"
+echo "d - Development"
 echo "t - Upload to TestPyPI"
 echo "p - Upload to PyPI"
 read -p "Enter your choice: " action
 
 # Execute the appropriate function based on user input
 case "$action" in
-    d)
-        development
-        ;;
     b)
         build
+        ;;
+    d)
+        development
         ;;
     t)
         upload_to_testpypi
