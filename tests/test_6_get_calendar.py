@@ -50,12 +50,11 @@ if not isinstance(calendar, list):
 # Print all events
 for event in calendar:
     logger.info("")
-    logger.info("Symbol: %s", symbol['symbol'])
+    logger.info("Title: %s", event['title'])
     line = ''
-    for key, value in symbol.items():
+    for key, value in event.items():
         line += key + ': ' + str(value) + ', '
     logger.info(line)
-
 
 # Close Wrapper
 XTBData.delete()
