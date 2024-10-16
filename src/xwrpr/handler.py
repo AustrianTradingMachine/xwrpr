@@ -228,7 +228,7 @@ class _GeneralHandler(Client):
         # Receive the response from the server
         response = self.receive()
 
-        if response == '':
+        if not response:
             if stream:
                 # Stream responses can be empty
                 # in this case just return an empty dictionary
@@ -239,23 +239,16 @@ class _GeneralHandler(Client):
         
         self._logger.debug("Received response: " + str(response)[:100] + ('...' if len(str(response)) > 100 else ''))
 
-        try:
-            # Convert the response string to a dictionary
-            response_dict = json.loads(response)
-        except json.JSONDecodeError as e:
-            self._logger.error(f"Error decoding JSON response: {e}")
-            raise ValueError("Response not a valid JSON")
-
         if not stream:
             # Non stream responses have the flag "status"
-            if 'status' not in response_dict:
+            if 'status' not in response:
                 self._logger.error("Response corrupted")
                 raise ValueError("Response corrupted")
 
-            if not response_dict['status']:
+            if not response['status']:
                 # If the status is False, the response contains an error code and description
-                self._logger.error("Request failed. Error code: " + str(response_dict['errorCode']) + ", Error description: " + response_dict['errorDescr'])
-                raise ValueError("Request failed. Error code: " + str(response_dict['errorCode']) + ", Error description: " + response_dict['errorDescr'])
+                self._logger.error("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
+                raise ValueError("Request failed. Error code: " + str(response['errorCode']) + ", Error description: " + response['errorDescr'])
 
         return response
     
@@ -1537,6 +1530,8 @@ class _StreamHandler(_GeneralHandler):
 
     @dh.setter
     def dh(self, value: _DataHandler) -> None:
+        self._logger.info("Changing DataHandler ...")
+
         # Shut down the StreamHandler
         self._stop_stream(kill = False)
         self.stop_ping()
@@ -1551,6 +1546,8 @@ class _StreamHandler(_GeneralHandler):
         self.open()
         self._restart_streams()
         self.start_ping(handler = self)
+
+        self._logger.info("DataHandler changed")
     
     @property
     def status(self) -> Status:
@@ -1684,6 +1681,7 @@ class HandlerManager():
             target = self._healthcheck,
             daemon = True
         )
+        self._handler_management_thread.start()
 
         self._logger.info("HandlerManager initialized")
 
@@ -1720,7 +1718,7 @@ class HandlerManager():
         
         self._logger.info("Deleting HandlerManager ...")
         
-        for handler in self._handler_register['data']:
+        for handler in list(self._handler_register['data']):
             # Delete all data handlers
             # The DataHandler wil send a delete command to every attached StreamHandler
             if handler.status != Status.DELETED:
@@ -2029,10 +2027,12 @@ class HandlerManager():
                 # Check if the handler is failed
                 if handler.status == Status.FAILED:
                     # Check for connected stream handlers
+                    self._logger.info("DataHandler" + self._handler_register['data'][handler]['name'] + " failed")
                     if len(handler.stream_handler) > 0:
                         # Provide a new DataHandler that is ready for usage
                         dh_new = self._provide_DataHandler()
                         if dh_new:
+                            self._logger.info("DataHandler" + self._handler_register['data'][handler]['name'] + " replaced by DataHandler" + self._handler_register['data'][dh_new]['name'])
                             # Assign the new DataHandler to the connected stream handlers
                             for sh in handler.stream_handler:
                                 sh.dh = dh_new
@@ -2044,12 +2044,14 @@ class HandlerManager():
             for handler in self._handler_register['stream']:
                 # Check if the handler is failed
                 if handler.status == Status.FAILED:
+                    self._logger.info("StreamHandler" + self._handler_register['stream'][handler]['name'] + " failed")
                     # Check for open stream tasks
                     if len(handler.stream_tasks) > 0:
                         for _, task in handler.stream_tasks.items():
                             # Provide a new StreamHandler that is ready for usage
                             sh_new = self._provide_StreamHandler()
                             if sh_new:
+                                self._logger.info("StreamHandler" + self._handler_register['stream'][handler]['name'] + " replaced by StreamHandler" + self._handler_register['stream'][sh_new]['name'])
                                 # Assign the new StreamHandler to the stream tasks
                                 sh_new.transplant_stream_tasks(task)
                             else:
