@@ -23,7 +23,7 @@
 
 from helper.helper import generate_logger
 import xwrpr
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Setting DEMO to True will use the demo account
 DEMO=False
@@ -40,23 +40,34 @@ except Exception as e:
     logger.info("Look in README.md for more information")
     exit()
 
+# Check failure
+try:
+    records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
+except Exception as e:
+    logger.error("Failure Check: start > now")
+    logger.error(e)
+
+try:
+    records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.now()+timedelta(days=1))
+except Exception as e:
+    logger.error("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
+    logger.error(e)   
+
 # Get market events
-for period in 
-chart_range=XTBData.getChartLastRequest(symbol='GOLD', period="M1", start=datetime.min)
+for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
+    records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
 
-# Check if the return value is a list
-if not isinstance(calendar, list):
-    logger.error("Error getting calendar")
-    exit()
+    # Check if the return value is a list
+    if not isinstance(records, list):
+        logger.error("Error getting calendar")
+        continue
 
-# Print all events
-for event in calendar:
-    logger.info("")
-    logger.info("Title: %s", event['title'])
-    line = ''
-    for key, value in event.items():
-        line += key + ': ' + str(value) + ', '
-    logger.info(line)
+    # Print chart
+    for record in records:
+        line = ''
+        for key, value in record.items():
+            line += key + ': ' + str(value) + ', '
+        logger.info(line)
 
 # Close Wrapper
 XTBData.delete()
