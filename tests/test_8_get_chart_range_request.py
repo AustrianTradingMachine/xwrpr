@@ -42,22 +42,31 @@ except Exception as e:
 
 # Check failure
 try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
+    records= XTBData.getChartRangeRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1), end=datetime.now()+timedelta(days=2))
+    raise Exception("Failure Check: start > now")
 except Exception as e:
-    logger.error("Failure Check: start > now")
+    logger.error("Failure Check: start and end > now")
     logger.error(e)
 
 try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
+    records= XTBData.getChartRangeRequest(symbol="GOLD", period="M1", start=datetime.now(), end=datetime.now()-timedelta(days=2))
+    raise Exception("Failure Check: start > end")
+except Exception as e:
+    logger.error("Failure Check: start > end")
+    logger.error(e)
+
+try:
+    records= XTBData.getChartRangeRequest(symbol="GOLD", period="X1", start=datetime.min)
+    raise Exception("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
 except Exception as e:
     logger.error("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
     logger.error(e)   
 
-# Get market events
+# Get chart
 for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
+    records= XTBData.getChartRangeRequest(symbol="GOLD", period=period, start=datetime.now()-timedelta(days=2), end=datetime.now())
 
-    # Check if the return value is a list
+    # Check if the return value is a dictionary
     if not isinstance(records, dict):
         logger.error("Error getting calendar")
         continue

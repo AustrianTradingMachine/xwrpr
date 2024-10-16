@@ -42,32 +42,26 @@ except Exception as e:
 
 # Check failure
 try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
+    commission= XTBData.getCommissionDef(symbol="GOLD", volume=0)
+    raise Exception("Failure Check: volume <= 0")
 except Exception as e:
-    logger.error("Failure Check: start > now")
+    logger.error("Failure Check: volume <= 0")
     logger.error(e)
 
-try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
-except Exception as e:
-    logger.error("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
-    logger.error(e)   
+commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
 
-# Get market events
-for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
+# Check if the return value is a dict
+if not isinstance(commission, dict):
+    logger.error("Error getting commission definition")
+    exit()
 
-    # Check if the return value is a list
-    if not isinstance(records, dict):
-        logger.error("Error getting calendar")
-        continue
-
-    # Print chart
-    for record in records["rateInfos"]:
-        line = ''
-        for key, value in record.items():
-            line += key + ': ' + str(value) + ', '
-        logger.info(line)
+# Print commission definition
+logger.info("")
+logger.info("Commission Definition")
+line = ''
+for key, value in commission.items():
+    line += key + ': ' + str(value) + ', '
+logger.info(line)
 
 # Close Wrapper
 XTBData.delete()
