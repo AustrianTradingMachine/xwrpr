@@ -1651,6 +1651,7 @@ class HandlerManager():
         # Check if username and password are provided
         if username and password:
             # Set the username and password
+            self._logger.debug("Using provided username and password")
             self._username = username
             self._password = password
         else:
@@ -1659,6 +1660,7 @@ class HandlerManager():
                 set_path(path = path)
 
             # Get the username and password from the config file
+            self._logger.debug("Getting username and password from config file")
             self._username = get_userId(self._demo)
             self._password = get_password()
 
