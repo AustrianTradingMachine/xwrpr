@@ -39,16 +39,16 @@ except Exception as e:
     logger.info("Look in README.md for more information")
     exit()
 
-# Get all symbols
-symbols=XTBData.getAllSymbols()
+# Get market events
+calendar=XTBData.getCalendar()
 
 # Check if the return value is a list
-if not isinstance(symbols, list):
-    logger.error("Error getting all symbols")
+if not isinstance(calendar, list):
+    logger.error("Error getting calendar")
     exit()
 
-# Print all symbols
-for symbol in symbols:
+# Print all events
+for event in calendar:
     logger.info("")
     logger.info("Symbol: %s", symbol['symbol'])
     line = ''
