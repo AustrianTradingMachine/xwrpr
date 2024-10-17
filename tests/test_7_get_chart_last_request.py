@@ -21,55 +21,45 @@
 #
 ###########################################################################
 
-from helper.helper import generate_logger
+import pytest
+from helper.helper import generate_logger, demo_flag
 import xwrpr
 from datetime import datetime, timedelta
+import logging
 
-# Setting DEMO to True will use the demo account
-DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
+def test_7_get_chart_last_request(demo_flag):
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
 
-try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    try:
+        # Creating Wrapper
+        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
-# Check failure
-try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
-    raise Exception("Failure Check: start > now")
-except Exception as e:
-    logger.error("Failure Check: start > now")
-    logger.error(e)
+    try:
+        # Check failure
+        with pytest.raises(Exception):
+            records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
 
-try:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
-    raise Exception("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
-except Exception as e:
-    logger.error("Failure Check: period not in ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']")
-    logger.error(e)   
+        # Check failure
+        with pytest.raises(Exception):
+            records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
 
-# Get chart
-for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
-    records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
+        # Get chart
+        for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
+            records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
 
-    # Check if the return value is a dictionary
-    if not isinstance(records, dict):
-        logger.error("Error getting calendar")
-        continue
+            # Check if the return value is a dictionary
+            assert isinstance(records, dict), "Expected records to be a dict"
 
-    # Print chart
-    for record in records["rateInfos"]:
-        line = ''
-        for key, value in record.items():
-            line += key + ': ' + str(value) + ', '
-        logger.info(line)
-
-# Close Wrapper
-XTBData.delete()
+            # Print chart
+            logger.setLevel(logging.INFO)
+            for record in records["rateInfos"]:
+                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
+                logger.info(details)
+    finally:
+        # Close Wrapper
+        XTBData.delete()

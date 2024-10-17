@@ -37,17 +37,18 @@ def test_1_user(demo_flag):
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
-    # getting API version
-    version=XTBData.getVersion()
+    try:
+        # getting API version
+        version=XTBData.getVersion()
 
-    # Check if the return value is a dict
-    assert isinstance(version, dict), "Expected commission to be a dict"
+        # Check if the return value is a dict
+        assert isinstance(version, dict), "Expected commission to be a dict"
 
-    # Check if the API version matches the expected version
-    assert version['version'] == xwrpr.API_VERSION, \
-        f"API version is different. Is {version['version']}, should be {xwrpr.API_VERSION}"
-    
-    logger.info("API version is correct")
-
-    # Close Wrapper
-    XTBData.delete()
+        # Check if the API version matches the expected version
+        assert version['version'] == xwrpr.API_VERSION, \
+            f"API version is different. Is {version['version']}, should be {xwrpr.API_VERSION}"
+        
+        logger.info("API version is correct")
+    finally:
+        # Close Wrapper
+        XTBData.delete()

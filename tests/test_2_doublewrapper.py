@@ -43,15 +43,19 @@ def test_2_doublewrapper(demo_flag):
     except Exception as e:
         logger.error("Error creating Wrapper: %s", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
+    finally:
+        # Close Wrapper
+        XTBData_1.delete()
 
-    # getting API version
-    version_1=XTBData_1.getVersion()
-    version_2=XTBData_2.getVersion()
+    try:
+        # getting API version
+        version_1=XTBData_1.getVersion()
+        version_2=XTBData_2.getVersion()
 
-    # Check if the return values are dicts
-    assert isinstance(version_1, dict), "Expected version from Wrapper 1 to be a dict"
-    assert isinstance(version_2, dict), "Expected version from Wrapper 2 to be a dict"
-
-    # Close Wrapper
-    XTBData_1.delete()
-    XTBData_2.delete()
+        # Check if the return values are dicts
+        assert isinstance(version_1, dict), "Expected version from Wrapper 1 to be a dict"
+        assert isinstance(version_2, dict), "Expected version from Wrapper 2 to be a dict"
+    finally:
+        # Close Wrapper
+        XTBData_1.delete()
+        XTBData_2.delete()

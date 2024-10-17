@@ -38,18 +38,19 @@ def test_5_get_all_symbols(demo_flag):
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
-    # Get all symbols
-    symbols=XTBData.getAllSymbols()
+    try:
+        # Get all symbols
+        symbols=XTBData.getAllSymbols()
 
-    # Check if the return value is a list
-    assert isinstance(symbols, list), "Expected symbols to be a list"
+        # Check if the return value is a list
+        assert isinstance(symbols, list), "Expected symbols to be a list"
 
-    logger.setLevel(logging.INFO)
-    # Log each symbol's details
-    for symbol in symbols:
-        logger.info("Symbol: %s", symbol['symbol'])
-        details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
-        logger.info(details)
-
-    # Close Wrapper
-    XTBData.delete()
+        # Log each symbol's details
+        logger.setLevel(logging.INFO)
+        for symbol in symbols:
+            logger.info("Symbol: %s", symbol['symbol'])
+            details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
+            logger.info(details)
+    finally:
+        # Close Wrapper
+        XTBData.delete()

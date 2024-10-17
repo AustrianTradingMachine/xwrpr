@@ -52,11 +52,12 @@ def test_3_direct_credentials(demo_flag):
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
-    # getting API version
-    version=XTBData.getVersion()
+    try:
+        # getting API version
+        version=XTBData.getVersion()
 
-    # Check if the return value is a dict
-    assert isinstance(version, dict), "Expected commission to be a dict"
-
-    # Close Wrapper
-    XTBData.delete()
+        # Check if the return value is a dict
+        assert isinstance(version, dict), "Expected commission to be a dict"
+    finally:
+        # Close Wrapper
+        XTBData.delete()

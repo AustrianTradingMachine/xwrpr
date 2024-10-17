@@ -38,18 +38,19 @@ def test_6_get_calendar(demo_flag):
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
-    # Get market events
-    calendar=XTBData.getCalendar()
+    try:
+        # Get market events
+        calendar=XTBData.getCalendar()
 
-    # Check if the return value is a list
-    assert isinstance(calendar, list), "Expected calendar to be a list"
+        # Check if the return value is a list
+        assert isinstance(calendar, list), "Expected calendar to be a list"
 
-    logger.setLevel(logging.INFO)
-    # Print all events
-    for event in calendar:
-        logger.info("Title: %s", event['title'])
-        details = ', '.join([f"{key}: {value}" for key, value in event.items()])
-        logger.info(details)
-
-    # Close Wrapper
-    XTBData.delete()
+        # Print all events
+        logger.setLevel(logging.INFO)
+        for event in calendar:
+            logger.info("Title: %s", event['title'])
+            details = ', '.join([f"{key}: {value}" for key, value in event.items()])
+            logger.info(details)
+    finally:
+        # Close Wrapper
+        XTBData.delete()

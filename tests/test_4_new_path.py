@@ -67,13 +67,12 @@ def test_4_new_path(setup_new_path, demo_flag):
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
-    # Get API version
-    version = XTBData.getVersion()
+    try:
+        # Get API version
+        version = XTBData.getVersion()
 
-    # Check if the return value is a dict
-    assert isinstance(version, dict), "Expected version to be a dict"
-
-    # Close Wrapper
-    XTBData.delete()
-
-    logger.info(f"Successfully tested with path: {new_path}")
+        # Check if the return value is a dict
+        assert isinstance(version, dict), "Expected version to be a dict"
+    finally:
+        # Close Wrapper
+        XTBData.delete()
