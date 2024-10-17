@@ -33,6 +33,7 @@ def test_6_get_calendar(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -40,17 +41,20 @@ def test_6_get_calendar(demo_flag):
 
     try:
         # Get market events
+        logger.debug("Getting calendar")
         calendar=XTBData.getCalendar()
 
         # Check if the return value is a list
+        logger.debug("Checking if the return value is a list")
         assert isinstance(calendar, list), "Expected calendar to be a list"
 
         # Print all events
-        logger.setLevel(logging.INFO)
+        logger.debug("Printing all events")
         for event in calendar:
             logger.info("Title: %s", event['title'])
             details = ', '.join([f"{key}: {value}" for key, value in event.items()])
             logger.info(details)
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

@@ -47,6 +47,7 @@ def test_3_direct_credentials(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper with direct credentials")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger, username=USERNAME, password=PASSWORD)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -54,10 +55,13 @@ def test_3_direct_credentials(demo_flag):
 
     try:
         # getting API version
+        logger.debug("Getting API version")
         version=XTBData.getVersion()
 
         # Check if the return value is a dict
+        logger.debug("Checking if the return value is a dict")
         assert isinstance(version, dict), "Expected commission to be a dict"
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

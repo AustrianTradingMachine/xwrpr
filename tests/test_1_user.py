@@ -32,6 +32,7 @@ def test_1_user(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -39,16 +40,20 @@ def test_1_user(demo_flag):
 
     try:
         # getting API version
+        logger.debug("Getting API version")
         version=XTBData.getVersion()
 
         # Check if the return value is a dict
+        logger.debug("Checking if the return value is a dict")
         assert isinstance(version, dict), "Expected commission to be a dict"
 
         # Check if the API version matches the expected version
+        logger.debug("Checking if the API version matches the expected version")
         assert version['version'] == xwrpr.API_VERSION, \
             f"API version is different. Is {version['version']}, should be {xwrpr.API_VERSION}"
         
         logger.info("API version is correct")
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

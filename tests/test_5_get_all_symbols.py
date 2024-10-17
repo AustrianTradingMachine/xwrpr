@@ -33,6 +33,7 @@ def test_5_get_all_symbols(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -40,17 +41,20 @@ def test_5_get_all_symbols(demo_flag):
 
     try:
         # Get all symbols
+        logger.debug("Getting all symbols")
         symbols=XTBData.getAllSymbols()
 
         # Check if the return value is a list
+        logger.debug("Checking if the return value is a list")
         assert isinstance(symbols, list), "Expected symbols to be a list"
 
         # Log each symbol's details
-        logger.setLevel(logging.INFO)
+        logger.debug("Logging each symbol's details")
         for symbol in symbols:
             logger.info("Symbol: %s", symbol['symbol'])
             details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
             logger.info(details)
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

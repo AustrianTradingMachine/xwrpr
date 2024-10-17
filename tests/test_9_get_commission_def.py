@@ -33,6 +33,7 @@ def test_9_get_commission_def(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -40,20 +41,24 @@ def test_9_get_commission_def(demo_flag):
 
     try:
         # Check failure
+        logger.debug("Checking failure conditions: volume <= 0")
         with pytest.raises(Exception):
             commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
 
         # Get commission definition
+        logger.debug("Getting commission definition")
         commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
 
         # Check if the return value is a dict
+        logger.setLevel(logging.DEBUG)
         assert isinstance(commission, dict), "Expected commission to be a dict"
 
         # Print commission definition
-        logger.setLevel(logging.INFO)
+        logger.debug("Printing commission definition")
         logger.info("Commission Definition")
         details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
         logger.info(details)
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

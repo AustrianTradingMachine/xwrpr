@@ -61,9 +61,9 @@ def generate_logger(filename: str) -> logging.Logger:
     except FileNotFoundError as e:
         pass
 
-    file_handler = logging.FileHandler(log_file_path)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    #file_handler = logging.FileHandler(log_file_path)
+    #file_handler.setFormatter(formatter)
+    #logger.addHandler(file_handler)
 
     return logger
 

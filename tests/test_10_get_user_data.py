@@ -33,6 +33,7 @@ def test_10_get_user_data(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -40,16 +41,19 @@ def test_10_get_user_data(demo_flag):
 
     try:
         # Get commission definition
+        logger.debug("Getting User Data")
         user_data = XTBData.getCurrentUserData()
 
         # Check if the return value is a dict
+        logger.debug("Checking if the return value is a dict")
         assert isinstance(user_data, dict), "Expected commission to be a dict"
 
         # Print commission definition
-        logger.setLevel(logging.INFO)
+        logger.debug("Printing User Data")
         logger.info("Current User Data")
         details = ', '.join([f"{key}: {value}" for key, value in user_data.items()])
         logger.info(details)
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

@@ -34,6 +34,7 @@ def test_8_get_chart_range_request(demo_flag):
 
     try:
         # Creating Wrapper
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -41,26 +42,33 @@ def test_8_get_chart_range_request(demo_flag):
 
     try:
         # Check failure
+        logger.debug("Checking failure conditions: end > now")
         with pytest.raises(Exception):
             records= XTBData.getChartRangeRequest(symbol="GOLD", period="M1", start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
+        logger.debug("Checking failure conditions: start > end")
         with pytest.raises(Exception):
             records= XTBData.getChartRangeRequest(symbol="GOLD", period="M1", start=datetime.now(), end=datetime.now()-timedelta(days=2))
+        logger.debug("Checking failure conditions: wrong period")
         with pytest.raises(Exception):
             records= XTBData.getChartRangeRequest(symbol="GOLD", period="X1", start=datetime.min)
 
         # Get chart
         for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
+            logger.debug(f"Getting chart for period {period}")
             records= XTBData.getChartRangeRequest(symbol="GOLD", period=period, start=datetime.now()-timedelta(days=2), end=datetime.now())
 
             # Check if the return value is a dictionary
+            logger.debug("Checking if the return value is a dictionary")
             assert isinstance(records, dict), "Expected records to be a dict"
+            logger.debug("Checking if rateInfos is a list")
             assert isinstance(records["rateInfos"], list), "Expected rateInfos to be a list"
 
             # Print chart
-            logger.setLevel(logging.INFO)
+            logger.debug("Printing chart")
             for record in records["rateInfos"]:
                 details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                 logger.info(details)
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()

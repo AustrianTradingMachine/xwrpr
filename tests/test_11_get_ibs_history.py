@@ -31,11 +31,10 @@ import logging
 def test_11_get_ibs_history(demo_flag):
     # Create a logger with the specified name
     logger = generate_logger(filename=__file__)
-    logger.setLevel(logging.DEBUG)
     
     try:
         # Creating Wrapper
-        logger.debug("Creating XTBData wrapper")
+        logger.debug("Creating Wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -43,13 +42,16 @@ def test_11_get_ibs_history(demo_flag):
 
     try:
         # Check failure
-        logger.debug("Checking failure conditions")
+        logger.debug("Checking failure conditions: end > now")
         with pytest.raises(Exception):
             history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
+        logger.debug("Checking failure conditions: start > end")
         with pytest.raises(Exception):
             history= XTBData.getIbsHistory(start=datetime.now(), end=datetime.now()-timedelta(days=2))
+        logger.debug("Checking failure conditions: deprecated function")
         with pytest.raises(Exception):
             history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()-timedelta(days=1))
     finally:
         # Close Wrapper
+        logger.debug("Closing Wrapper")
         XTBData.delete()
