@@ -22,13 +22,11 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger
+from helper.helper import generate_logger, demo_flag
 from pathlib import Path
 import configparser
 import xwrpr
 
-# Setting DEMO to True will use the demo account
-DEMO=False
 
 # Read the configuration file
 config = configparser.ConfigParser()
@@ -43,17 +41,15 @@ except (configparser.NoSectionError, configparser.NoOptionError) as e:
     raise RuntimeError(f"Configuration error: {e}")
 
 
-def test_3_direct_credentials():
+def test_3_direct_credentials(demo_flag):
     # Create a logger with the specified name
     logger = generate_logger(filename=__file__)
 
     try:
         # Creating Wrapper
-        XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger, username=USERNAME, password=PASSWORD)
+        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger, username=USERNAME, password=PASSWORD)
     except Exception as e:
-        logger.error("Error creating Wrapper: %s", e)
-        logger.info("Did you forget to enter your credentials?")
-        logger.info("Look in README.md for more information")
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
     # getting API version

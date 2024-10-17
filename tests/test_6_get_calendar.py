@@ -21,40 +21,35 @@
 #
 ###########################################################################
 
-from helper.helper import generate_logger
+import pytest
+from helper.helper import generate_logger, demo_flag
 import xwrpr
+import logging
 
-# Setting DEMO to True will use the demo account
-DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
+def test_6_get_calendar(demo_flag):
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
 
-try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    try:
+        # Creating Wrapper
+        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
-# Get market events
-calendar=XTBData.getCalendar()
+    # Get market events
+    calendar=XTBData.getCalendar()
 
-# Check if the return value is a list
-if not isinstance(calendar, list):
-    logger.error("Error getting calendar")
-    exit()
+    # Check if the return value is a list
+    assert isinstance(calendar, list), "Expected calendar to be a list"
 
-# Print all events
-for event in calendar:
-    logger.info("")
-    logger.info("Title: %s", event['title'])
-    line = ''
-    for key, value in event.items():
-        line += key + ': ' + str(value) + ', '
-    logger.info(line)
+    logger.setLevel(logging.INFO)
+    # Print all events
+    for event in calendar:
+        logger.info("Title: %s", event['title'])
+        details = ', '.join([f"{key}: {value}" for key, value in event.items()])
+        logger.info(details)
 
-# Close Wrapper
-XTBData.delete()
+    # Close Wrapper
+    XTBData.delete()

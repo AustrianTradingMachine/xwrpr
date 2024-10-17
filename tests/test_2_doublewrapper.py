@@ -22,28 +22,24 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger
+from helper.helper import generate_logger, demo_flag
 import xwrpr
 
-# Setting DEMO to True will use the demo account
-DEMO=False
 
-def test_2_doublewrapper():
+def test_2_doublewrapper(demo_flag):
     # Create a logger with the specified name
     logger = generate_logger(filename=__file__)
 
     try:
         # Creating Wrapper 1
-        XTBData_1=xwrpr.Wrapper(demo=DEMO, logger=logger)
+        XTBData_1=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
-        logger.error("Error creating Wrapper: %s", e)
-        logger.info("Did you forget to enter your credentials?")
-        logger.info("Look in README.md for more information")
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
         pytest.fail(f"Failed to create Wrapper: {e}")
 
     try:
         # Creating Wrapper 2
-        XTBData_2=xwrpr.Wrapper(demo=DEMO, logger=logger)
+        XTBData_2=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s", e)
         pytest.fail(f"Failed to create Wrapper: {e}")

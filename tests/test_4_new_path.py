@@ -21,51 +21,59 @@
 #
 ###########################################################################
 
-from helper.helper import generate_logger
+import pytest
+from helper.helper import generate_logger, demo_flag
 from pathlib import Path
 import shutil
 import xwrpr
 
-# Setting DEMO to True will use the demo account
-DEMO=False
-
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
 
 # Path to the configuration directory
 old_path = Path('~/.xwrpr').expanduser()/ 'user.ini'
 new_path = Path('~/.xwrpr_new').expanduser()/ 'user.ini'
 
-# Create new path
-new_path.parent.mkdir(parents=True, exist_ok=True)
+@pytest.fixture(scope="function")
+def setup_new_path():
+    # Setup phase: Copy file to new path
+    try:
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(old_path, new_path)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"File not found: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Error copying file: {e}")
 
-# Copy file
-try:
-    shutil.copy(old_path, new_path)
-    logger.info(f"Copied {old_path} to {new_path}")
-except FileNotFoundError as e:
-    logger.error(f"File not found: {e}")
-except Exception as e:
-    logger.error(f"Error copying file: {e}")
+    # Yield control back to the test function
+    yield new_path
 
-try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger, path=new_path)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    # Teardown phase: Remove the copied file after the test
+    try:
+        new_path.unlink()
+    except FileNotFoundError as e:
+        print(f"Cleanup error: File not found: {e}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
 
-# getting API version
-version=XTBData.getVersion()
+# Create a logger with the specified name
+logger = generate_logger(filename=__file__)
 
-# Close Wrapper
-XTBData.delete()
+def test_4_new_path(setup_new_path, demo_flag):
+    new_path = setup_new_path
 
-# Remove new path
-try:
-    new_path.unlink()
-    logger.info(f"Removed {new_path}")
-except FileNotFoundError as e:
-    logger.error(f"File not found: {e}")
+    try:
+        # Creating Wrapper
+        XTBData = xwrpr.Wrapper(demo=demo_flag, logger=logger, path=new_path)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+        pytest.fail(f"Failed to create Wrapper: {e}")
+
+    # Get API version
+    version = XTBData.getVersion()
+
+    # Check if the return value is a dict
+    assert isinstance(version, dict), "Expected version to be a dict"
+
+    # Close Wrapper
+    XTBData.delete()
+
+    logger.info(f"Successfully tested with path: {new_path}")

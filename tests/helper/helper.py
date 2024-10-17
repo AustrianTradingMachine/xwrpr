@@ -23,6 +23,8 @@
 
 import logging
 from pathlib import Path
+import pytest
+
 
 def generate_logger(filename: str) -> logging.Logger:
     """
@@ -64,3 +66,8 @@ def generate_logger(filename: str) -> logging.Logger:
     logger.addHandler(file_handler)
 
     return logger
+
+@pytest.fixture
+def demo_flag():
+    # This fixture can dynamically change the value of DEMO
+    return False  # or True, based on the testing scenario

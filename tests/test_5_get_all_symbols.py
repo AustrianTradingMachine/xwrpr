@@ -21,40 +21,35 @@
 #
 ###########################################################################
 
-from helper.helper import generate_logger
+import pytest
+from helper.helper import generate_logger, demo_flag
 import xwrpr
+import logging
 
-# Setting DEMO to True will use the demo account
-DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
+def test_5_get_all_symbols(demo_flag):
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
 
-try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    try:
+        # Creating Wrapper
+        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
-# Get all symbols
-symbols=XTBData.getAllSymbols()
+    # Get all symbols
+    symbols=XTBData.getAllSymbols()
 
-# Check if the return value is a list
-if not isinstance(symbols, list):
-    logger.error("Error getting all symbols")
-    exit()
+    # Check if the return value is a list
+    assert isinstance(symbols, list), "Expected symbols to be a list"
 
-# Print all symbols
-for symbol in symbols:
-    logger.info("")
-    logger.info("Symbol: %s", symbol['symbol'])
-    line = ''
-    for key, value in symbol.items():
-        line += key + ': ' + str(value) + ', '
-    logger.info(line)
+    logger.setLevel(logging.INFO)
+    # Log each symbol's details
+    for symbol in symbols:
+        logger.info("Symbol: %s", symbol['symbol'])
+        details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
+        logger.info(details)
 
-# Close Wrapper
-XTBData.delete()
+    # Close Wrapper
+    XTBData.delete()
