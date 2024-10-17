@@ -32,7 +32,7 @@ def test_11_get_ibs_history(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.WARNING):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")

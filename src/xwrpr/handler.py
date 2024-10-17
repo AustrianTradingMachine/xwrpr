@@ -26,7 +26,6 @@ import logging
 import configparser
 from pathlib import Path
 from typing import Union, List, Optional
-import json
 import time
 from threading import Lock
 from queue import Queue

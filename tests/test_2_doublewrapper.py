@@ -31,7 +31,7 @@ def test_2_doublewrapper(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.WARNING):
         try:
             # Creating Wrapper 1
             logger.debug("Creating Wrapper 1")
