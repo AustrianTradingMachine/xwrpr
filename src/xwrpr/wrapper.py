@@ -86,7 +86,7 @@ class Wrapper(HandlerManager):
         getChartRangeRequest: Returns chart info with data between given start and end dates.
         getCommissionDef: Returns calculation of commission and rate of exchange for a given symbol and volume.
         getCurrentUserData: Returns information about account currency, and account leverage.
-        getIbsHistory: Returns IBs data from the given time range.
+        getIbsHistory: Returns IBs data from the given time range. (deprecated)
         getMarginLevel: Returns various account indicators.
         getMarginTrade: Returns expected margin for given instrument and volume.
         getNews: Returns news from trading server which were sent within specified period of time.
@@ -1036,6 +1036,7 @@ class Wrapper(HandlerManager):
         Raises:
             ValueError: If the start time is greater than the end time.
         """
+        raise NotImplementedError("getIbsHistory is deprecated and cannot be used.")
 
         # Convert the start time to unix time
         if not start:

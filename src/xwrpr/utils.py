@@ -72,6 +72,8 @@ def generate_logger(
         try:
             # Checks if the path exists, if not, creates it
             path.mkdir(parents = True)
+        except FileExistsError:
+            pass
         except Exception as e:
             raise ValueError(f"Could not create the directory {path}. Error: {e}")
 

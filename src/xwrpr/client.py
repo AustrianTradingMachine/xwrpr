@@ -296,7 +296,7 @@ class Client():
             if hasattr(self, '_socket'):
                 self._logger.warning("Socket already exists")
                 # Close the existing socket
-                self.close()
+                self.close(lock = False)
 
             # List of possible error values
             # Ordered by level of lifecicle of the socket
@@ -339,7 +339,7 @@ class Client():
                     # Log the failure cause
                     self._addresses[self._address_key]['last_error'] = 'create'
                     # Close the socket if it is not stable
-                    self.close()
+                    self.close(lock = False)
                     # Try the next address
                     continue
 
@@ -358,7 +358,7 @@ class Client():
                         # Log the failure cause
                         self._addresses[self._address_key]['last_error'] = 'wrap'
                         # Close the socket if it is not stable
-                        self.close()
+                        self.close(lock = False)
                         # Try the next address
                         continue
 
@@ -442,7 +442,7 @@ class Client():
                     # Log the failure cause
                     self._addresses[self._address_key]['last_error'] = 'connect'
                     # Close the connection if it is not stable
-                    self.close()
+                    self.close(lock = False)
 
                     if recreate:
                         # Try to create a new socket
@@ -641,12 +641,15 @@ class Client():
             # For graceful closing no raise of exception is not allowed
             self._logger.error(f"Exception in destructor: {e}")
 
-    def close(self) -> None:
+    def close(self, lock: bool = True) -> None:
         """
         Closes the connection and releases the socket.
 
+        Args:
+            lock (bool, optional): Indicates whether to use the lock for thread safety. Defaults to True.
+
         Raises:
-            None: If there is an error closing the connection.
+            OSError: If there is an error during the shutdown or closing of the socket.
 
         Returns:
             None
@@ -654,25 +657,30 @@ class Client():
 
         # Thread safety necessary
         # Socket can just be closed once
-        with self._lock:
-            # Check if the socket is in a basic state
-            if self._socket.fileno() != -1:
-                try:
-                    # Shut down the connection
-                    self._logger.info("Closing connection ...")
-                    self._socket.shutdown(socket.SHUT_RDWR)
-                    self._logger.info("Connections closed")
-                except OSError as e:
-                    # For graceful shutdown no raise of exception is not allowed
-                    self._logger.debug(f"Error during connection shutdown: {e}")
-                finally:
-                    # Close the socket
-                    self._logger.info("Closing socket ...")
-                    self._socket.close()
-                    self._logger.info("Socket closed")
-                
-            else:
-                self._logger.warning("Connection and socket already closed")
+        if lock:
+            with self._lock:
+                self._close_socket()
+        else:
+            self._close_socket()
+
+    def _close_socket(self) -> None:
+        # Check if the socket is in a basic state
+        if self._socket.fileno() != -1:
+            try:
+                # Shut down the connection
+                self._logger.info("Closing connection ...")
+                self._socket.shutdown(socket.SHUT_RDWR)
+                self._logger.info("Connection shut down successfully.")
+            except OSError as e:
+                # For graceful shutdown, do not raise an exception
+                self._logger.debug(f"Error during connection shutdown: {e}")
+            finally:
+                # Close the socket
+                self._logger.info("Closing socket ...")
+                self._socket.close()
+                self._logger.info("Socket closed.")
+        else:
+            self._logger.warning("Connection and socket already closed.")
 
     @property
     def timeout(self) -> Optional[float]:

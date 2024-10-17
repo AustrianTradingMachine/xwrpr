@@ -70,4 +70,4 @@ def generate_logger(filename: str) -> logging.Logger:
 @pytest.fixture
 def demo_flag():
     # This fixture can dynamically change the value of DEMO
-    return False  # or True, based on the testing scenario
+    return False

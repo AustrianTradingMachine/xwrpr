@@ -31,9 +31,11 @@ import logging
 def test_11_get_ibs_history(demo_flag):
     # Create a logger with the specified name
     logger = generate_logger(filename=__file__)
-
+    logger.setLevel(logging.DEBUG)
+    
     try:
         # Creating Wrapper
+        logger.debug("Creating XTBData wrapper")
         XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
     except Exception as e:
         logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
@@ -41,22 +43,13 @@ def test_11_get_ibs_history(demo_flag):
 
     try:
         # Check failure
+        logger.debug("Checking failure conditions")
         with pytest.raises(Exception):
             history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
         with pytest.raises(Exception):
-            history= XTBData.getIbsHistory(symbol="GOLD", start=datetime.now(), end=datetime.now()-timedelta(days=2))
-
-        # Get chart
-        history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()-timedelta(days=1))
-
-        # Check if the return value is a dictionary
-        assert isinstance(history, list), "Expected records to be a dict"
-
-        # Print chart
-        logger.setLevel(logging.INFO)
-        for record in history:
-            details = ', '.join([f"{key}: {value}" for key, value in record.items()])
-            logger.info(details)
+            history= XTBData.getIbsHistory(start=datetime.now(), end=datetime.now()-timedelta(days=2))
+        with pytest.raises(Exception):
+            history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()-timedelta(days=1))
     finally:
         # Close Wrapper
         XTBData.delete()
