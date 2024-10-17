@@ -21,6 +21,7 @@
 #
 ###########################################################################
 
+import pytest
 from helper.helper import generate_logger
 from pathlib import Path
 import configparser
@@ -29,28 +30,37 @@ import xwrpr
 # Setting DEMO to True will use the demo account
 DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
-
 # Read the configuration file
 config = configparser.ConfigParser()
 config_path = Path('~/.xwrpr').expanduser()/'user.ini'
 config.read(config_path)
 
-USERNAME = config.get('USER', 'REAL_ID')
-PASSWORD = config.get('USER', 'PASSWORD')
-
+# Retrieve credentials with error handling
 try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger, username=USERNAME, password=PASSWORD)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    USERNAME = config.get('USER', 'REAL_ID')
+    PASSWORD = config.get('USER', 'PASSWORD')
+except (configparser.NoSectionError, configparser.NoOptionError) as e:
+    raise RuntimeError(f"Configuration error: {e}")
 
-# getting API version
-version=XTBData.getVersion()
 
-# Close Wrapper
-XTBData.delete()
+def test_3_direct_credentials():
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
+
+    try:
+        # Creating Wrapper
+        XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger, username=USERNAME, password=PASSWORD)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s", e)
+        logger.info("Did you forget to enter your credentials?")
+        logger.info("Look in README.md for more information")
+        pytest.fail(f"Failed to create Wrapper: {e}")
+
+    # getting API version
+    version=XTBData.getVersion()
+
+    # Check if the return value is a dict
+    assert isinstance(version, dict), "Expected commission to be a dict"
+
+    # Close Wrapper
+    XTBData.delete()

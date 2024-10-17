@@ -21,36 +21,41 @@
 #
 ###########################################################################
 
+import pytest
 from helper.helper import generate_logger
 import xwrpr
 
 # Setting DEMO to True will use the demo account
 DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
+def test_2_doublewrapper():
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
 
-try:
-    # Creating Wrapper 1
-    XTBData_1=xwrpr.Wrapper(demo=DEMO, logger=logger)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    try:
+        # Creating Wrapper 1
+        XTBData_1=xwrpr.Wrapper(demo=DEMO, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s", e)
+        logger.info("Did you forget to enter your credentials?")
+        logger.info("Look in README.md for more information")
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
-# Creating Wrapper 2
-XTBData_2=xwrpr.Wrapper(demo=DEMO, logger=logger)
+    try:
+        # Creating Wrapper 2
+        XTBData_2=xwrpr.Wrapper(demo=DEMO, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s", e)
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
+    # getting API version
+    version_1=XTBData_1.getVersion()
+    version_2=XTBData_2.getVersion()
 
-# getting API version
-version=XTBData_1.getVersion()
+    # Check if the return values are dicts
+    assert isinstance(version_1, dict), "Expected version from Wrapper 1 to be a dict"
+    assert isinstance(version_2, dict), "Expected version from Wrapper 2 to be a dict"
 
-# getting API version
-version=XTBData_2.getVersion()
-
-# Close Wrapper 1
-XTBData_1.delete()
-
-# Close Wrapper 2
-XTBData_2.delete()
+    # Close Wrapper
+    XTBData_1.delete()
+    XTBData_2.delete()
