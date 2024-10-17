@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 import logging
 
 
-def test_8_get_chart_range_request(demo_flag):
+def test_11_get_ibs_history(demo_flag):
     # Create a logger with the specified name
     logger = generate_logger(filename=__file__)
 
@@ -42,25 +42,21 @@ def test_8_get_chart_range_request(demo_flag):
     try:
         # Check failure
         with pytest.raises(Exception):
-            records= XTBData.getChartRangeRequest(symbol="GOLD", period="M1", start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
+            history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
         with pytest.raises(Exception):
-            records= XTBData.getChartRangeRequest(symbol="GOLD", period="M1", start=datetime.now(), end=datetime.now()-timedelta(days=2))
-        with pytest.raises(Exception):
-            records= XTBData.getChartRangeRequest(symbol="GOLD", period="X1", start=datetime.min)
+            history= XTBData.getIbsHistory(symbol="GOLD", start=datetime.now(), end=datetime.now()-timedelta(days=2))
 
         # Get chart
-        for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
-            records= XTBData.getChartRangeRequest(symbol="GOLD", period=period, start=datetime.now()-timedelta(days=2), end=datetime.now())
+        history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()-timedelta(days=1))
 
-            # Check if the return value is a dictionary
-            assert isinstance(records, dict), "Expected records to be a dict"
-            assert isinstance(records["rateInfos"], list), "Expected rateInfos to be a list"
+        # Check if the return value is a dictionary
+        assert isinstance(history, list), "Expected records to be a dict"
 
-            # Print chart
-            logger.setLevel(logging.INFO)
-            for record in records["rateInfos"]:
-                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
-                logger.info(details)
+        # Print chart
+        logger.setLevel(logging.INFO)
+        for record in history:
+            details = ', '.join([f"{key}: {value}" for key, value in record.items()])
+            logger.info(details)
     finally:
         # Close Wrapper
         XTBData.delete()

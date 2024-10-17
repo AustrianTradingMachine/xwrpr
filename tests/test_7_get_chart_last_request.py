@@ -52,6 +52,7 @@ def test_7_get_chart_last_request(demo_flag):
 
             # Check if the return value is a dictionary
             assert isinstance(records, dict), "Expected records to be a dict"
+            assert isinstance(records["rateInfos"], list), "Expected rateInfos to be a list"
 
             # Print chart
             logger.setLevel(logging.INFO)
