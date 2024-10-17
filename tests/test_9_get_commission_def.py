@@ -21,47 +21,39 @@
 #
 ###########################################################################
 
-from helper.helper import generate_logger
+import pytest
+from helper.helper import generate_logger, demo_flag
 import xwrpr
-from datetime import datetime, timedelta
+import logging
 
-# Setting DEMO to True will use the demo account
-DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
+def test_9_get_commission_def(demo_flag):
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
 
-try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    try:
+        # Creating Wrapper
+        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
-# Check failure
-try:
-    commission= XTBData.getCommissionDef(symbol="GOLD", volume=0)
-    raise Exception("Failure Check: volume <= 0")
-except Exception as e:
-    logger.error("Failure Check: volume <= 0")
-    logger.error(e)
+    try:
+        # Check failure
+        with pytest.raises(Exception):
+            commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
 
-commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+        # Get commission definition
+        commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
 
-# Check if the return value is a dict
-if not isinstance(commission, dict):
-    logger.error("Error getting commission definition")
-    exit()
+        # Check if the return value is a dict
+        assert isinstance(commission, dict), "Expected commission to be a dict"
 
-# Print commission definition
-logger.info("")
-logger.info("Commission Definition")
-line = ''
-for key, value in commission.items():
-    line += key + ': ' + str(value) + ', '
-logger.info(line)
-
-# Close Wrapper
-XTBData.delete()
+        # Print commission definition
+        logger.setLevel(logging.INFO)
+        logger.info("Commission Definition")
+        details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
+        logger.info(details)
+    finally:
+        # Close Wrapper
+        XTBData.delete()

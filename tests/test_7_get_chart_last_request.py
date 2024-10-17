@@ -43,8 +43,6 @@ def test_7_get_chart_last_request(demo_flag):
         # Check failure
         with pytest.raises(Exception):
             records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
-
-        # Check failure
         with pytest.raises(Exception):
             records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
 
