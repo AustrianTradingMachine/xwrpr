@@ -65,8 +65,8 @@ development() {
     echo "Running development actions..."
 
     # Check if package is build
-    if [ ! -d "dist" ]; then
-        echo "Error: No build files found. Please run the build task first."
+    if ! find . -type d -name "dist" | grep -q .; then
+        echo "Error: No build files found in any directory. Please run the build task first."
         exit 1
     fi
 

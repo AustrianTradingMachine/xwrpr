@@ -21,44 +21,37 @@
 #
 ###########################################################################
 
+import pytest
 from helper.helper import generate_logger
 import xwrpr
 
 # Setting DEMO to True will use the demo account
 DEMO=False
 
-# Create a logger with the specified name
-logger = generate_logger(filename=__file__)
+def test_1_user():
+    # Create a logger with the specified name
+    logger = generate_logger(filename=__file__)
 
-try:
-    # Creating Wrapper
-    XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
-except Exception as e:
-    logger.error("Error creating Wrapper: %s", e)
-    logger.info("Did you forget to enter your credentials?")
-    logger.info("Look in README.md for more information")
-    exit()
+    try:
+        # Creating Wrapper
+        XTBData=xwrpr.Wrapper(demo=DEMO, logger=logger)
+    except Exception as e:
+        logger.error("Error creating Wrapper: %s", e)
+        logger.info("Did you forget to enter your credentials?")
+        logger.info("Look in README.md for more information")
+        pytest.fail(f"Failed to create Wrapper: {e}")
 
-# getting API version
-version=XTBData.getVersion()
+    # getting API version
+    version=XTBData.getVersion()
 
-if version['version'] != xwrpr.API_VERSION:
-    logger.error("API version is different. Is %s, should be %s", version['version'], xwrpr.API_VERSION)
-else:
+    # Check if the return value is a dict
+    assert isinstance(version, dict), "Expected commission to be a dict"
+
+    # Check if the API version matches the expected version
+    assert version['version'] == xwrpr.API_VERSION, \
+        f"API version is different. Is {version['version']}, should be {xwrpr.API_VERSION}"
+    
     logger.info("API version is correct")
 
-
-# get user data
-user=XTBData.getCurrentUserData()
-for key, value in user.items():
-    logger.info("%s: %s", key, value)
-
-
-# get server time
-server_time=XTBData.getServerTime()
-for key, value in server_time.items():
-    logger.info("%s: %s", key, value)
-
-
-# Close Wrapper
-XTBData.delete()
+    # Close Wrapper
+    XTBData.delete()
