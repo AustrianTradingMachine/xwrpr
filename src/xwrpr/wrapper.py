@@ -1034,6 +1034,7 @@ class Wrapper(HandlerManager):
                 SELL	            1	        sell
         
         Raises:
+            NotImplementedError: This method is deprecated and cannot be used.
             ValueError: If the start time is greater than the end time.
         """
         raise NotImplementedError("getIbsHistory is deprecated and cannot be used.")

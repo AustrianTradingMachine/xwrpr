@@ -26,7 +26,7 @@ from pathlib import Path
 import pytest
 
 
-def generate_logger(filename: str) -> logging.Logger:
+def generate_logger() -> logging.Logger:
     """
     Generate a logger with the specified name and configuration.
 
@@ -39,33 +39,50 @@ def generate_logger(filename: str) -> logging.Logger:
     
     # Create a logger with the specified name
     logger = logging.getLogger()
-    logger.setLevel(logging.WARNING)
+    logger.setLevel(logging.DEBUG)
+
     stream_handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     stream_handler.setFormatter(formatter)
+
     logger.addHandler(stream_handler)
+
+    return logger
+
+def write_logs(caplog, filename: str) -> None:
+    """
+    Write records to log file.
+
+    Args:
+        caplog: The caplog fixture object.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If the directory cannot
+    """
 
     try:
         # Define the log file path in /tmp/xwrpr/logs
         log_file_path = Path("/tmp/xwrpr/logs") / Path(filename).name.replace('.py', '.log')
         # Ensure the logs directory exists
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info("Log file path: %s", log_file_path)
-    except Exception as e:
-        logger.error("Error creating log directory: %s", e)
+    except FileExistsError:
         pass
-
+    except Exception as e:
+        raise ValueError(f"Could not create the directory {log_file_path}. Error: {e}")
+    
     try:
         # Remove the log file if it already exists
         log_file_path.unlink()
     except FileNotFoundError as e:
         pass
-
-    #file_handler = logging.FileHandler(log_file_path)
-    #file_handler.setFormatter(formatter)
-    #logger.addHandler(file_handler)
-
-    return logger
+    
+    # Write the records to the log file
+    with open(log_file_path, 'w') as log_file:
+        for record in caplog.records:
+            log_file.write(f"{record.levelname}: {record.message}\n")
 
 @pytest.fixture
 def demo_flag():

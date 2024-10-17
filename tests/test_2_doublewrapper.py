@@ -22,49 +22,54 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
+from helper.helper import generate_logger, write_logs, demo_flag
+import logging
 import xwrpr
 
 
-def test_2_doublewrapper(demo_flag):
+def test_2_doublewrapper(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
+    logger = generate_logger()
 
-    try:
-        # Creating Wrapper 1
-        logger.debug("Creating Wrapper 1")
-        XTBData_1=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper 1
+            logger.debug("Creating Wrapper 1")
+            XTBData_1=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
 
-    try:
-        # Creating Wrapper 2
-        logger.debug("Creating Wrapper 2")
-        XTBData_2=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper 1")
-        XTBData_1.delete()
+        try:
+            # Creating Wrapper 2
+            logger.debug("Creating Wrapper 2")
+            XTBData_2=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper 1")
+            XTBData_1.delete()
 
-    try:
-        # getting API version
-        logger.debug("Getting API version with Wrapper 1")
-        version_1=XTBData_1.getVersion()
-        logger.debug("Getting API version with Wrapper 2")
-        version_2=XTBData_2.getVersion()
+        try:
+            # getting API version
+            logger.debug("Getting API version with Wrapper 1")
+            version_1=XTBData_1.getVersion()
+            logger.debug("Getting API version with Wrapper 2")
+            version_2=XTBData_2.getVersion()
 
-        # Check if the return values are dicts
-        logger.debug("Checking if the return values are dicts with Wrapper 1")
-        assert isinstance(version_1, dict), "Expected version from Wrapper 1 to be a dict"
-        logger.debug("Checking if the return values are dicts with Wrapper 2")
-        assert isinstance(version_2, dict), "Expected version from Wrapper 2 to be a dict"
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper 1")
-        XTBData_1.delete()
-        logger.debug("Closing Wrapper 2")
-        XTBData_2.delete()
+            # Check if the return values are dicts
+            logger.debug("Checking if the return values are dicts with Wrapper 1")
+            assert isinstance(version_1, dict), "Expected version from Wrapper 1 to be a dict"
+            logger.debug("Checking if the return values are dicts with Wrapper 2")
+            assert isinstance(version_2, dict), "Expected version from Wrapper 2 to be a dict"
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper 1")
+            XTBData_1.delete()
+            logger.debug("Closing Wrapper 2")
+            XTBData_2.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)

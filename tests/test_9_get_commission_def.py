@@ -22,43 +22,48 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
+from helper.helper import generate_logger, write_logs, demo_flag
+import logging
 import xwrpr
 import logging
 
 
-def test_9_get_commission_def(demo_flag):
+def test_9_get_commission_def(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
+    logger = generate_logger()
 
-    try:
-        # Creating Wrapper
-        logger.debug("Creating Wrapper")
-        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper
+            logger.debug("Creating Wrapper")
+            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
 
-    try:
-        # Check failure
-        logger.debug("Checking failure conditions: volume <= 0")
-        with pytest.raises(Exception):
-            commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
+        try:
+            # Check failure
+            logger.debug("Checking failure conditions: volume <= 0")
+            with pytest.raises(Exception):
+                commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
 
-        # Get commission definition
-        logger.debug("Getting commission definition")
-        commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+            # Get commission definition
+            logger.debug("Getting commission definition")
+            commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
 
-        # Check if the return value is a dict
-        logger.setLevel(logging.DEBUG)
-        assert isinstance(commission, dict), "Expected commission to be a dict"
+            # Check if the return value is a dict
+            logger.setLevel(logging.DEBUG)
+            assert isinstance(commission, dict), "Expected commission to be a dict"
 
-        # Print commission definition
-        logger.debug("Printing commission definition")
-        logger.info("Commission Definition")
-        details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
-        logger.info(details)
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper")
-        XTBData.delete()
+            # Print commission definition
+            logger.debug("Printing commission definition")
+            logger.info("Commission Definition")
+            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
+            logger.info(details)
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper")
+            XTBData.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)

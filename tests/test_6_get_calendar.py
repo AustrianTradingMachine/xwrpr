@@ -22,39 +22,43 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
-import xwrpr
+from helper.helper import generate_logger, write_logs, demo_flag
 import logging
+import xwrpr
 
 
-def test_6_get_calendar(demo_flag):
+def test_6_get_calendar(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
+    logger = generate_logger()
 
-    try:
-        # Creating Wrapper
-        logger.debug("Creating Wrapper")
-        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper
+            logger.debug("Creating Wrapper")
+            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
 
-    try:
-        # Get market events
-        logger.debug("Getting calendar")
-        calendar=XTBData.getCalendar()
+        try:
+            # Get market events
+            logger.debug("Getting calendar")
+            calendar=XTBData.getCalendar()
 
-        # Check if the return value is a list
-        logger.debug("Checking if the return value is a list")
-        assert isinstance(calendar, list), "Expected calendar to be a list"
+            # Check if the return value is a list
+            logger.debug("Checking if the return value is a list")
+            assert isinstance(calendar, list), "Expected calendar to be a list"
 
-        # Print all events
-        logger.debug("Printing all events")
-        for event in calendar:
-            logger.info("Title: %s", event['title'])
-            details = ', '.join([f"{key}: {value}" for key, value in event.items()])
-            logger.info(details)
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper")
-        XTBData.delete()
+            # Print all events
+            logger.debug("Printing all events")
+            for event in calendar:
+                logger.info("Title: %s", event['title'])
+                details = ', '.join([f"{key}: {value}" for key, value in event.items()])
+                logger.info(details)
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper")
+            XTBData.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)

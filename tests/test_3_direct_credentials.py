@@ -22,7 +22,8 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
+from helper.helper import generate_logger, write_logs, demo_flag
+import logging
 from pathlib import Path
 import configparser
 import xwrpr
@@ -41,27 +42,31 @@ except (configparser.NoSectionError, configparser.NoOptionError) as e:
     raise RuntimeError(f"Configuration error: {e}")
 
 
-def test_3_direct_credentials(demo_flag):
+def test_3_direct_credentials(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
+    logger = generate_logger()
 
-    try:
-        # Creating Wrapper
-        logger.debug("Creating Wrapper with direct credentials")
-        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger, username=USERNAME, password=PASSWORD)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper
+            logger.debug("Creating Wrapper with direct credentials")
+            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger, username=USERNAME, password=PASSWORD)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
 
-    try:
-        # getting API version
-        logger.debug("Getting API version")
-        version=XTBData.getVersion()
+        try:
+            # getting API version
+            logger.debug("Getting API version")
+            version=XTBData.getVersion()
 
-        # Check if the return value is a dict
-        logger.debug("Checking if the return value is a dict")
-        assert isinstance(version, dict), "Expected commission to be a dict"
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper")
-        XTBData.delete()
+            # Check if the return value is a dict
+            logger.debug("Checking if the return value is a dict")
+            assert isinstance(version, dict), "Expected commission to be a dict"
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper")
+            XTBData.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)

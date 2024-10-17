@@ -22,39 +22,43 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
-import xwrpr
+from helper.helper import generate_logger, write_logs, demo_flag
 import logging
+import xwrpr
 
 
-def test_5_get_all_symbols(demo_flag):
+def test_5_get_all_symbols(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
+    logger = generate_logger()
 
-    try:
-        # Creating Wrapper
-        logger.debug("Creating Wrapper")
-        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper
+            logger.debug("Creating Wrapper")
+            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
 
-    try:
-        # Get all symbols
-        logger.debug("Getting all symbols")
-        symbols=XTBData.getAllSymbols()
+        try:
+            # Get all symbols
+            logger.debug("Getting all symbols")
+            symbols=XTBData.getAllSymbols()
 
-        # Check if the return value is a list
-        logger.debug("Checking if the return value is a list")
-        assert isinstance(symbols, list), "Expected symbols to be a list"
+            # Check if the return value is a list
+            logger.debug("Checking if the return value is a list")
+            assert isinstance(symbols, list), "Expected symbols to be a list"
 
-        # Log each symbol's details
-        logger.debug("Logging each symbol's details")
-        for symbol in symbols:
-            logger.info("Symbol: %s", symbol['symbol'])
-            details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
-            logger.info(details)
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper")
-        XTBData.delete()
+            # Log each symbol's details
+            logger.debug("Logging each symbol's details")
+            for symbol in symbols:
+                logger.info("Symbol: %s", symbol['symbol'])
+                details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
+                logger.info(details)
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper")
+            XTBData.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)

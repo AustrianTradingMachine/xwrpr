@@ -22,36 +22,40 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
+from helper.helper import generate_logger, write_logs, demo_flag
+import logging
 import xwrpr
 from datetime import datetime, timedelta
-import logging
 
 
-def test_11_get_ibs_history(demo_flag):
+def test_11_get_ibs_history(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
-    
-    try:
-        # Creating Wrapper
-        logger.debug("Creating Wrapper")
-        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    logger = generate_logger()
 
-    try:
-        # Check failure
-        logger.debug("Checking failure conditions: end > now")
-        with pytest.raises(Exception):
-            history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
-        logger.debug("Checking failure conditions: start > end")
-        with pytest.raises(Exception):
-            history= XTBData.getIbsHistory(start=datetime.now(), end=datetime.now()-timedelta(days=2))
-        logger.debug("Checking failure conditions: deprecated function")
-        with pytest.raises(Exception):
-            history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()-timedelta(days=1))
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper")
-        XTBData.delete()
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper
+            logger.debug("Creating Wrapper")
+            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
+
+        try:
+            # Check failure
+            logger.debug("Checking failure conditions: end > now")
+            with pytest.raises(Exception):
+                history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
+            logger.debug("Checking failure conditions: start > end")
+            with pytest.raises(Exception):
+                history= XTBData.getIbsHistory(start=datetime.now(), end=datetime.now()-timedelta(days=2))
+            logger.debug("Checking failure conditions: deprecated function")
+            with pytest.raises(Exception):
+                history= XTBData.getIbsHistory(start=datetime.now()-timedelta(days=2), end=datetime.now()-timedelta(days=1))
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper")
+            XTBData.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)

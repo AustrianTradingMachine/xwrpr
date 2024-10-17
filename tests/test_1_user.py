@@ -22,38 +22,43 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, demo_flag
+from helper.helper import generate_logger, write_logs, demo_flag
+import logging
 import xwrpr
 
 
-def test_1_user(demo_flag):
+def test_1_user(demo_flag, caplog):
     # Create a logger with the specified name
-    logger = generate_logger(filename=__file__)
+    logger = generate_logger()
 
-    try:
-        # Creating Wrapper
-        logger.debug("Creating Wrapper")
-        XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
-    except Exception as e:
-        logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
-        pytest.fail(f"Failed to create Wrapper: {e}")
+    with caplog.at_level(logging.DEBUG):
+        try:
+            # Creating Wrapper
+            logger.debug("Creating Wrapper")
+            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+        except Exception as e:
+            logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
+            pytest.fail(f"Failed to create Wrapper: {e}")
 
-    try:
-        # getting API version
-        logger.debug("Getting API version")
-        version=XTBData.getVersion()
+        try:
+            # getting API version
+            logger.debug("Getting API version")
+            version=XTBData.getVersion()
 
-        # Check if the return value is a dict
-        logger.debug("Checking if the return value is a dict")
-        assert isinstance(version, dict), "Expected commission to be a dict"
+            # Check if the return value is a dict
+            logger.debug("Checking if the return value is a dict")
+            assert isinstance(version, dict), "Expected commission to be a dict"
 
-        # Check if the API version matches the expected version
-        logger.debug("Checking if the API version matches the expected version")
-        assert version['version'] == xwrpr.API_VERSION, \
-            f"API version is different. Is {version['version']}, should be {xwrpr.API_VERSION}"
-        
-        logger.info("API version is correct")
-    finally:
-        # Close Wrapper
-        logger.debug("Closing Wrapper")
-        XTBData.delete()
+            # Check if the API version matches the expected version
+            logger.debug("Checking if the API version matches the expected version")
+            assert version['version'] == xwrpr.API_VERSION, \
+                f"API version is different. Is {version['version']}, should be {xwrpr.API_VERSION}"
+            
+            logger.info("API version is correct")
+        finally:
+            # Close Wrapper
+            logger.debug("Closing Wrapper")
+            XTBData.delete()
+
+    # Write records to log file
+    write_logs(caplog, __file__)
