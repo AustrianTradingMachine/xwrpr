@@ -58,11 +58,13 @@ class Client():
     Methods:
         _get_addresses: Gets the available addresses for the socket connection.
         check: Check the socket for readability, writability, or errors.
-        create: Creates a socket connection.
+        create: Creates a socket connection thread safely.
+        _create_socket: Creates a socket.
         open: Opens a connection to the server.
         send: Sends a message over the socket connection.
         receive: Receives a message from the socket.
-        close: Closes the connection and releases the socket.
+        close: Closes the connection and releases the socket thread safely.
+        _close_socket: Closes the socket.
 
     Properties:
         timeout: The timeout value for the connection.
@@ -271,8 +273,31 @@ class Client():
         if mode == 'writable' and self._socket not in writable:
             self._logger.debug("Socket not writable")
             raise TimeoutError("Socket not writable")
-         
-    def create(self, excluded_errors: List[str] = []) -> None:
+        
+    def create(self, excluded_errors: List[str] = [], lock: bool = True) -> None:
+        """
+        Creates a socket connection.
+
+        Args:
+            excluded_errors (List[str], optional): A list of error values to exclude from retrying. Defaults to [].
+            lock (bool, optional): Indicates whether to use the lock for thread safety. Defaults to True.
+
+        Raises:
+            None
+
+        Returns:
+            None
+        """
+
+        # Thread safety necessary
+        # Socket can just be created once
+        if lock:
+            with self._lock:
+                self._create_socket(excluded_errors = excluded_errors)
+        else:
+            self._create_socket(excluded_errors = excluded_errors)
+
+    def _create_socket(self, excluded_errors: List[str] = []) -> None:
         """
         Creates a socket
 
@@ -287,104 +312,101 @@ class Client():
             None
         """
 
-        # Thread safety necessary
-        # There can just be one socket at a time
-        with self._lock:
-            self._logger.info("Creating socket ...")
+        self._logger.info("Creating socket ...")
 
-            # Check for existing socket
-            if hasattr(self, '_socket'):
-                self._logger.warning("Socket already exists")
-                # Close the existing socket
+        # Check for existing socket
+        if hasattr(self, '_socket'):
+            self._logger.warning("Socket already exists")
+            # Close the existing socket
+            self.close(lock = False)
+
+        # List of possible error values
+        # Ordered by level of lifecicle of the socket
+        possible_errors = ['check', 'connect', 'wrap', 'create']
+        # Fill the list of errors
+        errors = []
+        if 'all' not in excluded_errors:
+            errors = [error for error in possible_errors if error not in excluded_errors]
+        self._logger.debug(f"Excluded errors: {excluded_errors}")
+        # Fill the list of available addresses
+        avl_addresses = []
+        for error in [None] + errors:
+            avl_addresses.extend([key for key, value in self._addresses.items() if value['last_error'] == error])
+        self._logger.debug(f"Available addresses: {avl_addresses}")
+
+        # Check if there are any available addresses
+        if not avl_addresses:
+            self._logger.error("No available addresses found")
+            raise RuntimeError("No available addresses found")
+
+        # Try to create the socket
+        created = False
+        while avl_addresses and not created:
+            # Get the next address
+            self._address_key = avl_addresses.pop(0)
+            # If the address has been tried before
+            self._addresses[self._address_key]['retries'] += 1
+            self._addresses[self._address_key]['last_atempt'] = time.time()
+            self._logger.debug(f"Trying address {self._address_key} ...")
+
+            try:
+                # Create the socket
+                self._socket = socket.socket(
+                    family = self._addresses[self._address_key]['family'],
+                    type = self._addresses[self._address_key]['socktype'],
+                    proto = self._addresses[self._address_key]['proto'],
+                )
+            except socket.error as e:
+                self._logger.error(f"Failed to create socket: {e}")
+                # Log the failure cause
+                self._addresses[self._address_key]['last_error'] = 'create'
+                # Close the socket if it is not stable
                 self.close(lock = False)
+                # Try the next address
+                continue
 
-            # List of possible error values
-            # Ordered by level of lifecicle of the socket
-            possible_errors = ['check', 'connect', 'wrap', 'create']
-            # Fill the list of errors
-            errors = []
-            if 'all' not in excluded_errors:
-                errors = [error for error in possible_errors if error not in excluded_errors]
-            self._logger.debug(f"Excluded errors: {excluded_errors}")
-            # Fill the list of available addresses
-            avl_addresses = []
-            for error in [None] + errors:
-                avl_addresses.extend([key for key, value in self._addresses.items() if value['last_error'] == error])
-            self._logger.debug(f"Available addresses: {avl_addresses}")
+            self._logger.info("Socket created")
 
-            # Check if there are any available addresses
-            if not avl_addresses:
-                self._logger.error("No available addresses found")
-                raise RuntimeError("No available addresses found")
-
-            # Try to create the socket
-            created = False
-            while avl_addresses and not created:
-                # Get the next address
-                self._address_key = avl_addresses.pop(0)
-                # If the address has been tried before
-                self._addresses[self._address_key]['retries'] += 1
-                self._addresses[self._address_key]['last_atempt'] = time.time()
-                self._logger.debug(f"Trying address {self._address_key} ...")
-
+            # If the connection is ssl encrypted
+            if self._encrypted:
                 try:
-                    # Create the socket
-                    self._socket = socket.socket(
-                        family = self._addresses[self._address_key]['family'],
-                        type = self._addresses[self._address_key]['socktype'],
-                        proto = self._addresses[self._address_key]['proto'],
-                    )
+                    self._logger.info("Wrapping socket with SSL ...")
+                    context = ssl.create_default_context()
+                    self._socket = context.wrap_socket(
+                        sock = self._socket,
+                        server_hostname = self._host)
                 except socket.error as e:
-                    self._logger.error(f"Failed to create socket: {e}")
+                    self._logger.error(f"Failed to wrap socket: {e}")
                     # Log the failure cause
-                    self._addresses[self._address_key]['last_error'] = 'create'
+                    self._addresses[self._address_key]['last_error'] = 'wrap'
                     # Close the socket if it is not stable
                     self.close(lock = False)
                     # Try the next address
                     continue
 
-                self._logger.info("Socket created")
+                self._logger.info("Socket wrapped")
 
-                # If the connection is ssl encrypted
-                if self._encrypted:
-                    try:
-                        self._logger.info("Wrapping socket with SSL ...")
-                        context = ssl.create_default_context()
-                        self._socket = context.wrap_socket(
-                            sock = self._socket,
-                            server_hostname = self._host)
-                    except socket.error as e:
-                        self._logger.error(f"Failed to wrap socket: {e}")
-                        # Log the failure cause
-                        self._addresses[self._address_key]['last_error'] = 'wrap'
-                        # Close the socket if it is not stable
-                        self.close(lock = False)
-                        # Try the next address
-                        continue
+            # Set the socket blocking mode
+            if self._timeout:
+                # The socket is in non-blocking mode
+                # The timeout avoids that the socket is raising
+                # a timout exeption immediately
+                self._socket.settimeout(self._timeout)
+                self._socket.setblocking(False)
+            else:
+                # The socket is in blocking mode
+                self._socket.settimeout(None)
+                self._socket.setblocking(True)
 
-                    self._logger.info("Socket wrapped")
+            self._logger.debug("Blocking mode: %s", self._socket.getblocking())
 
-                # Set the socket blocking mode
-                if self._timeout:
-                    # The socket is in non-blocking mode
-                    # The timeout avoids that the socket is raising
-                    # a timout exeption immediately
-                    self._socket.settimeout(self._timeout)
-                    self._socket.setblocking(False)
-                else:
-                    # The socket is in blocking mode
-                    self._socket.settimeout(None)
-                    self._socket.setblocking(True)
+            # Socket successfully created
+            created = True
 
-                self._logger.debug("Blocking mode: %s", self._socket.getblocking())
-
-                # Socket successfully created
-                created = True
-
-            # If all attempts to create the socket failed raise an exception
-            if not created:
-                self._logger.error("All attempts to create socket failed")
-                raise RuntimeError("All attempts to create socket failed")
+        # If all attempts to create the socket failed raise an exception
+        if not created:
+            self._logger.error("All attempts to create socket failed")
+            raise RuntimeError("All attempts to create socket failed")
 
     def open(self, recreate: bool = True) -> None:
         """
@@ -447,7 +469,7 @@ class Client():
                     if recreate:
                         # Try to create a new socket
                         self._logger.error("Attempting to recreate socket ...")
-                        self.create(excluded_errors = ['all'])
+                        self.create(excluded_errors = ['all'], lock = True)
 
             self._logger.info("Connection opened")
 
