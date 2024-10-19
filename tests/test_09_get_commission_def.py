@@ -26,7 +26,12 @@ from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
 
 
-def test_09_get_commission_def(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_09_get_commission_def(
+    demo_flag: bool,
+    log_level: int,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture
+) -> None:
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 

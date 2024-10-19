@@ -27,7 +27,12 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_08_get_chart_range_request(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_08_get_chart_range_request(
+    demo_flag: bool,
+    log_level: int,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture
+) -> None:
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 

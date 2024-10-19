@@ -73,7 +73,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 @pytest.fixture
-def demo_flag(request):
+def demo_flag(request: pytest.FixtureRequest) -> bool:
     """
     Fixture to dynamically change the value of DEMO based on the command-line option.
 
@@ -87,7 +87,7 @@ def demo_flag(request):
     return request.config.getoption("--demo")
 
 @pytest.fixture
-def log_level(request):
+def log_level(request: pytest.FixtureRequest) -> int:
     """
     Fixture to dynamically change the logging level based on the command-line option.
 
@@ -99,3 +99,17 @@ def log_level(request):
     """
 
     return _set_logger_level(request.config.getoption("--log-level"))
+
+@pytest.fixture(autouse=True)
+def clear_cache(cache: pytest.Cache) -> None:
+    """
+    Fixture to clear the cache before each test.
+
+    Args:
+        cache: The cache object.
+
+    Returns:
+        None
+    """
+    
+    cache.clear_cache(cachedir = cache._cachedir)

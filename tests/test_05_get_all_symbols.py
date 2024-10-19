@@ -26,7 +26,12 @@ from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
 
 
-def test_05_get_all_symbols(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_05_get_all_symbols(
+        demo_flag: bool,
+        log_level: int,
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture
+) -> None:
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 

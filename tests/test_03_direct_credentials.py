@@ -41,7 +41,12 @@ except (configparser.NoSectionError, configparser.NoOptionError) as e:
     raise RuntimeError(f"Configuration error: {e}")
 
 
-def test_03_direct_credentials(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_03_direct_credentials(
+        demo_flag: bool,
+        log_level: int,
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture
+) -> None:
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 

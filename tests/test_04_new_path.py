@@ -59,7 +59,13 @@ def setup_new_path():
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
-def test_04_new_path(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture, setup_new_path: Path):
+def test_04_new_path(
+        demo_flag: bool,
+        log_level: int,
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture,
+        setup_new_path: Path
+) -> None:
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 
