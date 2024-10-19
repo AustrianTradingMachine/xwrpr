@@ -72,3 +72,6 @@ def test_19_get_tick_prices(demo_flag: bool, log_level: int, caplog: pytest.LogC
     with capsys.disabled():
         log_file_path = write_logs(caplog, __file__)
         print(f"\nLog files written to: {GREEN}{log_file_path}{RESET}\n")
+                
+    # Clear the captured logs
+    caplog.clear()
