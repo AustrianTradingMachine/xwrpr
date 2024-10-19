@@ -27,7 +27,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_14_get_news(
+def test_22_trade_records(
     demo_flag: bool,
     log_level: int,
     caplog: pytest.LogCaptureFixture,
@@ -47,27 +47,26 @@ def test_14_get_news(
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: end > now")
-            with pytest.raises(Exception):
-                news = XTBData.getNews(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
-            logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
-                news = XTBData.getNews(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
+            # Get trades history
+            trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(weeks = 52), end = datetime.now())
 
-            # Get news
-            logger.debug("Getting news")
-            news = XTBData.getNews(start = datetime.now()-timedelta(weeks = 6), end = datetime.now())
+            orders = []
+            for records in trades_history:
+                orders.append(records['position'])
+
+            # Get trades history
+            logger.debug("Getting trades records")
+            trades_records = XTBData.getTradeRecords(orders = orders)
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")
-            assert isinstance(news, list), "Expected news to be a list"
+            assert isinstance(trades_records, list), "Expected trades history to be a list"
 
-            # Log each event's details
-            logger.debug("Logging each event's details")
-            for event in news:
-                logger.info("Event: %s", event['title'])
-                details = ', '.join([f"{key}: {value}" for key, value in event.items()])
+            # Log trades history
+            logger.debug("Logging trades history")
+            for records in trades_records:
+                logger.info("Position: %s", records['position'])
+                details = ', '.join([f"{key}: {value}" for key, value in records.items()])
                 logger.info(details)
         finally:
             # Close Wrapper

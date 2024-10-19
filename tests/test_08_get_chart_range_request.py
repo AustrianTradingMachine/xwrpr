@@ -62,7 +62,7 @@ def test_08_get_chart_range_request(
             for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
                 # Get chart for period
                 logger.debug(f"Getting chart for period {period}")
-                chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = period, start = datetime.now()-timedelta(days = 2), end = datetime.now())
+                chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = period, start = datetime.min, end = datetime.now())
 
                 # Check if the return value is a dictionary
                 logger.debug("Checking if the return value is a dictionary")
