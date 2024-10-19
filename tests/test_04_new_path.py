@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from tests.helper import generate_logger, write_logs
+from tests.helper import generate_logger, write_logs, GREEN, RESET
 from pathlib import Path
 import shutil
 import xwrpr
@@ -93,4 +93,4 @@ def test_04_new_path(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureF
     # Write records to log file
     with capsys.disabled():
         log_file_path = write_logs(caplog, __file__)
-        print(f"\nLog files written to: {log_file_path}\n")
+        print(f"\nLog files written to: {GREEN}{log_file_path}{RESET}\n")

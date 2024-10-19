@@ -22,11 +22,11 @@
 ###########################################################################
 
 import pytest
-from tests.helper import generate_logger, write_logs
+from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
 
 
-def test_21_trades(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_21_get_trades(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 
@@ -63,4 +63,4 @@ def test_21_trades(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFix
     # Write records to log file
     with capsys.disabled():
         log_file_path = write_logs(caplog, __file__)
-        print(f"\nLog files written to: {log_file_path}\n")
+        print(f"\nLog files written to: {GREEN}{log_file_path}{RESET}\n")

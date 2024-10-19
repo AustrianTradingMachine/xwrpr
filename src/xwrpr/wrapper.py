@@ -1619,7 +1619,12 @@ class Wrapper(HandlerManager):
             # If no end time is given, set it to the current time
             end_ux = datetime_to_unixtime(datetime.now())
         else:
-            end_ux = datetime_to_unixtime(end) 
+            end_ux = datetime_to_unixtime(end)
+
+        # Check if the start time is greater than the end time
+        if end_ux > datetime_to_unixtime(datetime.now()):
+            self._logger.error("End time is greater than current time.")
+            raise ValueError("End time is greater than current time.")
 
         # Check if the start time is greater than the end time
         if start_ux > end_ux:

@@ -760,8 +760,8 @@ class _DataHandler(_GeneralHandler):
             # Receive the response from the server
             response = self.receive_response()
             
-            # Response must contain 'returnData' key with data
-            if 'returnData' not in response or not response['returnData']:
+            # Response must contain 'returnData' key
+            if 'returnData' not in response:
                 self._logger.error("No data in response")
                 raise ValueError("No data in response")
                 
