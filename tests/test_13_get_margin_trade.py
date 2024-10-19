@@ -26,11 +26,13 @@ from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
+
 def test_13_get_margin_trade(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -43,20 +45,20 @@ def test_13_get_margin_trade(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                margin = XTBData.getMarginTrade(symbol = "BITCOIN", volume = -0)
+                margin_trade = XTBData.getMarginTrade(symbol = "BITCOIN", volume = -0)
 
             # Get margin trade
             logger.debug("Getting margin trade")
-            margin = XTBData.getMarginTrade(symbol = "BITCOIN", volume = 1)
+            margin_trade = XTBData.getMarginTrade(symbol = "BITCOIN", volume = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(margin, dict), "Expected margin trade to be a dict"
+            assert isinstance(margin_trade, dict), "Expected margin trade to be a dict"
 
             # Log margin trade
-            logger.debug("Printing margin trade")
+            logger.debug("Logging Margin Trade")
             logger.info("Margin Trade")
-            details = ', '.join([f"{key}: {value}" for key, value in margin.items()])
+            details = ', '.join([f"{key}: {value}" for key, value in margin_trade.items()])
             logger.info(details)
         finally:
             # Close Wrapper

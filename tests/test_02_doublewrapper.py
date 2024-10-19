@@ -27,11 +27,12 @@ import logging
 import xwrpr
 
 
-def test_2_doublewrapper(demo_flag, caplog):
+def test_02_doublewrapper(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper 1
             logger.debug("Creating Wrapper 1")
@@ -48,18 +49,20 @@ def test_2_doublewrapper(demo_flag, caplog):
             logger.error("Error creating Wrapper: %s", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
         finally:
-            # Close Wrapper
+            # Close Wrapper 1
             logger.debug("Closing Wrapper 1")
             XTBData_1.delete()
 
         try:
-            # getting API version
+            # Getting API version with Wrapper 1
             logger.debug("Getting API version with Wrapper 1")
             version_1 = XTBData_1.getVersion()
+
+            # Getting API version with Wrapper 2
             logger.debug("Getting API version with Wrapper 2")
             version_2 = XTBData_2.getVersion()
 
-            # Check if the return values are dicts
+            # Check if the return values of both Wrappers are dicts
             logger.debug("Checking if the return values are dicts with Wrapper 1")
             assert isinstance(version_1, dict), "Expected version from Wrapper 1 to be a dict"
             logger.debug("Checking if the return values are dicts with Wrapper 2")

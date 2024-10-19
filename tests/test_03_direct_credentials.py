@@ -42,13 +42,14 @@ except (configparser.NoSectionError, configparser.NoOptionError) as e:
     raise RuntimeError(f"Configuration error: {e}")
 
 
-def test_3_direct_credentials(demo_flag, caplog):
+def test_03_direct_credentials(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
-            # Creating Wrapper
+            # Creating Wrapper with direct credentials
             logger.debug("Creating Wrapper with direct credentials")
             XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger, username = USERNAME, password = PASSWORD)
         except Exception as e:
@@ -56,7 +57,7 @@ def test_3_direct_credentials(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # getting API version
+            # Getting API version
             logger.debug("Getting API version")
             version = XTBData.getVersion()
 

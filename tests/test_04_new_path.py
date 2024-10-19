@@ -35,6 +35,11 @@ new_path = Path('~/.xwrpr_new').expanduser()/ 'user.ini'
 
 @pytest.fixture(scope = "function")
 def setup_new_path():
+    """
+    Fixture to set up a new path for the configuration file.
+    Copies the configuration file to a new path before the test and removes it after the test.
+    """
+
     # Setup phase: Copy file to new path
     try:
         new_path.parent.mkdir(parents = True, exist_ok = True)
@@ -55,11 +60,12 @@ def setup_new_path():
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
-def test_4_new_path(setup_new_path, demo_flag, caplog):
+def test_04_new_path(setup_new_path, demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         new_path = setup_new_path
 
         try:

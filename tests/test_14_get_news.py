@@ -32,7 +32,8 @@ def test_14_get_news(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")

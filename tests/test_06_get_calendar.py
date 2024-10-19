@@ -27,11 +27,12 @@ import logging
 import xwrpr
 
 
-def test_6_get_calendar(demo_flag, caplog):
+def test_06_get_calendar(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -50,10 +51,10 @@ def test_6_get_calendar(demo_flag, caplog):
             assert isinstance(calendar, list), "Expected calendar to be a list"
 
             # Log each event's details
-            logger.debug("Printing all events")
-            for calendar_record in calendar:
-                logger.info("Title: %s", calendar_record['title'])
-                details = ', '.join([f"{key}: {value}" for key, value in calendar_record.items()])
+            logger.debug("Logging each event's details")
+            for record in calendar:
+                logger.info("Title: %s", record['title'])
+                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                 logger.info(details)
         finally:
             # Close Wrapper

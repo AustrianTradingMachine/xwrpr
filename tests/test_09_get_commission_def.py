@@ -27,11 +27,12 @@ import logging
 import xwrpr
 
 
-def test_9_get_commission_def(demo_flag, caplog):
+def test_09_get_commission_def(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -55,7 +56,7 @@ def test_9_get_commission_def(demo_flag, caplog):
             assert isinstance(commission, dict), "Expected commission to be a dict"
 
             # Log commission definition
-            logger.debug("Printing commission definition")
+            logger.debug("Logging commission definition")
             logger.info("Commission Definition")
             details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
             logger.info(details)

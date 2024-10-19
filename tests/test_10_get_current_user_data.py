@@ -31,7 +31,8 @@ def test_10_get_user_data(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -50,7 +51,7 @@ def test_10_get_user_data(demo_flag, caplog):
             assert isinstance(user_data, dict), "Expected current user data to be a dict"
 
             # Log user data
-            logger.debug("Printing User Data")
+            logger.debug("Logging User Data")
             logger.info("Current User Data")
             details = ', '.join([f"{key}: {value}" for key, value in user_data.items()])
             logger.info(details)

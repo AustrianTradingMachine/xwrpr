@@ -27,11 +27,12 @@ import logging
 import xwrpr
 
 
-def test_1_user(demo_flag, caplog):
+def test_01_user(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -41,7 +42,7 @@ def test_1_user(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # getting API version
+            # Getting API version
             logger.debug("Getting API version")
             version = XTBData.getVersion()
 

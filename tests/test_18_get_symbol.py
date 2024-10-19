@@ -31,7 +31,8 @@ def test_18_get_symbol(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -41,8 +42,8 @@ def test_18_get_symbol(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Get all symbols
-            logger.debug("Getting all symbols")
+            # Get symbol
+            logger.debug("Getting symbol")
             symbol = XTBData.getSymbol(symbol="BITCOIN")
 
             # Check if the return value is a list

@@ -27,11 +27,12 @@ import logging
 import xwrpr
 
 
-def test_5_get_all_symbols(demo_flag, caplog):
+def test_05_get_all_symbols(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -51,9 +52,9 @@ def test_5_get_all_symbols(demo_flag, caplog):
 
             # Log each symbol's details
             logger.debug("Logging each symbol's details")
-            for symbol_record in all_symbols:
-                logger.info("Symbol: %s", symbol_record['symbol'])
-                details = ', '.join([f"{key}: {value}" for key, value in symbol_record.items()])
+            for record in all_symbols:
+                logger.info("Symbol: %s", record['symbol'])
+                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                 logger.info(details)
         finally:
             # Close Wrapper

@@ -32,7 +32,8 @@ def test_19_get_tick_prices(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -49,13 +50,13 @@ def test_19_get_tick_prices(demo_flag, caplog):
 
             # Get tick prices
             logger.debug("Getting tick prices")
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now(), level = 1)
+            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(days = 1), level = 1)
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a dictionary")
             assert isinstance(tick_prices, dict), "Expected tick prices to be a dictionary"
             logger.debug("Checking if quotations is a list")
-            assert isinstance(tick_prices["quotations"], list), "Expected rateInfos to be a list"
+            assert isinstance(tick_prices["quotations"], list), "Expected quotations to be a list"
 
             # Log tick prices
             logger.debug("Logging each tick price")

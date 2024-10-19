@@ -31,7 +31,8 @@ def test_12_get_margin_level(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -50,7 +51,7 @@ def test_12_get_margin_level(demo_flag, caplog):
             assert isinstance(margin_level, dict), "Expected margin level to be a dict"
 
             # Log margin level
-            logger.debug("Printing Margin Level")
+            logger.debug("Logging Margin Level")
             logger.info("Margin Level")
             details = ', '.join([f"{key}: {value}" for key, value in margin_level.items()])
             logger.info(details)

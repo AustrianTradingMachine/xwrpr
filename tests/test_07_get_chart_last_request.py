@@ -28,11 +28,12 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_7_get_chart_last_request(demo_flag, caplog):
+def test_07_get_chart_last_request(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -63,7 +64,7 @@ def test_7_get_chart_last_request(demo_flag, caplog):
                 assert isinstance(chart_request["rateInfos"], list), "Expected rateInfos to be a list"
 
                 # Log chart details
-                logger.debug("Printing chart")
+                logger.debug("Logging chart details")
                 for record in chart_request["rateInfos"]:
                     details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                     logger.info(details)

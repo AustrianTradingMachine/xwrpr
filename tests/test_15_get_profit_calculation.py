@@ -31,7 +31,8 @@ def test_15_get_profit_calculation(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -64,7 +65,7 @@ def test_15_get_profit_calculation(demo_flag, caplog):
             assert isinstance(profit, dict), "Expected profit calculation to be a dict"
 
             # Log profit calculation
-            logger.debug("Printing profit calculation")
+            logger.debug("Logging profit calculation")
             logger.info("Profit Calculation")
             details = ', '.join([f"{key}: {value}" for key, value in profit.items()])
             logger.info(details)

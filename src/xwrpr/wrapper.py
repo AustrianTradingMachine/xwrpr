@@ -1427,7 +1427,7 @@ class Wrapper(HandlerManager):
         timestamp = datetime_to_unixtime(time)
 
         # Check if time lies in the future
-        if timestamp > datetime_to_unixtime(datetime.now()):
+        if timestamp >= datetime_to_unixtime(datetime.now()):
             self._logger.error("Time lies in the future.")
             raise ValueError("Time lies in the future.")
 

@@ -32,7 +32,8 @@ def test_22_trades_history(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -50,7 +51,7 @@ def test_22_trades_history(demo_flag, caplog):
             with pytest.raises(Exception):
                 trades_history = XTBData.getTradesHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
 
-            # Get news
+            # Get trades history
             logger.debug("Getting trades history")
             trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now())
 
@@ -61,7 +62,7 @@ def test_22_trades_history(demo_flag, caplog):
             # Log trades history
             logger.debug("Logging trades history")
             for trade in trades_history:
-                logger.info("Trade: %s", trade['order'])
+                logger.info("Position: %s", trade['position'])
                 details = ', '.join([f"{key}: {value}" for key, value in trade.items()])
                 logger.info(details)
         finally:

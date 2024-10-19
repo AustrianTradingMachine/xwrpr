@@ -31,7 +31,8 @@ def test_16_get_server_time(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
-    with caplog.at_level(logging.WARNING):
+    # Set logging level to INFO to reduce the amount of captured logs
+    with caplog.at_level(logging.INFO):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
@@ -42,7 +43,7 @@ def test_16_get_server_time(demo_flag, caplog):
 
         try:
             # Get Server Time
-            logger.debug("Getting User Data")
+            logger.debug("Getting Server Time")
             server_time = XTBData.getServerTime()
 
             # Check if the return value is a dict
@@ -50,7 +51,7 @@ def test_16_get_server_time(demo_flag, caplog):
             assert isinstance(server_time, dict), "Expected server time to be a dict"
 
             # Log server time
-            logger.debug("Printing Server Time")
+            logger.debug("Logging Server Time")
             logger.info("Current Server Time")
             details = ', '.join([f"{key}: {value}" for key, value in server_time.items()])
             logger.info(details)
