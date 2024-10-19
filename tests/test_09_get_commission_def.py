@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
@@ -35,7 +35,7 @@ def test_9_get_commission_def(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -44,11 +44,11 @@ def test_9_get_commission_def(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
+                commission = XTBData.getCommissionDef(symbol = "GOLD", volume = -0)
 
             # Get commission definition
             logger.debug("Getting commission definition")
-            commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+            commission = XTBData.getCommissionDef(symbol = "GOLD", volume = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")

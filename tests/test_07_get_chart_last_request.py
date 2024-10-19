@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 from datetime import datetime, timedelta
@@ -36,7 +36,7 @@ def test_7_get_chart_last_request(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -45,15 +45,15 @@ def test_7_get_chart_last_request(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: start > now")
             with pytest.raises(Exception):
-                records= XTBData.getChartLastRequest(symbol="GOLD", period="M1", start=datetime.now()+timedelta(days=1))
+                records = XTBData.getChartLastRequest(symbol = "GOLD", period = "M1", start=datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: wrong period")
             with pytest.raises(Exception):
-                records= XTBData.getChartLastRequest(symbol="GOLD", period="X1", start=datetime.min)
+                records = XTBData.getChartLastRequest(symbol = "GOLD", period = "X1", start = datetime.min)
 
             # Get chart
             for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
                 logger.debug(f"Getting chart for period {period}")
-                records= XTBData.getChartLastRequest(symbol="GOLD", period=period, start=datetime.min)
+                records = XTBData.getChartLastRequest(symbol = "GOLD", period = period, start = datetime.min)
 
                 # Check if the return value is a dictionary
                 logger.debug("Checking if the return value is a dictionary")

@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
@@ -35,7 +35,7 @@ def test_5_get_all_symbols(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -43,7 +43,7 @@ def test_5_get_all_symbols(demo_flag, caplog):
         try:
             # Get all symbols
             logger.debug("Getting all symbols")
-            symbols=XTBData.getAllSymbols()
+            symbols = XTBData.getAllSymbols()
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")

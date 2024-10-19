@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 from datetime import datetime, timedelta
@@ -36,7 +36,7 @@ def test_14_get_news(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -45,14 +45,14 @@ def test_14_get_news(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: end > now")
             with pytest.raises(Exception):
-                news= XTBData.getNews(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
+                news = XTBData.getNews(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
             with pytest.raises(Exception):
-                news= XTBData.getNews(start=datetime.now(), end=datetime.now()-timedelta(days=2))
+                news = XTBData.getNews(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
 
             # Get news
             logger.debug("Getting news")
-            news= XTBData.getNews(start=datetime.now()-timedelta(days=2), end=datetime.now())
+            news = XTBData.getNews(start = datetime.now()-timedelta(days = 2), end = datetime.now())
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")

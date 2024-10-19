@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
@@ -35,7 +35,7 @@ def test_15_get_profit_calculation(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -44,20 +44,20 @@ def test_15_get_profit_calculation(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: wrong cmd")
             with pytest.raises(Exception):
-                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=1000, close_price=2000, cmd=-1)
+                profit = XTBData.getProfitCalculation(symbol = "GOLD", volum = 1, open_price = 1000, close_price = 000, cmd = -1)
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=0, open_price=1000, close_price=2000, cmd=0)
+                profit = XTBData.getProfitCalculation(symbol = "GOLD", volume = 0, open_price = 1000, close_price = 2000, cmd = 0)
             logger.debug("Checking failure conditions: open_price <= 0")
             with pytest.raises(Exception):
-                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=0, close_price=2000, cmd=0)
+                profit = XTBData.getProfitCalculation(symbol = "GOLD", volume = 1, open_price = 0, close_price = 2000, cmd = 0)
             logger.debug("Checking failure conditions: close_price <= 0")
             with pytest.raises(Exception):
-                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=1000, close_price=0, cmd=0)
+                profit = XTBData.getProfitCalculation(symbol = "GOLD", volume = 1, open_price = 1000, close_price = 0, cmd = 0)
 
             # Get commission definition
             logger.debug("Getting profit calculation")
-            profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=1000, close_price=2000, cmd=0)
+            profit = XTBData.getProfitCalculation(symbol  ="GOLD", volume = 1, open_price = 1000, close_price = 2000, cmd = 0)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")

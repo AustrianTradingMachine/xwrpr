@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 from datetime import datetime, timedelta
@@ -36,7 +36,7 @@ def test_18_get_tick_prices(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -45,11 +45,11 @@ def test_18_get_tick_prices(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: timestamp > current time")
             with pytest.raises(Exception):
-                tick= XTBData.getTickPrices(symbol="GOLD", time=datetime.now()+timedelta(days=1), level=-1)
+                tick = XTBData.getTickPrices(symbol = "GOLD", time = datetime.now()+timedelta(days = 1), level = -1)
 
             # Get commission definition
             logger.debug("Getting profit calculation")
-            tick= XTBData.getTickPrices(symbol="GOLD", time=datetime.now(), level=1)
+            tick = XTBData.getTickPrices(symbol = "GOLD", time = datetime.now(), level = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a list")

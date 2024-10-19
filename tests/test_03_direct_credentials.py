@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 from pathlib import Path
 import configparser
@@ -50,7 +50,7 @@ def test_3_direct_credentials(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper with direct credentials")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger, username=USERNAME, password=PASSWORD)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger, username = USERNAME, password = PASSWORD)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -58,7 +58,7 @@ def test_3_direct_credentials(demo_flag, caplog):
         try:
             # getting API version
             logger.debug("Getting API version")
-            version=XTBData.getVersion()
+            version = XTBData.getVersion()
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")

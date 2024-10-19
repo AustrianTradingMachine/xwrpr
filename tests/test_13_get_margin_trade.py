@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
@@ -34,7 +34,7 @@ def test_13_get_margin_trade(demo_flag, caplog):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -43,11 +43,11 @@ def test_13_get_margin_trade(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                margin= XTBData.getMarginTrade(symbol="GOLD", volume=-0)
+                margin = XTBData.getMarginTrade(symbol = "GOLD", volume = -0)
 
             # Get commission definition
             logger.debug("Getting margin trade")
-            margin= XTBData.getMarginTrade(symbol="GOLD", volume=1)
+            margin = XTBData.getMarginTrade(symbol = "GOLD", volume = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")

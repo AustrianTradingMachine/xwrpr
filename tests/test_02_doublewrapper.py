@@ -22,7 +22,7 @@
 ###########################################################################
 
 import pytest
-from helper.helper import generate_logger, write_logs, demo_flag
+from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
@@ -35,7 +35,7 @@ def test_2_doublewrapper(demo_flag, caplog):
         try:
             # Creating Wrapper 1
             logger.debug("Creating Wrapper 1")
-            XTBData_1=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData_1 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -43,7 +43,7 @@ def test_2_doublewrapper(demo_flag, caplog):
         try:
             # Creating Wrapper 2
             logger.debug("Creating Wrapper 2")
-            XTBData_2=xwrpr.Wrapper(demo=demo_flag, logger=logger)
+            XTBData_2 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -55,9 +55,9 @@ def test_2_doublewrapper(demo_flag, caplog):
         try:
             # getting API version
             logger.debug("Getting API version with Wrapper 1")
-            version_1=XTBData_1.getVersion()
+            version_1 = XTBData_1.getVersion()
             logger.debug("Getting API version with Wrapper 2")
-            version_2=XTBData_2.getVersion()
+            version_2 = XTBData_2.getVersion()
 
             # Check if the return values are dicts
             logger.debug("Checking if the return values are dicts with Wrapper 1")
