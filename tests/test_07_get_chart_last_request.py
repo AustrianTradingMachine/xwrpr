@@ -45,25 +45,25 @@ def test_7_get_chart_last_request(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: start > now")
             with pytest.raises(Exception):
-                records = XTBData.getChartLastRequest(symbol = "GOLD", period = "M1", start=datetime.now()+timedelta(days = 1))
+                chart_request = XTBData.getChartLastRequest(symbol = "EURUSD", period = "M1", start=datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: wrong period")
             with pytest.raises(Exception):
-                records = XTBData.getChartLastRequest(symbol = "GOLD", period = "X1", start = datetime.min)
+                chart_request = XTBData.getChartLastRequest(symbol = "EURUSD", period = "X1", start = datetime.min)
 
             # Get chart
             for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
                 logger.debug(f"Getting chart for period {period}")
-                records = XTBData.getChartLastRequest(symbol = "GOLD", period = period, start = datetime.min)
+                chart_request = XTBData.getChartLastRequest(symbol = "EURUSD", period = period, start = datetime.min)
 
                 # Check if the return value is a dictionary
                 logger.debug("Checking if the return value is a dictionary")
-                assert isinstance(records, dict), "Expected records to be a dict"
+                assert isinstance(chart_request, dict), "Expected records to be a dict"
                 logger.debug("Checking if rateInfos is a list")
-                assert isinstance(records["rateInfos"], list), "Expected rateInfos to be a list"
+                assert isinstance(chart_request["rateInfos"], list), "Expected rateInfos to be a list"
 
                 # Log chart details
                 logger.debug("Printing chart")
-                for record in records["rateInfos"]:
+                for record in chart_request["rateInfos"]:
                     details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                     logger.info(details)
         finally:

@@ -44,11 +44,11 @@ def test_9_get_commission_def(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                commission = XTBData.getCommissionDef(symbol = "GOLD", volume = -0)
+                commission = XTBData.getCommissionDef(symbol = "EURUSD", volume = -0)
 
             # Get commission definition
             logger.debug("Getting commission definition")
-            commission = XTBData.getCommissionDef(symbol = "GOLD", volume = 1)
+            commission = XTBData.getCommissionDef(symbol = "EURUSD", volume = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")

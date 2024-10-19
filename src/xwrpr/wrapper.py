@@ -1419,9 +1419,9 @@ class Wrapper(HandlerManager):
 
         # Check if the level is valid
         levels = [-1, 0]
-        if level not in levels or level > 0:
-            self._logger.error("Invalid level. Must be -1, 0 or greater than 0.")
-            raise ValueError("Invalid level. Must be -1, 0 or greater than 0.")
+        if level not in levels and level <= 0:
+            self._logger.error("Invalid level. Must be -1, 0, or greater than 0.")
+            raise ValueError("Invalid level. Must be -1, 0, or greater than 0.")
         
         # Convert the time to unix time
         timestamp = datetime_to_unixtime(time)

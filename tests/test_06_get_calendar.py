@@ -51,9 +51,9 @@ def test_6_get_calendar(demo_flag, caplog):
 
             # Log each event's details
             logger.debug("Printing all events")
-            for event in calendar:
-                logger.info("Title: %s", event['title'])
-                details = ', '.join([f"{key}: {value}" for key, value in event.items()])
+            for calendar_record in calendar:
+                logger.info("Title: %s", calendar_record['title'])
+                details = ', '.join([f"{key}: {value}" for key, value in calendar_record.items()])
                 logger.info(details)
         finally:
             # Close Wrapper

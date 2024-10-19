@@ -45,19 +45,19 @@ def test_18_get_tick_prices(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: timestamp > current time")
             with pytest.raises(Exception):
-                tick = XTBData.getTickPrices(symbol = "GOLD", time = datetime.now()+timedelta(days = 1), level = -1)
+                tick_prices = XTBData.getTickPrices(symbol = "EURUSD", time = datetime.now()+timedelta(days = 1), level = -1)
 
             # Get commission definition
             logger.debug("Getting profit calculation")
-            tick = XTBData.getTickPrices(symbol = "GOLD", time = datetime.now(), level = 1)
+            tick_prices = XTBData.getTickPrices(symbol = "EURUSD", time = datetime.now(), level = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a list")
-            assert isinstance(tick, list), "Expected tick prices to be a list"
+            assert isinstance(tick_prices, list), "Expected tick prices to be a list"
 
             # Log tick prices
             logger.debug("Logging each tick price")
-            for record in tick:
+            for record in tick_prices:
                 logger.info("Event: %s", record['symbol'])
                 details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                 logger.info(details)

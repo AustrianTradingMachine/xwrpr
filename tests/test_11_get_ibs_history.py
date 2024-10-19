@@ -45,13 +45,13 @@ def test_11_get_ibs_history(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: end > now")
             with pytest.raises(Exception):
-                history = XTBData.getIbsHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
+                ibs_history = XTBData.getIbsHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
             with pytest.raises(Exception):
-                history = XTBData.getIbsHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
+                ibs_history = XTBData.getIbsHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
             logger.debug("Checking failure conditions: deprecated function")
             with pytest.raises(Exception):
-                history = XTBData.getIbsHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()-timedelta(days = 1))
+                ibs_history = XTBData.getIbsHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()-timedelta(days = 1))
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")

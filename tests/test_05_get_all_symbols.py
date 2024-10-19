@@ -43,17 +43,17 @@ def test_5_get_all_symbols(demo_flag, caplog):
         try:
             # Get all symbols
             logger.debug("Getting all symbols")
-            symbols = XTBData.getAllSymbols()
+            all_symbols = XTBData.getAllSymbols()
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")
-            assert isinstance(symbols, list), "Expected symbols to be a list"
+            assert isinstance(all_symbols, list), "Expected symbols to be a list"
 
             # Log each symbol's details
             logger.debug("Logging each symbol's details")
-            for symbol in symbols:
-                logger.info("Symbol: %s", symbol['symbol'])
-                details = ', '.join([f"{key}: {value}" for key, value in symbol.items()])
+            for symbol_record in all_symbols:
+                logger.info("Symbol: %s", symbol_record['symbol'])
+                details = ', '.join([f"{key}: {value}" for key, value in symbol_record.items()])
                 logger.info(details)
         finally:
             # Close Wrapper

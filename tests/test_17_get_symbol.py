@@ -43,7 +43,7 @@ def test_17_get_symbol(demo_flag, caplog):
         try:
             # Get all symbols
             logger.debug("Getting all symbols")
-            symbol = XTBData.getSymbol(symbol="GOLD")
+            symbol = XTBData.getSymbol(symbol="EURUSD")
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a dict")

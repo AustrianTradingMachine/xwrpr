@@ -43,11 +43,11 @@ def test_13_get_margin_trade(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                margin = XTBData.getMarginTrade(symbol = "GOLD", volume = -0)
+                margin = XTBData.getMarginTrade(symbol = "EURUSD", volume = -0)
 
             # Get commission definition
             logger.debug("Getting margin trade")
-            margin = XTBData.getMarginTrade(symbol = "GOLD", volume = 1)
+            margin = XTBData.getMarginTrade(symbol = "EURUSD", volume = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
