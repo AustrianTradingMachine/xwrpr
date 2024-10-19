@@ -26,9 +26,12 @@ from pathlib import Path
 import pytest
 
 
-def generate_logger() -> logging.Logger:
+def generate_logger(log_level: int = logging.INFO) -> logging.Logger:
     """
     Generate a logger with the specified name and configuration.
+
+    Args:
+        log_level (int, optional): The log level for the console output. Defaults to logging.INFO.
 
     Returns:
         logging.Logger: The configured logger instance.
@@ -36,7 +39,7 @@ def generate_logger() -> logging.Logger:
     
     # Create a logger with the specified name
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(log_level)
 
     stream_handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -85,8 +88,3 @@ def write_logs(caplog, filename: str) -> str:
             log_file.write(f"{record.levelname}: {record.message}\n")
 
     return log_file_path
-
-@pytest.fixture
-def demo_flag():
-    # This fixture can dynamically change the value of DEMO
-    return False

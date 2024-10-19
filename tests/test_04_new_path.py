@@ -22,8 +22,7 @@
 ###########################################################################
 
 import pytest
-from tests.helper import generate_logger, write_logs, demo_flag
-import logging
+from tests.helper import generate_logger, write_logs
 from pathlib import Path
 import shutil
 import xwrpr
@@ -60,13 +59,14 @@ def setup_new_path():
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
-def test_04_new_path(demo_flag: bool, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_04_new_path(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture, setup_new_path: Path):
     # Create a logger with the specified name
-    logger = generate_logger()
+    logger = generate_logger(log_level)
 
     # Set logging level to INFO to reduce the amount of captured logs
-    with caplog.at_level(logging.INFO):
-        new_path = setup_new_path
+    with caplog.at_level(log_level):
+        new_path = str(setup_new_path)
+        logger.debug(f"New path: {new_path}")
 
         try:
             # Creating Wrapper
@@ -75,6 +75,7 @@ def test_04_new_path(demo_flag: bool, caplog: pytest.LogCaptureFixture, capsys: 
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
+
 
         try:
             # Get API version

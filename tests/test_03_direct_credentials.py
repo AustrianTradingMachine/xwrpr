@@ -22,8 +22,7 @@
 ###########################################################################
 
 import pytest
-from tests.helper import generate_logger, write_logs, demo_flag
-import logging
+from tests.helper import generate_logger, write_logs
 from pathlib import Path
 import configparser
 import xwrpr
@@ -42,12 +41,12 @@ except (configparser.NoSectionError, configparser.NoOptionError) as e:
     raise RuntimeError(f"Configuration error: {e}")
 
 
-def test_03_direct_credentials(demo_flag: bool, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_03_direct_credentials(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
     # Create a logger with the specified name
-    logger = generate_logger()
+    logger = generate_logger(log_level)
 
     # Set logging level to INFO to reduce the amount of captured logs
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(log_level):
         try:
             # Creating Wrapper with direct credentials
             logger.debug("Creating Wrapper with direct credentials")

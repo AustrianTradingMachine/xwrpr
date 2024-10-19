@@ -117,9 +117,8 @@ def _validate_level(
 
     if level not in levels:
         raise ValueError(f"Invalid logger level: {level}")
-    level = levels[level.lower()]
 
-    return level
+    return levels[level]
 
 class CustomThread(threading.Thread):
     """

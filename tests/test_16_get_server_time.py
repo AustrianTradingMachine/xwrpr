@@ -22,17 +22,16 @@
 ###########################################################################
 
 import pytest
-from tests.helper import generate_logger, write_logs, demo_flag
-import logging
+from tests.helper import generate_logger, write_logs
 import xwrpr
 
 
-def test_16_get_server_time(demo_flag: bool, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
+def test_16_get_server_time(demo_flag: bool, log_level: int, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
     # Create a logger with the specified name
-    logger = generate_logger()
+    logger = generate_logger(log_level)
 
     # Set logging level to INFO to reduce the amount of captured logs
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(log_level):
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
