@@ -27,7 +27,7 @@ import logging
 import xwrpr
 
 
-def test_17_get_symbol(demo_flag, caplog):
+def test_18_get_symbol(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -43,7 +43,7 @@ def test_17_get_symbol(demo_flag, caplog):
         try:
             # Get all symbols
             logger.debug("Getting all symbols")
-            symbol = XTBData.getSymbol(symbol="EURUSD")
+            symbol = XTBData.getSymbol(symbol="BITCOIN")
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a dict")

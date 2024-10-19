@@ -41,7 +41,7 @@ def test_12_get_margin_level(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Get commission definition
+            # Get Margin Level
             logger.debug("Getting Margin Level")
             margin_level = XTBData.getMarginLevel()
 

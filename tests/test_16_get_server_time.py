@@ -41,7 +41,7 @@ def test_16_get_server_time(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Get commission definition
+            # Get Server Time
             logger.debug("Getting User Data")
             server_time = XTBData.getServerTime()
 

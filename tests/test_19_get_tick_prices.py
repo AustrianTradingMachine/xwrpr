@@ -28,7 +28,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_8_get_chart_range_request(demo_flag, caplog):
+def test_19_get_tick_prices(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -43,33 +43,26 @@ def test_8_get_chart_range_request(demo_flag, caplog):
 
         try:
             # Check failure
-            logger.debug("Checking failure conditions: end > now")
+            logger.debug("Checking failure conditions: timestamp > current time")
             with pytest.raises(Exception):
-                chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = "M1", start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
-            logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
-                chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = "M1", start = datetime.now(), end = datetime.now()-timedelta(days = 2))
-            logger.debug("Checking failure conditions: wrong period")
-            with pytest.raises(Exception):
-                chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = "X1", start = datetime.min)
+                tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(days = 1), level = -1)
 
-            # Get chart
-            for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
-                # Get chart for period
-                logger.debug(f"Getting chart for period {period}")
-                chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = period, start = datetime.now()-timedelta(days = 2), end = datetime.now())
+            # Get tick prices
+            logger.debug("Getting profit calculation")
+            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now(), level = 1)
 
-                # Check if the return value is a dictionary
-                logger.debug("Checking if the return value is a dictionary")
-                assert isinstance(chart_request, dict), "Expected chart request to be a dictionary"
-                logger.debug("Checking if rateInfos is a list")
-                assert isinstance(chart_request["rateInfos"], list), "Expected rateInfos to be a list"
+            # Check if the return value is a dictionary
+            logger.debug("Checking if the return value is a dictionary")
+            assert isinstance(tick_prices, dict), "Expected tick prices to be a dictionary"
+            logger.debug("Checking if quotations is a list")
+            assert isinstance(tick_prices["quotations"], list), "Expected rateInfos to be a list"
 
-                # Log chart details
-                logger.debug("Printing chart")
-                for record in chart_request["rateInfos"]:
-                    details = ', '.join([f"{key}: {value}" for key, value in record.items()])
-                    logger.info(details)
+            # Log tick prices
+            logger.debug("Logging each tick price")
+            for record in tick_prices["quotations"]:
+                logger.info("Event: %s", record['symbol'])
+                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
+                logger.info(details)
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")

@@ -45,19 +45,20 @@ def test_7_get_chart_last_request(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: start > now")
             with pytest.raises(Exception):
-                chart_request = XTBData.getChartLastRequest(symbol = "EURUSD", period = "M1", start=datetime.now()+timedelta(days = 1))
+                chart_request = XTBData.getChartLastRequest(symbol = "BITCOIN", period = "M1", start=datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: wrong period")
             with pytest.raises(Exception):
-                chart_request = XTBData.getChartLastRequest(symbol = "EURUSD", period = "X1", start = datetime.min)
+                chart_request = XTBData.getChartLastRequest(symbol = "BITCOIN", period = "X1", start = datetime.min)
 
             # Get chart
             for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
+                # Get chart for period
                 logger.debug(f"Getting chart for period {period}")
-                chart_request = XTBData.getChartLastRequest(symbol = "EURUSD", period = period, start = datetime.min)
+                chart_request = XTBData.getChartLastRequest(symbol = "BITCOIN", period = period, start = datetime.min)
 
                 # Check if the return value is a dictionary
                 logger.debug("Checking if the return value is a dictionary")
-                assert isinstance(chart_request, dict), "Expected records to be a dict"
+                assert isinstance(chart_request, dict), "Expected chart request to be a dictionary"
                 logger.debug("Checking if rateInfos is a list")
                 assert isinstance(chart_request["rateInfos"], list), "Expected rateInfos to be a list"
 

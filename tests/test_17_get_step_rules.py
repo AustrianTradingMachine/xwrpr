@@ -28,7 +28,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_18_get_tick_prices(demo_flag, caplog):
+def test_17_get_step_rules(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -42,23 +42,17 @@ def test_18_get_tick_prices(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: timestamp > current time")
-            with pytest.raises(Exception):
-                tick_prices = XTBData.getTickPrices(symbol = "EURUSD", time = datetime.now()+timedelta(days = 1), level = -1)
+            # Get step rules
+            logger.debug("Getting step rules")
+            step_rules = XTBData.getStepRules()
 
-            # Get commission definition
-            logger.debug("Getting profit calculation")
-            tick_prices = XTBData.getTickPrices(symbol = "EURUSD", time = datetime.now(), level = 1)
-
-            # Check if the return value is a dict
+            # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a list")
-            assert isinstance(tick_prices, list), "Expected tick prices to be a list"
+            assert isinstance(step_rules, list), "Expected step rules to be a list"
 
-            # Log tick prices
-            logger.debug("Logging each tick price")
-            for record in tick_prices:
-                logger.info("Event: %s", record['symbol'])
+            # Log step rules
+            logger.debug("Logging the step rules")
+            for record in step_rules:
                 details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                 logger.info(details)
         finally:

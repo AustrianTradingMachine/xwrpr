@@ -41,7 +41,7 @@ def test_10_get_user_data(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Get commission definition
+            # Get User Data
             logger.debug("Getting User Data")
             user_data = XTBData.getCurrentUserData()
 
