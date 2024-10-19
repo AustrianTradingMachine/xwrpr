@@ -48,7 +48,7 @@ def _set_logger_level(level: str) -> int:
     }
 
     if level is None:
-        level = 'DEBUG'
+        level = 'WARNING'
 
     level = level.lower()
 
@@ -99,17 +99,3 @@ def log_level(request: pytest.FixtureRequest) -> int:
     """
 
     return _set_logger_level(request.config.getoption("--log-level"))
-
-@pytest.fixture(autouse=True)
-def clear_cache(cache: pytest.Cache) -> None:
-    """
-    Fixture to clear the cache before each test.
-
-    Args:
-        cache: The cache object.
-
-    Returns:
-        None
-    """
-    
-    cache.clear_cache(cachedir = cache._cachedir)

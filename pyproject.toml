@@ -57,6 +57,7 @@ Homepage = "https://github.com/AustrianTradingMachine/xwrpr"
 [project.optional-dependencies]
 dev = [
     "pytest == 8.3.3",
+    "pytest-xdist == 3.6.1"
     ]
 
 [tool.pytest.ini_options]
