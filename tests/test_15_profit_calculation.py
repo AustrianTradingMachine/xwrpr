@@ -28,7 +28,7 @@ import xwrpr
 import logging
 
 
-def test_9_get_commission_def(demo_flag, caplog):
+def test_15_profit_calculation(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -43,22 +43,31 @@ def test_9_get_commission_def(demo_flag, caplog):
 
         try:
             # Check failure
+            logger.debug("Checking failure conditions: wrong cmd")
+            with pytest.raises(Exception):
+                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=1000, close_price=2000, cmd=-1)
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
+                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=0, open_price=1000, close_price=2000, cmd=0)
+            logger.debug("Checking failure conditions: open_price <= 0")
+            with pytest.raises(Exception):
+                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=0, close_price=2000, cmd=0)
+            logger.debug("Checking failure conditions: close_price <= 0")
+            with pytest.raises(Exception):
+                profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=1000, close_price=0, cmd=0)
 
             # Get commission definition
-            logger.debug("Getting commission definition")
-            commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+            logger.debug("Getting profit calculation")
+            profit= XTBData.getProfitCalculation(symbol="GOLD", volume=1, open_price=1000, close_price=2000, cmd=0)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(commission, dict), "Expected commission to be a dict"
+            assert isinstance(profit, dict), "Expected margin trade to be a dict"
 
             # Print commission definition
-            logger.debug("Printing commission definition")
-            logger.info("Commission Definition")
-            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
+            logger.debug("Printing profit calculation")
+            logger.info("Profit Calculation")
+            details = ', '.join([f"{key}: {value}" for key, value in profit.items()])
             logger.info(details)
         finally:
             # Close Wrapper

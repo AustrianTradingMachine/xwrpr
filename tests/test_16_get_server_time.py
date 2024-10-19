@@ -25,10 +25,9 @@ import pytest
 from helper.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
-import logging
 
 
-def test_9_get_commission_def(demo_flag, caplog):
+def test_16_get_server_time(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -42,23 +41,18 @@ def test_9_get_commission_def(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: volume <= 0")
-            with pytest.raises(Exception):
-                commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
-
             # Get commission definition
-            logger.debug("Getting commission definition")
-            commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+            logger.debug("Getting User Data")
+            server_time = XTBData.getServerTime()
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(commission, dict), "Expected commission to be a dict"
+            assert isinstance(server_time, dict), "Expected commission to be a dict"
 
             # Print commission definition
-            logger.debug("Printing commission definition")
-            logger.info("Commission Definition")
-            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
+            logger.debug("Printing Server Time")
+            logger.info("Current Server Time")
+            details = ', '.join([f"{key}: {value}" for key, value in server_time.items()])
             logger.info(details)
         finally:
             # Close Wrapper

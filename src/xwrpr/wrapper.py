@@ -1196,6 +1196,8 @@ class Wrapper(HandlerManager):
         Raises:
             ValueError: If the command is invalid.
             ValueError: If the volume is less than or equal to 0.
+            ValueError: If the open price is less than or equal to 0.
+            ValueError: If the close price is less than or equal to 0.
         """
 
         # List of valid commands
@@ -1210,6 +1212,14 @@ class Wrapper(HandlerManager):
         if volume <= 0:
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
+        
+        if open_price <= 0:
+            self._logger.error("Open price must be greater than 0.")
+            raise ValueError("Open price must be greater than 0.")
+        
+        if close_price <= 0:
+            self._logger.error("Close price must be greater than 0.")
+            raise ValueError("Close price must be greater than 0.")
 
         return self._open_data_channel(
             command = "ProfitCalculation",

@@ -28,7 +28,7 @@ import xwrpr
 import logging
 
 
-def test_9_get_commission_def(demo_flag, caplog):
+def test_13_get_margin_trade(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -45,20 +45,20 @@ def test_9_get_commission_def(demo_flag, caplog):
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(Exception):
-                commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
+                margin= XTBData.getMarginTrade(symbol="GOLD", volume=-0)
 
             # Get commission definition
-            logger.debug("Getting commission definition")
-            commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+            logger.debug("Getting margin trade")
+            margin= XTBData.getMarginTrade(symbol="GOLD", volume=1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(commission, dict), "Expected commission to be a dict"
+            assert isinstance(margin, dict), "Expected margin trade to be a dict"
 
             # Print commission definition
-            logger.debug("Printing commission definition")
-            logger.info("Commission Definition")
-            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
+            logger.debug("Printing margin trade")
+            logger.info("Margin Trade")
+            details = ', '.join([f"{key}: {value}" for key, value in margin.items()])
             logger.info(details)
         finally:
             # Close Wrapper

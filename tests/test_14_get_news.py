@@ -25,10 +25,10 @@ import pytest
 from helper.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
-import logging
+from datetime import datetime, timedelta
 
 
-def test_9_get_commission_def(demo_flag, caplog):
+def test_14_get_news(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -43,23 +43,23 @@ def test_9_get_commission_def(demo_flag, caplog):
 
         try:
             # Check failure
-            logger.debug("Checking failure conditions: volume <= 0")
+            logger.debug("Checking failure conditions: end > now")
             with pytest.raises(Exception):
-                commission= XTBData.getCommissionDef(symbol="GOLD", volume=-0)
+                news= XTBData.getNews(start=datetime.now()-timedelta(days=2), end=datetime.now()+timedelta(days=1))
+            logger.debug("Checking failure conditions: start > end")
+            with pytest.raises(Exception):
+                news= XTBData.getNews(start=datetime.now(), end=datetime.now()-timedelta(days=2))
 
-            # Get commission definition
-            logger.debug("Getting commission definition")
-            commission= XTBData.getCommissionDef(symbol="GOLD", volume=1)
+            # Check if the return value is a list
+            logger.debug("Checking if the return value is a list")
+            assert isinstance(news, list), "Expected news to be a list"
 
-            # Check if the return value is a dict
-            logger.debug("Checking if the return value is a dict")
-            assert isinstance(commission, dict), "Expected commission to be a dict"
-
-            # Print commission definition
-            logger.debug("Printing commission definition")
-            logger.info("Commission Definition")
-            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
-            logger.info(details)
+            # Log each symbol's details
+            logger.debug("Logging each event's details")
+            for event in news:
+                logger.info("Event: %s", event['title'])
+                details = ', '.join([f"{key}: {value}" for key, value in event.items()])
+                logger.info(details)
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
