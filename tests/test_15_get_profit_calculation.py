@@ -25,10 +25,9 @@ import pytest
 from helper.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
-import logging
 
 
-def test_15_profit_calculation(demo_flag, caplog):
+def test_15_get_profit_calculation(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -62,9 +61,9 @@ def test_15_profit_calculation(demo_flag, caplog):
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(profit, dict), "Expected margin trade to be a dict"
+            assert isinstance(profit, dict), "Expected profit calculation to be a dict"
 
-            # Print commission definition
+            # Log profit calculation
             logger.debug("Printing profit calculation")
             logger.info("Profit Calculation")
             details = ', '.join([f"{key}: {value}" for key, value in profit.items()])

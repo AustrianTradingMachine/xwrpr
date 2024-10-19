@@ -50,11 +50,15 @@ def test_14_get_news(demo_flag, caplog):
             with pytest.raises(Exception):
                 news= XTBData.getNews(start=datetime.now(), end=datetime.now()-timedelta(days=2))
 
+            # Get news
+            logger.debug("Getting news")
+            news= XTBData.getNews(start=datetime.now()-timedelta(days=2), end=datetime.now())
+
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")
             assert isinstance(news, list), "Expected news to be a list"
 
-            # Log each symbol's details
+            # Log each event's details
             logger.debug("Logging each event's details")
             for event in news:
                 logger.info("Event: %s", event['title'])

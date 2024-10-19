@@ -49,7 +49,7 @@ def test_6_get_calendar(demo_flag, caplog):
             logger.debug("Checking if the return value is a list")
             assert isinstance(calendar, list), "Expected calendar to be a list"
 
-            # Print all events
+            # Log each event's details
             logger.debug("Printing all events")
             for event in calendar:
                 logger.info("Title: %s", event['title'])

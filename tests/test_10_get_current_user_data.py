@@ -26,7 +26,8 @@ from helper.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
 
-def test_13_get_margin_trade(demo_flag, caplog):
+
+def test_10_get_user_data(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -40,23 +41,18 @@ def test_13_get_margin_trade(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: volume <= 0")
-            with pytest.raises(Exception):
-                margin= XTBData.getMarginTrade(symbol="GOLD", volume=-0)
-
             # Get commission definition
-            logger.debug("Getting margin trade")
-            margin= XTBData.getMarginTrade(symbol="GOLD", volume=1)
+            logger.debug("Getting User Data")
+            user_data = XTBData.getCurrentUserData()
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(margin, dict), "Expected margin trade to be a dict"
+            assert isinstance(user_data, dict), "Expected current user data to be a dict"
 
-            # Log margin trade
-            logger.debug("Printing margin trade")
-            logger.info("Margin Trade")
-            details = ', '.join([f"{key}: {value}" for key, value in margin.items()])
+            # Log user data
+            logger.debug("Printing User Data")
+            logger.info("Current User Data")
+            details = ', '.join([f"{key}: {value}" for key, value in user_data.items()])
             logger.info(details)
         finally:
             # Close Wrapper

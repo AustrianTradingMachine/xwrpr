@@ -47,7 +47,7 @@ def test_17_get_symbol(demo_flag, caplog):
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(symbol, dict), "Expected symbols to be a dict"
+            assert isinstance(symbol, dict), "Expected symbol to be a dict"
 
             # Log the symbol details
             logger.debug("Logging the symbol details")

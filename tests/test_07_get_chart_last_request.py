@@ -61,7 +61,7 @@ def test_7_get_chart_last_request(demo_flag, caplog):
                 logger.debug("Checking if rateInfos is a list")
                 assert isinstance(records["rateInfos"], list), "Expected rateInfos to be a list"
 
-                # Print chart
+                # Log chart details
                 logger.debug("Printing chart")
                 for record in records["rateInfos"]:
                     details = ', '.join([f"{key}: {value}" for key, value in record.items()])

@@ -47,9 +47,9 @@ def test_12_get_margin_level(demo_flag, caplog):
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(user_data, dict), "Expected commission to be a dict"
+            assert isinstance(user_data, dict), "Expected margin level to be a dict"
 
-            # Print commission definition
+            # Log margin level
             logger.debug("Printing Margin Level")
             logger.info("Margin Level")
             details = ', '.join([f"{key}: {value}" for key, value in user_data.items()])

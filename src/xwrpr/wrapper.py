@@ -1057,6 +1057,11 @@ class Wrapper(HandlerManager):
         if start_ux > end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
+        
+        # Check if the end time is greater than the current time
+        if end_ux > datetime_to_unixtime(datetime.now()):
+            self._logger.error("End time is greater than current time.")
+            raise ValueError("End time is greater than current time.")
 
         return self._open_data_channel(command = "IbsHistory", end = end_ux, start = start_ux)
     
@@ -1150,12 +1155,18 @@ class Wrapper(HandlerManager):
             # If no end time is given, set it to the current time
             end_ux = datetime_to_unixtime(datetime.now())
         else:
-            end_ux = datetime_to_unixtime(end) 
+            end_ux = datetime_to_unixtime(end)
+
 
         # Check if the start time is greater than the end time
         if start_ux > end_ux:
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
+        
+        # Check if the end time is greater than the current time
+        if end_ux > datetime_to_unixtime(datetime.now()):
+            self._logger.error("End time is greater than current time.")
+            raise ValueError("End time is greater than current time.")
 
         return self._open_data_channel(command = "News", end = end_ux, start = start_ux)
     
@@ -1213,10 +1224,12 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
         
+        # Check if the open price is less than or equal to 0
         if open_price <= 0:
             self._logger.error("Open price must be greater than 0.")
             raise ValueError("Open price must be greater than 0.")
         
+        # Check if the close price is less than or equal to 0
         if close_price <= 0:
             self._logger.error("Close price must be greater than 0.")
             raise ValueError("Close price must be greater than 0.")

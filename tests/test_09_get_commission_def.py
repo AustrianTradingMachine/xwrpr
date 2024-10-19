@@ -25,7 +25,6 @@ import pytest
 from helper.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
-import logging
 
 
 def test_9_get_commission_def(demo_flag, caplog):
@@ -55,7 +54,7 @@ def test_9_get_commission_def(demo_flag, caplog):
             logger.debug("Checking if the return value is a dict")
             assert isinstance(commission, dict), "Expected commission to be a dict"
 
-            # Print commission definition
+            # Log commission definition
             logger.debug("Printing commission definition")
             logger.info("Commission Definition")
             details = ', '.join([f"{key}: {value}" for key, value in commission.items()])

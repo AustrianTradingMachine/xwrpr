@@ -25,9 +25,10 @@ import pytest
 from helper.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
+from datetime import datetime, timedelta
 
 
-def test_10_get_user_data(demo_flag, caplog):
+def test_18_get_tick_prices(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -41,19 +42,25 @@ def test_10_get_user_data(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
+            # Check failure
+            logger.debug("Checking failure conditions: timestamp > current time")
+            with pytest.raises(Exception):
+                tick= XTBData.getTickPrices(symbol="GOLD", time=datetime.now()+timedelta(days=1), level=-1)
+
             # Get commission definition
-            logger.debug("Getting User Data")
-            user_data = XTBData.getCurrentUserData()
+            logger.debug("Getting profit calculation")
+            tick= XTBData.getTickPrices(symbol="GOLD", time=datetime.now(), level=1)
 
             # Check if the return value is a dict
-            logger.debug("Checking if the return value is a dict")
-            assert isinstance(user_data, dict), "Expected commission to be a dict"
+            logger.debug("Checking if the return value is a list")
+            assert isinstance(tick, list), "Expected tick prices to be a list"
 
-            # Print commission definition
-            logger.debug("Printing User Data")
-            logger.info("Current User Data")
-            details = ', '.join([f"{key}: {value}" for key, value in user_data.items()])
-            logger.info(details)
+            # Log tick prices
+            logger.debug("Logging each tick price")
+            for record in tick:
+                logger.info("Event: %s", record['symbol'])
+                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
+                logger.info(details)
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")

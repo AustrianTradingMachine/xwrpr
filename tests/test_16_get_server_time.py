@@ -47,9 +47,9 @@ def test_16_get_server_time(demo_flag, caplog):
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
-            assert isinstance(server_time, dict), "Expected commission to be a dict"
+            assert isinstance(server_time, dict), "Expected server time to be a dict"
 
-            # Print commission definition
+            # Log server time
             logger.debug("Printing Server Time")
             logger.info("Current Server Time")
             details = ', '.join([f"{key}: {value}" for key, value in server_time.items()])
