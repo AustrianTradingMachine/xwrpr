@@ -25,10 +25,9 @@ import pytest
 from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
-from datetime import datetime, timedelta
 
 
-def test_19_get_tick_prices(demo_flag, caplog):
+def test_23_get_trading_hours(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -42,27 +41,24 @@ def test_19_get_tick_prices(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: timestamp > current time")
-            with pytest.raises(Exception):
-                tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(days = 1), level = -1)
-
-            # Get tick prices
-            logger.debug("Getting tick prices")
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now(), level = 1)
+            # Get trading hours
+            logger.debug("Getting trading hours")
+            trading_hours = XTBData.getTradingHours(symbols = ["BITCOIN"])
 
             # Check if the return value is a dictionary
-            logger.debug("Checking if the return value is a dictionary")
-            assert isinstance(tick_prices, dict), "Expected tick prices to be a dictionary"
-            logger.debug("Checking if quotations is a list")
-            assert isinstance(tick_prices["quotations"], list), "Expected rateInfos to be a list"
+            logger.debug("Checking if return value is a list")
+            assert isinstance(trading_hours, list), "Expected trading hours to be a list"
 
-            # Log tick prices
-            logger.debug("Logging each tick price")
-            for record in tick_prices["quotations"]:
+            # Log trading hours
+            logger.debug("Logging trading hours for each symbol")
+            for record in trading_hours:
                 logger.info("Symbol: %s", record['symbol'])
-                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
-                logger.info(details)
+                for quotes in record['quotes']:
+                    details = ', '.join([f"{key}: {value}" for key, value in quotes.items()])
+                    logger.info("Quotes: %s", details)
+                for trading in record['trading']:
+                    details = ', '.join([f"{key}: {value}" for key, value in trading.items()])
+                    logger.info("Trading: %s", details)
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")

@@ -30,9 +30,6 @@ def generate_logger() -> logging.Logger:
     """
     Generate a logger with the specified name and configuration.
 
-    Args:
-        filename (str): The name of the file.
-
     Returns:
         logging.Logger: The configured logger instance.
     """
@@ -55,6 +52,7 @@ def write_logs(caplog, filename: str) -> None:
 
     Args:
         caplog: The caplog fixture object.
+        filename (str): The name of the file to write the logs to.
 
     Returns:
         None
@@ -69,6 +67,7 @@ def write_logs(caplog, filename: str) -> None:
         # Ensure the logs directory exists
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
     except FileExistsError:
+        # If the directory already exists, pass
         pass
     except Exception as e:
         raise ValueError(f"Could not create the directory {log_file_path}. Error: {e}")
@@ -77,6 +76,7 @@ def write_logs(caplog, filename: str) -> None:
         # Remove the log file if it already exists
         log_file_path.unlink()
     except FileNotFoundError as e:
+        # If the file does not exist, pass
         pass
     
     # Write the records to the log file

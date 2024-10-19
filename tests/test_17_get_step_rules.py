@@ -25,7 +25,6 @@ import pytest
 from tests.helper import generate_logger, write_logs, demo_flag
 import logging
 import xwrpr
-from datetime import datetime, timedelta
 
 
 def test_17_get_step_rules(demo_flag, caplog):

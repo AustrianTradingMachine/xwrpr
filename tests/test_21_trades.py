@@ -28,7 +28,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_19_get_tick_prices(demo_flag, caplog):
+def test_21_trades(demo_flag, caplog):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -43,25 +43,26 @@ def test_19_get_tick_prices(demo_flag, caplog):
 
         try:
             # Check failure
-            logger.debug("Checking failure conditions: timestamp > current time")
+            logger.debug("Checking failure conditions: end > now")
             with pytest.raises(Exception):
-                tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(days = 1), level = -1)
+                trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
+            logger.debug("Checking failure conditions: start > end")
+            with pytest.raises(Exception):
+                trades_history = XTBData.getTradesHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
 
-            # Get tick prices
-            logger.debug("Getting tick prices")
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now(), level = 1)
+            # Get news
+            logger.debug("Getting trades history")
+            trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now())
 
-            # Check if the return value is a dictionary
-            logger.debug("Checking if the return value is a dictionary")
-            assert isinstance(tick_prices, dict), "Expected tick prices to be a dictionary"
-            logger.debug("Checking if quotations is a list")
-            assert isinstance(tick_prices["quotations"], list), "Expected rateInfos to be a list"
+            # Check if the return value is a list
+            logger.debug("Checking if the return value is a list")
+            assert isinstance(trades_history, list), "Expected trades history to be a list"
 
-            # Log tick prices
-            logger.debug("Logging each tick price")
-            for record in tick_prices["quotations"]:
-                logger.info("Symbol: %s", record['symbol'])
-                details = ', '.join([f"{key}: {value}" for key, value in record.items()])
+            # Log trades history
+            logger.debug("Logging trades history")
+            for trade in trades_history:
+                logger.info("Trade: %s", trade['order'])
+                details = ', '.join([f"{key}: {value}" for key, value in trade.items()])
                 logger.info(details)
         finally:
             # Close Wrapper
