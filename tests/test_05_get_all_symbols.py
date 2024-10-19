@@ -44,27 +44,22 @@ def test_05_get_all_symbols(
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
-        with capsys.disabled():
-            print("Opening Wrapper")
+
         try:
             # Get all symbols
             logger.debug("Getting all symbols")
             all_symbols = XTBData.getAllSymbols()
-            with capsys.disabled():
-                print("Got all symbols")
+
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")
             assert isinstance(all_symbols, list), "Expected symbols to be a list"
-            with capsys.disabled():
-                print("Checked if the return value is a list")
+
             # Log each symbol's details
             logger.debug("Logging each symbol's details")
             for record in all_symbols:
                 logger.info("Symbol: %s", record['symbol'])
                 details = ', '.join([f"{key}: {value}" for key, value in record.items()])
                 logger.info(details)
-            with capsys.disabled():
-                print("Logged each symbol's details")
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
@@ -72,7 +67,6 @@ def test_05_get_all_symbols(
 
     # Write records to log file
     with capsys.disabled():
-        print("Writing records to log file")
         log_file_path = write_logs(caplog, __file__)
         print(f"\nLog files written to: {GREEN}{log_file_path}{RESET}\n")
             

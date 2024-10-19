@@ -72,7 +72,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--demo", action = "store_true", default = False, help = "Run tests in demo mode"
     )
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def demo_flag(request: pytest.FixtureRequest) -> bool:
     """
     Fixture to dynamically change the value of DEMO based on the command-line option.
@@ -86,7 +86,7 @@ def demo_flag(request: pytest.FixtureRequest) -> bool:
 
     return request.config.getoption("--demo")
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def log_level(request: pytest.FixtureRequest) -> int:
     """
     Fixture to dynamically change the logging level based on the command-line option.
