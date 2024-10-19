@@ -23,7 +23,6 @@
 
 import logging
 from pathlib import Path
-import pytest
 
 
 def generate_logger(log_level: int = logging.INFO) -> logging.Logger:
