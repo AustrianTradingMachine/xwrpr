@@ -46,7 +46,7 @@ def generate_logger() -> logging.Logger:
 
     return logger
 
-def write_logs(caplog, filename: str) -> None:
+def write_logs(caplog, filename: str) -> str:
     """
     Write records to log file.
 
@@ -55,7 +55,7 @@ def write_logs(caplog, filename: str) -> None:
         filename (str): The name of the file to write the logs to.
 
     Returns:
-        None
+        str: The path to the log file
 
     Raises:
         ValueError: If the directory cannot
@@ -83,6 +83,8 @@ def write_logs(caplog, filename: str) -> None:
     with open(log_file_path, 'w') as log_file:
         for record in caplog.records:
             log_file.write(f"{record.levelname}: {record.message}\n")
+
+    return log_file_path
 
 @pytest.fixture
 def demo_flag():

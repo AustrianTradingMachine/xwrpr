@@ -28,7 +28,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_11_get_ibs_history(demo_flag, caplog):
+def test_11_get_ibs_history(demo_flag: bool, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -59,4 +59,6 @@ def test_11_get_ibs_history(demo_flag, caplog):
             XTBData.delete()
 
     # Write records to log file
-    write_logs(caplog, __file__)
+    with capsys.disabled():
+        log_file_path = write_logs(caplog, __file__)
+        print(f"\nLog files written to: {log_file_path}\n")

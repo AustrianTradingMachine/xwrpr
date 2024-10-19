@@ -28,7 +28,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_21_trades(demo_flag, caplog):
+def test_21_trades(demo_flag: bool, caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture):
     # Create a logger with the specified name
     logger = generate_logger()
 
@@ -43,25 +43,17 @@ def test_21_trades(demo_flag, caplog):
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: end > now")
-            with pytest.raises(Exception):
-                trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
-            logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
-                trades_history = XTBData.getTradesHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
-
-            # Get trades history
-            logger.debug("Getting trades history")
-            trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now())
+            # Get trades
+            logger.debug("Getting trades")
+            trades = XTBData.getTrades(opened_only=False)
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")
-            assert isinstance(trades_history, list), "Expected trades history to be a list"
+            assert isinstance(trades, list), "Expected trades to be a list"
 
-            # Log trades history
-            logger.debug("Logging trades history")
-            for trade in trades_history:
+            # Log trades
+            logger.debug("Logging trades")
+            for trade in trades:
                 logger.info("Position: %s", trade['position'])
                 details = ', '.join([f"{key}: {value}" for key, value in trade.items()])
                 logger.info(details)
@@ -71,4 +63,6 @@ def test_21_trades(demo_flag, caplog):
             XTBData.delete()
 
     # Write records to log file
-    write_logs(caplog, __file__)
+    with capsys.disabled():
+        log_file_path = write_logs(caplog, __file__)
+        print(f"\nLog files written to: {log_file_path}\n")
