@@ -27,7 +27,7 @@ import xwrpr
 from datetime import datetime, timedelta
 
 
-def test_22_trade_records(
+def test_22_get_trade_records(
     demo_flag: bool,
     log_level: int,
     caplog: pytest.LogCaptureFixture,
