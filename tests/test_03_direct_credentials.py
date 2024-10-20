@@ -55,7 +55,7 @@ def test_03_direct_credentials(
         try:
             # Creating Wrapper with direct credentials
             logger.debug("Creating Wrapper with direct credentials")
-            xtb = xwrpr(demo = demo_flag, logger = logger, username = USERNAME, password = PASSWORD)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger, username = USERNAME, password = PASSWORD)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
