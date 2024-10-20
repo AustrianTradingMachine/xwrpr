@@ -40,7 +40,7 @@ def test_02_doublewrapper(
         try:
             # Creating Wrapper 1
             logger.debug("Creating Wrapper 1")
-            xtb_1 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb_1 = xwrpr(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -48,7 +48,7 @@ def test_02_doublewrapper(
         try:
             # Creating Wrapper 2
             logger.debug("Creating Wrapper 2")
-            xtb_2 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb_2 = xwrpr(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
