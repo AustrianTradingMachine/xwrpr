@@ -26,7 +26,7 @@ from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
 
 
-def test_01_user(
+def test_01_basic(
         demo_flag: bool,
         log_level: int,
         caplog: pytest.LogCaptureFixture,

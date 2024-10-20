@@ -24,7 +24,14 @@
 """
 xwrpr - A wrapper for the API of XTB (https://www.xtb.com)
 
-This module provides a Wrapper class to interact with the XTB API.
+Classes:
+    Wrapper: The main class of the xwrpr package.
+
+Functions:
+    None
+
+Constants:
+    API_VERSION: The version of the XTB API the xwrpr relies on.
 """
 
 import sys
