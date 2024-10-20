@@ -63,7 +63,7 @@ def test_06_get_calendar(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            xtb.delete()
+            xtb._delete()
 
     # Write records to log file
     with capsys.disabled():

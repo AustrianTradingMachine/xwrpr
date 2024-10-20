@@ -55,7 +55,7 @@ def test_02_doublewrapper(
         finally:
             # Close Wrapper 1
             logger.debug("Closing Wrapper 1")
-            xtb_1.delete()
+            xtb_1._delete()
 
         try:
             # Getting API version with Wrapper 1
@@ -74,9 +74,9 @@ def test_02_doublewrapper(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper 1")
-            xtb_1.delete()
+            xtb_1._delete()
             logger.debug("Closing Wrapper 2")
-            xtb_2.delete()
+            xtb_2._delete()
 
     # Write records to log file
     with capsys.disabled():

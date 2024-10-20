@@ -62,7 +62,7 @@ def test_12_get_margin_level(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            xtb.delete()
+            xtb._delete()
 
     # Write records to log file
     with capsys.disabled():

@@ -247,7 +247,7 @@ class Wrapper(HandlerManager):
         try:
             self._logger.info("Deleting wrapper ...")
             # Calling the delete method of the HandlerManager
-            super().delete()
+            super()._delete()
             self._logger.info("Wrapper deleted.")
         except Exception as e:
             self._logger.error(f"Exception in delete: {e}")

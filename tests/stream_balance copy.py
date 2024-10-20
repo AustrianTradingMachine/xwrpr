@@ -39,4 +39,4 @@ while datetime.now() < stop_time:
 # Stop the stream
 
 exchange['thread'].stop()
-xtb.delete()
+xtb._delete()

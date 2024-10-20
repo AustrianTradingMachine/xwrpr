@@ -84,12 +84,12 @@ class _GeneralHandler(Client):
         _ping_lock (Lock): A lock for ping operations.
 
     Methods:
-        send_request: Sends a request to the server.
-        receive_response: Receives a response from the server.
-        thread_monitor: Monitors a thread and handles reactivation if necessary.
-        start_ping: Starts the ping process.
+        _send_request: Sends a request to the server.
+        _receive_response: Receives a response from the server.
+        _thread_monitor: Monitors a thread and handles reactivation if necessary.
+        _start_ping: Starts the ping process.
         _send_ping: Sends ping requests to the server.
-        stop_ping: Stops the ping process.
+        _stop_ping: Stops the ping process.
     """
 
     def __init__(
@@ -139,7 +139,7 @@ class _GeneralHandler(Client):
             port = port, 
 
             encrypted = True,
-            timeout= TIMEOUT if stream else None,
+            timeout = None,
             reaction_time = max_reaction_time,
 
             interval = min_request_interval,
@@ -156,7 +156,7 @@ class _GeneralHandler(Client):
 
         self._logger.info("GeneralHandler initialized")
     
-    def send_request(
+    def _send_request(
         self,
         command: str,
         ssid: Optional[str] = None,
@@ -206,7 +206,7 @@ class _GeneralHandler(Client):
 
         self._logger.info(f"Request sent: {request}")
 
-    def receive_response(self, stream: bool = False) -> dict:
+    def _receive_response(self, stream: bool = False) -> dict:
         """
         Receives a response from the server.
 
@@ -251,7 +251,7 @@ class _GeneralHandler(Client):
 
         return response
     
-    def thread_monitor(
+    def _thread_monitor(
         self,
         name: str,
         thread_data: dict,
@@ -312,7 +312,7 @@ class _GeneralHandler(Client):
 
         self._logger.info(f"Monitoring for thread {name} stopped")
 
-    def start_ping(
+    def _start_ping(
         self,
         handler: Union['_DataHandler', '_StreamHandler']
     ) -> None:
@@ -348,8 +348,8 @@ class _GeneralHandler(Client):
 
         # Create the thread monitor for the ping thread
         monitor_thread = CustomThread(
-            target = self.thread_monitor,
-            args = ('Ping', self._ping, handler.reactivate, ),
+            target = self._thread_monitor,
+            args = ('Ping', self._ping, handler._reactivate,),
             daemon = True)
         # Start the thread monitor
         monitor_thread.start()
@@ -404,11 +404,11 @@ class _GeneralHandler(Client):
 
                     try:
                         # Stream handler have to send their ssid with every request to the host
-                        self.send_request(command = 'ping', ssid = ssid)
+                        self._send_request(command = 'ping', ssid = ssid)
 
                         if not ssid:
                             # None stream pings receive a response
-                            self.receive_response()
+                            self._receive_response()
 
                         self._logger.info("Ping")
                     except ValueError as e:
@@ -427,7 +427,7 @@ class _GeneralHandler(Client):
 
         self._logger.info("Ping stopped")
 
-    def stop_ping(self) -> None:
+    def _stop_ping(self) -> None:
         """
         Stops the ping process.
 
@@ -471,14 +471,14 @@ class _DataHandler(_GeneralHandler):
         _sm_idle_time (float): The sliding mean idle time.
 
     Methods:
-        delete: Deletes the DataHandler.
+        _delete: Deletes the DataHandler.
         _login: Logs in to the XTB trading platform.
         _logout: Logs out the user from the XTB trading platform.
-        get_data: Retrieves data for the specified command.
+        _get_data: Retrieves data for the specified command.
         _retrieve_data: Retrieves data for the specified command.
-        reactivate: Reactivates the DataHandler.
-        attach_stream_handler: Attaches a stream handler to the DataHandler.
-        detach_stream_handler: Detaches a stream handler from the DataHandler.
+        _reactivate: Reactivates the DataHandler.
+        _attach_stream_handler: Attaches a stream handler to the DataHandler.
+        _detach_stream_handler: Detaches a stream handler from the DataHandler.
         _close_stream_handlers: Closes the stream handlers.
 
     Properties:
@@ -566,7 +566,7 @@ class _DataHandler(_GeneralHandler):
         # Log in to the XTB trading platform
         self._login()
         # Starts ping to keep connection open
-        self.start_ping(handler = self)
+        self._start_ping(handler = self)
 
         self._logger.info("DataHandler initialized")
         
@@ -581,12 +581,12 @@ class _DataHandler(_GeneralHandler):
         """
 
         try:
-            self.delete()
+            self._delete()
         except Exception as e:
             # For graceful closing no raise of exception is not allowed
             self._logger.error(f"Exception in destructor: {e}")
     
-    def delete(self) -> None:
+    def _delete(self) -> None:
         """
         Deletes the DataHandler.
 
@@ -607,7 +607,7 @@ class _DataHandler(_GeneralHandler):
         try:
             # Close the stream handlers and stop the ping process
             self._close_stream_handlers()
-            self.stop_ping()
+            self._stop_ping()
             # Log out from the XTB trading platform
             self._logout()
         except Exception as e:
@@ -642,7 +642,7 @@ class _DataHandler(_GeneralHandler):
             # Send the login request to the server
             # No reactivation if request fails because the login method
             # is part of the reactivation method
-            self.send_request(
+            self._send_request(
                 command = 'login',
                 arguments = {
                     'arguments': {
@@ -652,7 +652,7 @@ class _DataHandler(_GeneralHandler):
                 }
             )
             # Receive the response from the server
-            response = self.receive_response()
+            response = self._receive_response()
 
         self._logger.info("Log in successfully")
         self._ssid = response['streamSessionId']
@@ -684,7 +684,7 @@ class _DataHandler(_GeneralHandler):
                 # Server sends no response for logout request
                 # No reactivation if request fails because the login method
                 # is part of the reactivation method
-                self.send_request(command = 'logout')
+                self._send_request(command = 'logout')
                 self._logger.info("Logged out successfully")
             except Exception as e:
                 # For graceful logout no raise of exception is not allowed
@@ -697,7 +697,7 @@ class _DataHandler(_GeneralHandler):
                 # DataHandler no longer ready for usage
                 self._status = Status.INACTIVE
 
-    def get_data(self, command: str, **kwargs) -> dict:
+    def _get_data(self, command: str, **kwargs) -> dict:
         """
         Retrieves data from the server.
 
@@ -726,7 +726,7 @@ class _DataHandler(_GeneralHandler):
                     self._logger.info("Try a reactivation ...")
                     # Until reactivated the DataHandler is suspended
                     self._status = Status.SUSPENDED
-                    self.reactivate()
+                    self._reactivate()
                 else:
                     # If the data could not be retrieved, raise an error
                     self._logger.error("Failed to retrieve data")
@@ -753,12 +753,12 @@ class _DataHandler(_GeneralHandler):
             self._logger.info("Getting data for " + pretty(command) + " ...")
 
             # Send the request to the server
-            self.send_request(
+            self._send_request(
                 command = 'get'+command,
                 arguments = {'arguments': kwargs} if bool(kwargs) else None)
                 
             # Receive the response from the server
-            response = self.receive_response()
+            response = self._receive_response()
             
             # Response must contain 'returnData' key
             if 'returnData' not in response:
@@ -771,7 +771,7 @@ class _DataHandler(_GeneralHandler):
             # Return the data
             return response['returnData']
  
-    def reactivate(self) -> None:
+    def _reactivate(self) -> None:
         """
         Reactivates the DataHandler.
 
@@ -809,7 +809,7 @@ class _DataHandler(_GeneralHandler):
                     # Reactivation failed
                     self._status = Status.FAILED
 
-    def attach_stream_handler(self, handler: '_StreamHandler') -> None:
+    def _attach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
         Attach a StreamHandler to the DataHandler.
 
@@ -831,7 +831,7 @@ class _DataHandler(_GeneralHandler):
         else:
             self._logger.warning("StreamHandler already attached")
 
-    def detach_stream_handler(self, handler: '_StreamHandler') -> None:
+    def _detach_stream_handler(self, handler: '_StreamHandler') -> None:
         """
         Detaches a StreamHandler from the DataHandler.
 
@@ -871,7 +871,7 @@ class _DataHandler(_GeneralHandler):
             # Delete all connected stream handlers
             # Detaching is only executed by StreamHandler itself
             for handler in list(self._stream_handler):
-                handler.delete()
+                handler._delete()
 
     @property
     def stream_handler(self) -> List['_StreamHandler']:
@@ -905,8 +905,8 @@ class _StreamHandler(_GeneralHandler):
         _ssid (str): The stream session ID.
 
     Methods:
-        delete: Deletes the StreamHandler.
-        stream_data: Starts streaming data from the server.
+        _delete: Deletes the StreamHandler.
+        _stream_data: Starts streaming data from the server.
         _start_stream: Starts the stream for the specified command.
         _export_stream: Exports the stream data.
         _receive_stream: Receives the stream data.
@@ -914,7 +914,7 @@ class _StreamHandler(_GeneralHandler):
         _stop_stream: Stops the stream.
         _restart_stream: Restarts the stream.
         _reactivate: Reactivates the StreamHandler.
-        transplant_stream_task: Transplants the stream tasks from another StreamHandler.
+        _transplant_stream_task: Transplants the stream tasks from another StreamHandler.
 
     Properties:
         dh: The data handler object.
@@ -981,7 +981,7 @@ class _StreamHandler(_GeneralHandler):
 
         # Attach the StreamHandler to the DataHandler
         self._dh = data_handler
-        self._dh.attach_stream_handler(self)
+        self._dh._attach_stream_handler(self)
 
         # Set the maximum number of elements in the queue
         self._max_queue_elements = max_queue_elements
@@ -1006,16 +1006,16 @@ class _StreamHandler(_GeneralHandler):
         self._status = Status.ACTIVE
 
         # The idle time list
-        self._idle_times = List[float]
+        self._idle_times = []
         # The sliding mean idle time
-        self._sm_idle_time = 0
+        self._sm_idle_time = 0.0
 
         # Send KeepAlive to keep connection open
         # First command must beb sent 1 second after connection is opened
         # Otherwise the server will close the connection
-        self.stream_data(command = 'KeepAlive')
+        self._stream_data(command = 'KeepAlive')
         # Start ping to keep connection open
-        self.start_ping(handler = self)
+        self._start_ping(handler = self)
         
         self._logger.info("StreamHandler initialized")
 
@@ -1030,12 +1030,12 @@ class _StreamHandler(_GeneralHandler):
         """
         
         try:
-            self.delete()
+            self._delete()
         except Exception as e:
             # For graceful closing no raise of exception is not allowed
             self._logger.error(f"Exception in destructor: {e}")
             
-    def delete(self) -> None:
+    def _delete(self) -> None:
         """
         Deletes the StreamHandler.
 
@@ -1055,9 +1055,9 @@ class _StreamHandler(_GeneralHandler):
         try:
             # Stop the stream and ping processes
             self._stop_stream()
-            self.stop_ping()
+            self._stop_ping()
             # Detach the StreamHandler from the DataHandler
-            self._dh.detach_stream_handler(self)
+            self._dh._detach_stream_handler(self)
         except Exception as e:
             # For graceful closing no raise of exception is not allowed
             self._logger.error(f"Failed to delete StreamHandler: {e}")
@@ -1069,7 +1069,7 @@ class _StreamHandler(_GeneralHandler):
         
             self._logger.info("StreamHandler deleted")
         
-    def stream_data(
+    def _stream_data(
         self,
         command: str,
         exchange: Optional[dict] = None, # Not necessary for KeepAlive
@@ -1124,7 +1124,7 @@ class _StreamHandler(_GeneralHandler):
 
             # Create the thread monitor for the stream thread
             monitor_thread = CustomThread(
-                target = self.thread_monitor,
+                target = self._thread_monitor,
                 args = ('Stream', self._stream, self._reactivate, ),
                 daemon = True
             )
@@ -1185,7 +1185,7 @@ class _StreamHandler(_GeneralHandler):
             for tries in range(2):
                 try:
                     # Send the request for the stream to the server
-                    self.send_request(
+                    self._send_request(
                         command = 'get'+command,
                         ssid = self._ssid,
                         arguments = kwargs if bool(kwargs) else None
@@ -1227,6 +1227,7 @@ class _StreamHandler(_GeneralHandler):
             }
 
         # Loop until the run flag is set to False
+        total_idle_time = 0
         while self._stream['run']:
             # Start timer
             start_time = time.time()
@@ -1237,7 +1238,7 @@ class _StreamHandler(_GeneralHandler):
             response = self._receive_stream()
 
             # Calculate idle time
-            idle_time = time() - start_time
+            idle_time = time.time() - start_time
             total_idle_time += idle_time
 
             if response == {}:
@@ -1319,7 +1320,7 @@ class _StreamHandler(_GeneralHandler):
             for tries in range(2):
                 try:
                     # Receive the response from the server
-                    response = self.receive_response(stream = True)
+                    response = self._receive_response(stream = True)
                 except Exception as e:
                     self._logger.error(f"Failed to stream data: {e}")
                     if tries == 0:
@@ -1378,7 +1379,7 @@ class _StreamHandler(_GeneralHandler):
                 # To avoid conflicts with the stop request
                 with self._ping_lock:
                     # Send the stop request to the server
-                    self.send_request(
+                    self._send_request(
                         command = 'stop' + command,
                         arguments = {'symbol': arguments['symbol']} if 'symbol' in arguments else None
                     )
@@ -1459,7 +1460,7 @@ class _StreamHandler(_GeneralHandler):
             # the StreamHandler can initiate a reactivation
             try:
                 # Reactivate the DataHandler
-                self._dh.reactivate()
+                self._dh._reactivate()
             except Exception as e:
                 self._logger.error(f"Failed to reactivate DataHandler: {e}")
                 raise
@@ -1497,7 +1498,7 @@ class _StreamHandler(_GeneralHandler):
                     # Set the status to failed
                     self._status = Status.FAILED
 
-    def transplant_stream_task(self, task: dict) -> None:
+    def _transplant_stream_task(self, task: dict) -> None:
         """
         Transplants the stream tasks from another StreamHandler.
 
@@ -1519,7 +1520,7 @@ class _StreamHandler(_GeneralHandler):
         exchange = task['exchange']
 
         # Start the stream for the specified command
-        self.stream_data(
+        self._stream_data(
             command = command,
             exchange = exchange,
             **arguments
@@ -1537,18 +1538,18 @@ class _StreamHandler(_GeneralHandler):
 
         # Shut down the StreamHandler
         self._stop_stream(kill = False)
-        self.stop_ping()
+        self._stop_ping()
         self.close()
-        self._dh.detach_stream_handler(self)
+        self._dh._detach_stream_handler(self)
 
         # Change the DataHandler
         self._dh = value
 
         # Boot up the StreamHandler
-        self._dh.attach_stream_handler(self)
+        self._dh._attach_stream_handler(self)
         self.open()
         self._restart_streams()
-        self.start_ping(handler = self)
+        self._start_ping(handler = self)
 
         self._logger.info("DataHandler changed")
     
@@ -1585,7 +1586,7 @@ class HandlerManager():
         _handler_management_thread (CustomThread): The handler management thread.
 
     Methods:
-        delete: Deletes the HandlerManager instance.
+        _delete: Deletes the HandlerManager instance.
         _delete_handler: Deletes a specific handler and deregisters it from the HandlerManager..
         _avlb_DataHandler: Gets an available data handler.
         _avlb_StreamHandler: Gets an available stream handler.
@@ -1702,12 +1703,12 @@ class HandlerManager():
         """
 
         try:
-            self.delete()
+            self._delete()
         except Exception as e:
             # For graceful closing no raise of exception is not allowed
             self._logger.error(f"Exception in destructor: {e}")
 
-    def delete(self) -> None:
+    def _delete(self) -> None:
         """
         Deletes the HandlerManager instance and all associated handlers.
 
@@ -1757,7 +1758,7 @@ class HandlerManager():
             del self._handler_register['stream'][handler]
 
         # Delete the handler
-        handler.delete()
+        handler._delete()
 
     def _avlb_DataHandler(self) -> _DataHandler:
         """
@@ -1981,7 +1982,7 @@ class HandlerManager():
             return
 
         # Get the data from the server
-        data = dh.get_data(command = command, **kwargs)
+        data = dh._get_data(command = command, **kwargs)
 
         return data
 
@@ -2015,7 +2016,7 @@ class HandlerManager():
             return
 
         # Start the stream for the specified command
-        sh.stream_data(command = command, exchange = exchange, **kwargs)
+        sh._stream_data(command = command, exchange = exchange, **kwargs)
 
     def _healthcheck(self) -> None:
         """

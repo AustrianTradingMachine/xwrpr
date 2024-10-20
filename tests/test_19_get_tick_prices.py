@@ -74,7 +74,7 @@ def test_19_get_tick_prices(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            xtb.delete()
+            xtb._delete()
 
     # Write records to log file
     with capsys.disabled():

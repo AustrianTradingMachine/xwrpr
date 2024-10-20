@@ -76,7 +76,7 @@ def test_15_get_profit_calculation(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            xtb.delete()
+            xtb._delete()
 
     # Write records to log file
     with capsys.disabled():

@@ -72,7 +72,7 @@ def test_22_get_trade_records(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            xtb.delete()
+            xtb._delete()
 
     # Write records to log file
     with capsys.disabled():
