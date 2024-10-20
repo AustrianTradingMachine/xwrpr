@@ -24,8 +24,8 @@
 import pytest
 from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
+from queue import Empty
 
 
 def test_25_stream_balance(
@@ -58,21 +58,24 @@ def test_25_stream_balance(
 
             # Log balance
             logger.info("Balance")
-            stop_time = datetime.now() + relativedelta(seconds=10)
+            stop_time = datetime.now() + timedelta(seconds=10)
             while datetime.now() < stop_time:
-                data = exchange['queue'].get()
-
-                # Check if the return value is a dict
-                logger.debug("Checking if the return value is a dict")
-                assert isinstance(data, dict), "Expected a dict"
-                
-                # Log the data
-                details = ', '.join([f"{key}: {value}" for key, value in data.items()])
-                logger.info(details)
-            
+                try:
+                    # Get the data
+                    data = exchange['queue'].get(timeout = 1)
+                    
+                    # Check if the return value is a dict
+                    logger.debug("Checking if the return value is a dict")
+                    assert isinstance(data, dict), "Expected a dict"
+                    
+                    # Log the data
+                    details = ', '.join([f"{key}: {value}" for key, value in data.items()])
+                    logger.info(details)
+                except Empty:
+                    continue
             # Stop the stream
             logger.debug("Stopping the stream")
-            exchange['thread'].stop()
+            exchange['thread'].start()
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")

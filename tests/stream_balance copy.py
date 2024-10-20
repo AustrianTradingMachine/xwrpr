@@ -23,6 +23,7 @@
 
 import xwrpr
 from datetime import datetime, timedelta
+from queue import Empty
 
 
 
@@ -33,12 +34,13 @@ print(exchange)
 stop_time = datetime.now() + timedelta(seconds=10)
 while datetime.now() < stop_time:
     try:
+        # Get the data
         data = exchange['queue'].get(timeout = 1)
-    except Empty as e
-
-    # Log the data
-    details = ', '.join([f"{key}: {value}" for key, value in data.items()])
-    print(f"Data: {details}")
+        # Log the data
+        details = ', '.join([f"{key}: {value}" for key, value in data.items()])
+        print(f"Data: {details}")
+    except Empty:
+        continue
 
 # Stop the stream
 exchange['thread'].start()
