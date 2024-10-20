@@ -30,6 +30,7 @@ import logging
 import json
 from threading import Lock
 from typing import List, Optional
+import errno
 from xwrpr.utils import generate_logger
 
 
@@ -447,7 +448,21 @@ class Client():
                             # Connection successful
                             connected = True
                             # Exit loop if connection is successful
-                            break  
+                            break 
+                        except BlockingIOError as e:
+                            if e.errno == errno.EINPROGRESS:
+                                self._logger.info("Non-blocking connection in progress...")
+                                # Wait until the socket is ready for writing (connect completed)
+                                try:
+                                    self.check(mode = 'writable')
+                                    # Socket is ready to write
+                                    connected = True
+                                    break
+                                except TimeoutError:
+                                    raise
+                            else:
+                                self._logger.error(f"Error connecting to server: {e}")
+                                raise
                         except (socket.error, InterruptedError) as e:
                             self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
                             

@@ -139,7 +139,7 @@ class _GeneralHandler(Client):
             port = port, 
 
             encrypted = True,
-            timeout = None,
+            timeout = TIMEOUT if stream else None,
             reaction_time = max_reaction_time,
 
             interval = min_request_interval,
@@ -930,9 +930,9 @@ class _StreamHandler(_GeneralHandler):
 
         max_send_data: int,
         max_received_data: int,
-        min_request_interval: int,
+        min_request_interval: float,
         max_retries: int,
-        max_reaction_time: int,
+        max_reaction_time: float,
         max_queue_elements: int,
 
         logger: Optional[logging.Logger] = None
