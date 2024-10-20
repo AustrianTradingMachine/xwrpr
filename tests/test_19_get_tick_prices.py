@@ -48,8 +48,11 @@ def test_19_get_tick_prices(
 
         try:
             # Check failure
+            logger.debug("Checking failure conditions: level < -1")
+            with pytest.raises(ValueError):
+                tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(days = 1), level = -2)
             logger.debug("Checking failure conditions: timestamp > current time")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(days = 1), level = -1)
 
             # Get tick prices

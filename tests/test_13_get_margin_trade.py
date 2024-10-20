@@ -48,8 +48,8 @@ def test_13_get_margin_trade(
         try:
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
-            with pytest.raises(Exception):
-                margin_trade = XTBData.getMarginTrade(symbol = "BITCOIN", volume = -0)
+            with pytest.raises(ValueError):
+                margin_trade = XTBData.getMarginTrade(symbol = "BITCOIN", volume = 0)
 
             # Get margin trade
             logger.debug("Getting margin trade")

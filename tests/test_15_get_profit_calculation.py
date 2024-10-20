@@ -48,16 +48,16 @@ def test_15_get_profit_calculation(
         try:
             # Check failure
             logger.debug("Checking failure conditions: wrong cmd")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volum = 1, open_price = 10000, close_price = 20000, cmd = -1)
             logger.debug("Checking failure conditions: volume <= 0")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volume = 0, open_price = 10000, close_price = 20000, cmd = 0)
             logger.debug("Checking failure conditions: open_price <= 0")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 0, close_price = 20000, cmd = 0)
             logger.debug("Checking failure conditions: close_price <= 0")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 10000, close_price = 0, cmd = 0)
 
             # Get profit calculation

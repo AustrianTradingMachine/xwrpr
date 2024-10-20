@@ -49,10 +49,10 @@ def test_07_get_chart_last_request(
         try:
             # Check failure
             logger.debug("Checking failure conditions: start > now")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 chart_request = XTBData.getChartLastRequest(symbol = "BITCOIN", period = "M1", start=datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: wrong period")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 chart_request = XTBData.getChartLastRequest(symbol = "BITCOIN", period = "X1", start = datetime.min)
 
             # Get chart

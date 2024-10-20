@@ -48,6 +48,7 @@ def test_22_trade_records(
 
         try:
             # Get trades history
+            logger.debug("Getting trades history")
             trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(weeks = 52), end = datetime.now())
 
             orders = []

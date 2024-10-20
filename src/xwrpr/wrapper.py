@@ -1034,11 +1034,10 @@ class Wrapper(HandlerManager):
                 SELL	            1	        sell
         
         Raises:
-            NotImplementedError: This method is deprecated and cannot be used.
             ValueError: If the start time is greater than the end time.
+            NotImplementedError: This method is deprecated and cannot be used.
         """
-        raise NotImplementedError("getIbsHistory is deprecated and cannot be used.")
-
+        
         # Convert the start time to unix time
         if not start:
             # If no start time is given, set it to the minimum time 0001-01-01 00:00:00
@@ -1062,6 +1061,9 @@ class Wrapper(HandlerManager):
         if end_ux > datetime_to_unixtime(datetime.now()):
             self._logger.error("End time is greater than current time.")
             raise ValueError("End time is greater than current time.")
+        
+        # This method is deprecated
+        raise NotImplementedError("getIbsHistory is deprecated and cannot be used.")
 
         return self._open_data_channel(command = "IbsHistory", end = end_ux, start = start_ux)
     
@@ -1141,6 +1143,7 @@ class Wrapper(HandlerManager):
 
         Raises:
             ValueError: If the start time is greater than the end time.
+            ValueError: If the end time is greater than the current time.
         """
 
         # Convert the start time to unix time
@@ -1605,6 +1608,7 @@ class Wrapper(HandlerManager):
 
         Raises:
             ValueError: If the start time is greater than the end time.
+            ValueError: If the end time is greater than the current time.
         """
 
         # Convert the start time to unix time

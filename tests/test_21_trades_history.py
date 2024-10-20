@@ -49,10 +49,10 @@ def test_21_get_trades_history(
         try:
             # Check failure
             logger.debug("Checking failure conditions: end > now")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 trades_history = XTBData.getTradesHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
 
             # Get trades history

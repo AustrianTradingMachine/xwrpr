@@ -49,13 +49,13 @@ def test_08_get_chart_range_request(
         try:
             # Check failure
             logger.debug("Checking failure conditions: end > now")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = "M1", start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = "M1", start = datetime.now(), end = datetime.now()-timedelta(days = 2))
             logger.debug("Checking failure conditions: wrong period")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 chart_request = XTBData.getChartRangeRequest(symbol = "BITCOIN", period = "X1", start = datetime.min)
 
             # Get chart

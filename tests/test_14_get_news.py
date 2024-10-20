@@ -49,10 +49,10 @@ def test_14_get_news(
         try:
             # Check failure
             logger.debug("Checking failure conditions: end > now")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 news = XTBData.getNews(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 news = XTBData.getNews(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
 
             # Get news

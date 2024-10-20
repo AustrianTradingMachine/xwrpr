@@ -36,12 +36,14 @@ def test_24_trade_transaction(
 ) -> None:
 
     if not demo_flag:
+        # Skip the test if the demo flag is not set
         with capsys.disabled():
             print(f"\n{YELLOW}Skipping test as it requires a demo account{RESET}")
             print (f"\n{YELLOW}Run the test with \"pytest --demo\" flag to execute the test{RESET}")
             print (f"\n{YELLOW}Make sure your demo account is still active{RESET}\n")
         pytest.skip(reason = "Skipping test as it requires a demo account")
 
+    # Skip the test if the trade flag is not set
     if not trade_flag:
         with capsys.disabled():
             print(f"\n{YELLOW}Skipping test as it requires your agreement for a trade{RESET}")
@@ -64,29 +66,40 @@ def test_24_trade_transaction(
         try:
             # Get tick prices
             logger.debug("Getting tick prices")
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 10), level = 0)
+
+            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 5), level = 0)
             price_a = tick_prices["BITCOIN"]["ask"]
             tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 1), level = 0)
             price_b = tick_prices["BITCOIN"]["ask"]
 
             # Calculating rate of change
-            roc = (price_b - price_a) / price_a * 100
+            roc = (price_b - price_a) / price_a
             if roc > 0:
-                cmd = 0
+                cmd = 4
+                price = price_b+(price_b - price_a)*0.1
+                sl = price_b-(price_b - price_a)*0.1
+                tp = price_b+(price_b - price_a)*0.2
             else:
-                cmd = 1
-
-
-
-
-
+                cmd = 5
+                price = price_b-(price_a-price_b)*0.1
+                sl = price_b+(price_a-price_b)*0.1
+                tp = price_b-(price_a-price_b)*0.2
+            
             # Check failure
             logger.debug("Checking failure conditions: wrtong cmd")
-            with pytest.raises(Exception):
-                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = -1, price
+            with pytest.raises(ValueError):
+                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = -1, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrtong type")
+            with pytest.raises(ValueError):
+                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = -1, order = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: expiration < now")
+            with pytest.raises(ValueError):
+                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()-timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: volume <= 0")
+            with pytest.raises(ValueError):
+                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
 
-
-            # Get trades history
+            # Make Trade
             trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(weeks = 52), end = datetime.now())
 
             orders = []

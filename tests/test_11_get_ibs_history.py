@@ -49,13 +49,13 @@ def test_11_get_ibs_history(
         try:
             # Check failure
             logger.debug("Checking failure conditions: end > now")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 ibs_history = XTBData.getIbsHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 ibs_history = XTBData.getIbsHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
             logger.debug("Checking failure conditions: deprecated function")
-            with pytest.raises(Exception):
+            with pytest.raises(NotImplementedError):
                 ibs_history = XTBData.getIbsHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()-timedelta(days = 1))
         finally:
             # Close Wrapper
