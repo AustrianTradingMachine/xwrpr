@@ -31,7 +31,7 @@ readme = {file = "README.md", content-type = "text/markdown"}
 authors = [{ name = "AustrianTradingMachine"}]
 license = { file = "LICENSE" }
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
@@ -49,7 +49,7 @@ dependencies = [
     "six == 1.16.0",
     "python-dateutil == 2.9.0.post0"
     ]
-requires-python = ">=3.9"
+requires-python = ">=3.9, <4.0"
 
 [project.urls]
 Homepage = "https://github.com/AustrianTradingMachine/xwrpr"
@@ -61,5 +61,5 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = [
-    "tests",
+    "tests"
     ]
