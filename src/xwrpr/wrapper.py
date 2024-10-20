@@ -1775,13 +1775,13 @@ class Wrapper(HandlerManager):
 
         # Check if the command is valid
         if cmd not in cmds:
-            self._logger.error("Invalid cmd. Choose from: "+", ".join(cmds))
-            raise ValueError("Invalid cmd. Choose from: "+", ".join(cmds))
+            self._logger.error("Invalid cmd. Choose from: "+", ".join(map(str, cmds)))
+            raise ValueError("Invalid cmd. Choose from: "+", ".join(map(str, cmds)))
         
         # Check if the type is valid
         if type not in types:
-            self._logger.error("Invalid type. Choose from: "+", ".join(types))
-            raise ValueError("Invalid type. Choose from: "+", ".join(types))
+            self._logger.error("Invalid type. Choose from: "+", ".join(map(str, types)))
+            raise ValueError("Invalid type. Choose from: "+", ".join(map(str, types)))
         
         # Check if the expiration time is in the past
         if expiration < datetime.now():

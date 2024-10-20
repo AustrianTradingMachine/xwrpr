@@ -66,13 +66,13 @@ def test_24_trade_transaction(
         try:
             # Get tick prices
             logger.debug("Getting tick prices")
-
             tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 5), level = 0)
             price_a = tick_prices["BITCOIN"]["ask"]
             tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 1), level = 0)
             price_b = tick_prices["BITCOIN"]["ask"]
 
             # Calculating rate of change
+            logger.debug("Calculating rate of change")
             roc = (price_b - price_a) / price_a
             if roc > 0:
                 cmd = 4
@@ -100,26 +100,32 @@ def test_24_trade_transaction(
                 trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
 
             # Make Trade
-            trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(weeks = 52), end = datetime.now())
+            logger.debug("Making trade")
+            trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
 
-            orders = []
-            for records in trades_history:
-                orders.append(records['position'])
+            # Check if the return value is a dictionary
+            logger.debug("Checking if the return value is a dictionary")
+            assert isinstance(trade_transaction, dict), "Expected trades history to be a dictionary"
 
-            # Get trades history
-            logger.debug("Getting trades records")
-            trades_records = XTBData.getTradeRecords(orders = orders)
+            # Log the trade
+            logger.debug("Logging the trade")
+            details = ', '.join([f"{key}: {value}" for key, value in trade_transaction.items()])
+            logger.info(details)
 
-            # Check if the return value is a list
-            logger.debug("Checking if the return value is a list")
-            assert isinstance(trades_records, list), "Expected trades history to be a list"
 
-            # Log trades history
-            logger.debug("Logging trades history")
-            for records in trades_records:
-                logger.info("Position: %s", records['position'])
-                details = ', '.join([f"{key}: {value}" for key, value in records.items()])
-                logger.info(details)
+            # Verifying the trade
+            logger.debug("Verifying the trade")
+            trade_transaction_status = XTBData.tradeTransactionStatus(order = trade_transaction["order"])
+
+            # Check if the return value is a dictionary
+            logger.debug("Checking if the return value is a dictionary")
+            assert isinstance(trade_transaction_status, dict), "Expected trades history to be a dictionary"
+
+            # Log the trade status
+            logger.debug("Logging the trade status")
+            details = ', '.join([f"{key}: {value}" for key, value in trade_transaction_status.items()])
+            logger.info(details)
+
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
