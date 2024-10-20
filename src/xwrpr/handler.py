@@ -442,8 +442,8 @@ class _GeneralHandler(Client):
 
         # Check if ping was ever created
         if not self._ping:
-            self._logger.error("Ping never started")
-            raise RuntimeError("Ping never started")
+            self._logger.warning("Ping never started")
+            return
 
         # Check if the ping is intended to run 
         if not self._ping['run']:
@@ -985,6 +985,17 @@ class _StreamHandler(_GeneralHandler):
 
         # Set the maximum number of elements in the queue
         self._max_queue_elements = max_queue_elements
+        
+        # The status of the DataHandler is initially set to inactive
+        # because not jet ready for usage
+        self._status = Status.INACTIVE
+
+        # The dictionary for the thread control of the stream
+        self._stream = dict()
+        # Stream tasks are stored in a dictionary
+        self._stream_tasks = dict()
+        # Lock for stopping a stream task
+        self._stop_lock = Lock()
 
         # Open connection to the server
         self.open()
@@ -993,13 +1004,6 @@ class _StreamHandler(_GeneralHandler):
         # StreamHandler need no login
         # so the status is active right after the connection is open
         self._status = Status.ACTIVE
-
-        # The dictionary for the thread control of the stream
-        self._stream = dict()
-        # Stream tasks are stored in a dictionary
-        self._stream_tasks = dict()
-        # Lock for stopping a stream task
-        self._stop_lock = Lock()
 
         # The idle time list
         self._idle_times = List[float]
@@ -1398,8 +1402,8 @@ class _StreamHandler(_GeneralHandler):
 
         # Check if the stream was ever created
         if not self._stream:
-            self._logger.error("Stream never started")
-            raise RuntimeError("Stream never started")
+            self._logger.warning("Stream never started")
+            return
         
         # Check if the stream is intended to run
         if not self._stream['run']:

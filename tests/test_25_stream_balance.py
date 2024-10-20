@@ -56,27 +56,23 @@ def test_25_stream_balance(
             logger.debug("Checking if the return value is a dict")
             assert isinstance(exchange, dict), "Expected a dict"
 
-
+            # Log balance
+            logger.info("Balance")
             stop_time = datetime.now() + relativedelta(seconds=10)
             while datetime.now() < stop_time:
-                exchange['queue'].get()
+                data = exchange['queue'].get()
 
                 # Check if the return value is a dict
                 logger.debug("Checking if the return value is a dict")
-                assert isinstance(exchange, dict), "Expected a dict"
-                logger.info("Balance")
-                details = ', '.join([f"{key}: {value}" for key, value in exchange.items()])
+                assert isinstance(data, dict), "Expected a dict"
+                
+                # Log the data
+                details = ', '.join([f"{key}: {value}" for key, value in data.items()])
                 logger.info(details)
-                exchange = xtb.streamBalance()
             
-
-
-
-            # Log commission definition
-            logger.debug("Logging commission definition")
-            logger.info("Commission Definition")
-            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
-            logger.info(details)
+            # Stop the stream
+            logger.debug("Stopping the stream")
+            exchange['thread'].stop()
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
