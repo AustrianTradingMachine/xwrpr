@@ -1590,8 +1590,8 @@ class HandlerManager():
         _generate_StreamHandler: Generates a new stream handler.
         _provide_DataHandler: Provides a data handler for the stream handler.
         _provide_StreamHandler: Provides a stream handler for the data handler.
-        get_data: Retrieves data from the server.
-        stream_data: Starts streaming data from the server.
+        _get_data: Retrieves data from the server.
+        _stream_data: Starts streaming data from the server.
         _healthcheck: Checks the health of the handlers.
     """
         
@@ -1949,7 +1949,7 @@ class HandlerManager():
 
         return handler
     
-    def get_data(
+    def _get_data(
         self,
         command: str,
         **kwargs
@@ -1981,7 +1981,7 @@ class HandlerManager():
 
         return data
 
-    def stream_data(
+    def _stream_data(
         self,
         command: str,
         exchange: Optional[dict] = None,

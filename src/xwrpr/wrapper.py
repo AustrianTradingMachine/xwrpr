@@ -276,7 +276,7 @@ class Wrapper(HandlerManager):
 
         # Call the streamData method of the HandlerManager
         # and store the returned dictionary in the exchange dictionary
-        self.stream_data(
+        self._stream_data(
             exchange = exchange,
             **kwargs
         )
@@ -570,7 +570,7 @@ class Wrapper(HandlerManager):
             None
         """
 
-        return self.get_data(**kwargs)
+        return self._get_data(**kwargs)
         
     def getAllSymbols(self) -> List[dict]:
         """

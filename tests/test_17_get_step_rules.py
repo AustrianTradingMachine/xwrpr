@@ -35,7 +35,7 @@ def test_17_get_step_rules(
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 
-    # Set logging level to INFO to reduce the amount of captured logs
+    # Capture the logs
     with caplog.at_level(log_level):
         try:
             # Creating Wrapper

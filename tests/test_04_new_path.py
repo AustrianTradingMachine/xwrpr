@@ -69,7 +69,7 @@ def test_04_new_path(
     # Create a logger with the specified name
     logger = generate_logger(log_level)
 
-    # Set logging level to INFO to reduce the amount of captured logs
+    # Capture the logs
     with caplog.at_level(log_level):
         new_path = str(setup_new_path)
         logger.debug(f"New path: {new_path}")

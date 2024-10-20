@@ -24,10 +24,11 @@
 import pytest
 from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
-from datetime import datetime, timedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
-def test_07_get_chart_last_request(
+def test_25_stream_balance(
     demo_flag: bool,
     log_level: int,
     caplog: pytest.LogCaptureFixture,
@@ -47,31 +48,35 @@ def test_07_get_chart_last_request(
             pytest.fail(f"Failed to create Wrapper: {e}")
 
         try:
-            # Check failure
-            logger.debug("Checking failure conditions: start > now")
-            with pytest.raises(ValueError):
-                chart_request = xtb.getChartLastRequest(symbol = "BITCOIN", period = "M1", start=datetime.now()+timedelta(days = 1))
-            logger.debug("Checking failure conditions: wrong period")
-            with pytest.raises(ValueError):
-                chart_request = xtb.getChartLastRequest(symbol = "BITCOIN", period = "X1", start = datetime.min)
+            # Start streaming balance
+            logger.debug("Starting streaming balance")
+            exchange = xtb.streamBalance()
+            
+            # Check if the return value is a dict
+            logger.debug("Checking if the return value is a dict")
+            assert isinstance(exchange, dict), "Expected a dict"
 
-            # Get chart
-            for period in ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"]:
-                # Get chart for period
-                logger.debug(f"Getting chart for period {period}")
-                chart_request = xtb.getChartLastRequest(symbol = "BITCOIN", period = period, start = datetime.min)
 
-                # Check if the return value is a dictionary
-                logger.debug("Checking if the return value is a dictionary")
-                assert isinstance(chart_request, dict), "Expected chart request to be a dictionary"
-                logger.debug("Checking if rateInfos is a list")
-                assert isinstance(chart_request["rateInfos"], list), "Expected rateInfos to be a list"
+            stop_time = datetime.now() + relativedelta(seconds=10)
+            while datetime.now() < stop_time:
+                exchange['queue'].get()
 
-                # Log chart details
-                logger.debug("Logging chart details")
-                for record in chart_request["rateInfos"]:
-                    details = ', '.join([f"{key}: {value}" for key, value in record.items()])
-                    logger.info(details)
+                # Check if the return value is a dict
+                logger.debug("Checking if the return value is a dict")
+                assert isinstance(exchange, dict), "Expected a dict"
+                logger.info("Balance")
+                details = ', '.join([f"{key}: {value}" for key, value in exchange.items()])
+                logger.info(details)
+                exchange = xtb.streamBalance()
+            
+
+
+
+            # Log commission definition
+            logger.debug("Logging commission definition")
+            logger.info("Commission Definition")
+            details = ', '.join([f"{key}: {value}" for key, value in commission.items()])
+            logger.info(details)
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
