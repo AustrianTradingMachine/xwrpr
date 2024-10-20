@@ -1125,7 +1125,7 @@ class _StreamHandler(_GeneralHandler):
             # Create the thread monitor for the stream thread
             monitor_thread = CustomThread(
                 target = self._thread_monitor,
-                args = ('Stream', self._stream, self._reactivate, ),
+                args = ('Stream', self._stream, self._reactivate,),
                 daemon = True
             )
             # Start the thread monitor
@@ -1244,8 +1244,8 @@ class _StreamHandler(_GeneralHandler):
             if response == {}:
                 # Stream responses can be empty
                 continue
-
-            if response['command'] == 'KeepAlive':
+            
+            if str(response['command']).lower() == 'keepalive':
                 # KeepAlive stream is not necessary for the exchange
                 continue
 

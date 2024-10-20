@@ -22,21 +22,24 @@
 ###########################################################################
 
 import xwrpr
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
+
 
 
 xtb = xwrpr.Wrapper(demo = False)
 exchange = xtb.streamBalance()
+print(exchange)
 
-stop_time = datetime.now() + relativedelta(seconds=10)
+stop_time = datetime.now() + timedelta(seconds=10)
 while datetime.now() < stop_time:
-    data = exchange['queue'].get()
+    try:
+        data = exchange['queue'].get(timeout = 1)
+    except Empty as e
 
     # Log the data
     details = ', '.join([f"{key}: {value}" for key, value in data.items()])
+    print(f"Data: {details}")
 
 # Stop the stream
-
-exchange['thread'].stop()
-xtb._delete()
+exchange['thread'].start()
+xtb.delete()
