@@ -40,7 +40,7 @@ def test_17_get_step_rules(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -48,7 +48,7 @@ def test_17_get_step_rules(
         try:
             # Get step rules
             logger.debug("Getting step rules")
-            step_rules = XTBData.getStepRules()
+            step_rules = xtb.getStepRules()
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a list")
@@ -62,7 +62,7 @@ def test_17_get_step_rules(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

@@ -737,8 +737,8 @@ class Wrapper(HandlerManager):
 
         # Check if the period is valid
         if period not in periods:
-            self._logger.error("Invalid period. Choose from: "+", ".join(periods))
-            raise ValueError("Invalid period. Choose from: "+", ".join(periods))
+            self._logger.error("Invalid period. Choose from: "+", ".join(periods.keys()))
+            raise ValueError("Invalid period. Choose from: "+", ".join(periods.keys()))
         
         # Get the current time
         now = datetime.now()
@@ -843,8 +843,8 @@ class Wrapper(HandlerManager):
         periods = {'M1':1, 'M5':5, 'M15':15, 'M30':30, 'H1':60, 'H4':240, 'D1':1440, 'W1':10080, 'MN1':43200}    
 
         if period not in periods:
-            self._logger("Invalid period. Choose from: "+", ".join(periods))
-            raise ValueError("Invalid period. Choose from: "+", ".join(periods))
+            self._logger.error("Invalid period. Choose from: "+", ".join(periods.keys()))
+            raise ValueError("Invalid period. Choose from: "+", ".join(periods.keys()))
         
         # Get the current time
         now = datetime.now()
@@ -1219,8 +1219,9 @@ class Wrapper(HandlerManager):
 
         # Check if the command is valid
         if cmd not in cmds:
-            self._logger.error("Invalid cmd. Choose from: "+", ".join(cmds))
-            raise ValueError("Invalid cmd. Choose from: "+", ".join(cmds))
+            valid_cmds = ", ".join(map(str, cmds))
+            self._logger.error(f"Invalid cmd. Choose from: {valid_cmds}")
+            raise ValueError(f"Invalid cmd. Choose from: {valid_cmds}")
         
         # Check if the volume is less than or equal to 0
         if volume <= 0:

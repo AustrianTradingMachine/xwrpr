@@ -40,7 +40,7 @@ def test_10_get_user_data(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -48,7 +48,7 @@ def test_10_get_user_data(
         try:
             # Get User Data
             logger.debug("Getting User Data")
-            user_data = XTBData.getCurrentUserData()
+            user_data = xtb.getCurrentUserData()
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
@@ -62,7 +62,7 @@ def test_10_get_user_data(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

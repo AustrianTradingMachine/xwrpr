@@ -40,7 +40,7 @@ def test_13_get_margin_trade(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -49,11 +49,11 @@ def test_13_get_margin_trade(
             # Check failure
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(ValueError):
-                margin_trade = XTBData.getMarginTrade(symbol = "BITCOIN", volume = 0)
+                margin_trade = xtb.getMarginTrade(symbol = "BITCOIN", volume = 0)
 
             # Get margin trade
             logger.debug("Getting margin trade")
-            margin_trade = XTBData.getMarginTrade(symbol = "BITCOIN", volume = 1)
+            margin_trade = xtb.getMarginTrade(symbol = "BITCOIN", volume = 1)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
@@ -67,7 +67,7 @@ def test_13_get_margin_trade(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

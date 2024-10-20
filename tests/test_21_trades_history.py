@@ -41,7 +41,7 @@ def test_21_get_trades_history(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -50,14 +50,14 @@ def test_21_get_trades_history(
             # Check failure
             logger.debug("Checking failure conditions: end > now")
             with pytest.raises(ValueError):
-                trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
+                trades_history = xtb.getTradesHistory(start = datetime.now()-timedelta(days = 2), end = datetime.now()+timedelta(days = 1))
             logger.debug("Checking failure conditions: start > end")
             with pytest.raises(ValueError):
-                trades_history = XTBData.getTradesHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
+                trades_history = xtb.getTradesHistory(start = datetime.now(), end = datetime.now()-timedelta(days = 2))
 
             # Get trades history
             logger.debug("Getting trades history")
-            trades_history = XTBData.getTradesHistory(start = datetime.now()-timedelta(weeks = 52), end = datetime.now())
+            trades_history = xtb.getTradesHistory(start = datetime.now()-timedelta(weeks = 52), end = datetime.now())
 
             # Check if the return value is a list
             logger.debug("Checking if the return value is a list")
@@ -72,7 +72,7 @@ def test_21_get_trades_history(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

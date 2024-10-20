@@ -40,7 +40,7 @@ def test_12_get_margin_level(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -48,7 +48,7 @@ def test_12_get_margin_level(
         try:
             # Get Margin Level
             logger.debug("Getting Margin Level")
-            margin_level = XTBData.getMarginLevel()
+            margin_level = xtb.getMarginLevel()
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
@@ -62,7 +62,7 @@ def test_12_get_margin_level(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

@@ -40,7 +40,7 @@ def test_15_get_profit_calculation(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -49,20 +49,20 @@ def test_15_get_profit_calculation(
             # Check failure
             logger.debug("Checking failure conditions: wrong cmd")
             with pytest.raises(ValueError):
-                profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volum = 1, open_price = 10000, close_price = 20000, cmd = -1)
+                profit = xtb.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 10000, close_price = 20000, cmd = -1)
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(ValueError):
-                profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volume = 0, open_price = 10000, close_price = 20000, cmd = 0)
+                profit = xtb.getProfitCalculation(symbol = "BITCOIN", volume = 0, open_price = 10000, close_price = 20000, cmd = 0)
             logger.debug("Checking failure conditions: open_price <= 0")
             with pytest.raises(ValueError):
-                profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 0, close_price = 20000, cmd = 0)
+                profit = xtb.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 0, close_price = 20000, cmd = 0)
             logger.debug("Checking failure conditions: close_price <= 0")
             with pytest.raises(ValueError):
-                profit = XTBData.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 10000, close_price = 0, cmd = 0)
+                profit = xtb.getProfitCalculation(symbol = "BITCOIN", volume = 1, open_price = 10000, close_price = 0, cmd = 0)
 
             # Get profit calculation
             logger.debug("Getting profit calculation")
-            profit = XTBData.getProfitCalculation(symbol  ="BITCOIN", volume = 1, open_price = 10000, close_price = 20000, cmd = 0)
+            profit = xtb.getProfitCalculation(symbol  ="BITCOIN", volume = 1, open_price = 10000, close_price = 20000, cmd = 0)
 
             # Check if the return value is a dict
             logger.debug("Checking if the return value is a dict")
@@ -76,7 +76,7 @@ def test_15_get_profit_calculation(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

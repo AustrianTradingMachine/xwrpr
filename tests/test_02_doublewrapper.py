@@ -40,7 +40,7 @@ def test_02_doublewrapper(
         try:
             # Creating Wrapper 1
             logger.debug("Creating Wrapper 1")
-            XTBData_1 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb_1 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -48,23 +48,23 @@ def test_02_doublewrapper(
         try:
             # Creating Wrapper 2
             logger.debug("Creating Wrapper 2")
-            XTBData_2 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb_2 = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
         finally:
             # Close Wrapper 1
             logger.debug("Closing Wrapper 1")
-            XTBData_1.delete()
+            xtb_1.delete()
 
         try:
             # Getting API version with Wrapper 1
             logger.debug("Getting API version with Wrapper 1")
-            version_1 = XTBData_1.getVersion()
+            version_1 = xtb_1.getVersion()
 
             # Getting API version with Wrapper 2
             logger.debug("Getting API version with Wrapper 2")
-            version_2 = XTBData_2.getVersion()
+            version_2 = xtb_2.getVersion()
 
             # Check if the return values of both Wrappers are dicts
             logger.debug("Checking if the return values are dicts with Wrapper 1")
@@ -74,9 +74,9 @@ def test_02_doublewrapper(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper 1")
-            XTBData_1.delete()
+            xtb_1.delete()
             logger.debug("Closing Wrapper 2")
-            XTBData_2.delete()
+            xtb_2.delete()
 
     # Write records to log file
     with capsys.disabled():

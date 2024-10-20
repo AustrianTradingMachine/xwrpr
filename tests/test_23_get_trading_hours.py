@@ -40,7 +40,7 @@ def test_23_get_trading_hours(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -48,7 +48,7 @@ def test_23_get_trading_hours(
         try:
             # Get trading hours
             logger.debug("Getting trading hours")
-            trading_hours = XTBData.getTradingHours(symbols = ["BITCOIN"])
+            trading_hours = xtb.getTradingHours(symbols = ["BITCOIN"])
 
             # Check if the return value is a dictionary
             logger.debug("Checking if return value is a list")
@@ -67,7 +67,7 @@ def test_23_get_trading_hours(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

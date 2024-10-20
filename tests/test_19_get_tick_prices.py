@@ -41,7 +41,7 @@ def test_19_get_tick_prices(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -50,14 +50,14 @@ def test_19_get_tick_prices(
             # Check failure
             logger.debug("Checking failure conditions: level < -1")
             with pytest.raises(ValueError):
-                tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(days = 1), level = -2)
+                tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(days = 1), level = -2)
             logger.debug("Checking failure conditions: timestamp > current time")
             with pytest.raises(ValueError):
-                tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(days = 1), level = -1)
+                tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(days = 1), level = -1)
 
             # Get tick prices
             logger.debug("Getting tick prices")
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(days = 1), level = 1)
+            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(days = 1), level = 1)
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a dictionary")
@@ -74,7 +74,7 @@ def test_19_get_tick_prices(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():

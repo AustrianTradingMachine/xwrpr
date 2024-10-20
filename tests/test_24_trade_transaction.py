@@ -58,7 +58,7 @@ def test_24_trade_transaction(
         try:
             # Creating Wrapper
             logger.debug("Creating Wrapper")
-            XTBData = xwrpr.Wrapper(demo = demo_flag, logger = logger)
+            xtb = xwrpr.Wrapper(demo = demo_flag, logger = logger)
         except Exception as e:
             logger.error("Error creating Wrapper: %s. Did you forget to enter your credentials?", e)
             pytest.fail(f"Failed to create Wrapper: {e}")
@@ -66,9 +66,9 @@ def test_24_trade_transaction(
         try:
             # Get tick prices
             logger.debug("Getting tick prices")
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 5), level = 0)
+            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 5), level = 0)
             price_a = tick_prices["BITCOIN"]["ask"]
-            tick_prices = XTBData.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 1), level = 0)
+            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 1), level = 0)
             price_b = tick_prices["BITCOIN"]["ask"]
 
             # Calculating rate of change
@@ -88,20 +88,20 @@ def test_24_trade_transaction(
             # Check failure
             logger.debug("Checking failure conditions: wrtong cmd")
             with pytest.raises(ValueError):
-                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = -1, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = -1, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
             logger.debug("Checking failure conditions: wrtong type")
             with pytest.raises(ValueError):
-                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = -1, order = 0, custom_comment = "Test trade")
+                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = -1, order = 0, custom_comment = "Test trade")
             logger.debug("Checking failure conditions: expiration < now")
             with pytest.raises(ValueError):
-                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()-timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()-timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
             logger.debug("Checking failure conditions: volume <= 0")
             with pytest.raises(ValueError):
-                trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
 
             # Make Trade
             logger.debug("Making trade")
-            trade_transaction = XTBData.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+            trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a dictionary")
@@ -115,7 +115,7 @@ def test_24_trade_transaction(
 
             # Verifying the trade
             logger.debug("Verifying the trade")
-            trade_transaction_status = XTBData.tradeTransactionStatus(order = trade_transaction["order"])
+            trade_transaction_status = xtb.tradeTransactionStatus(order = trade_transaction["order"])
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a dictionary")
@@ -129,7 +129,7 @@ def test_24_trade_transaction(
         finally:
             # Close Wrapper
             logger.debug("Closing Wrapper")
-            XTBData.delete()
+            xtb.delete()
 
     # Write records to log file
     with capsys.disabled():
