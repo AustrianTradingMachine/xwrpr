@@ -25,6 +25,7 @@ import pytest
 from tests.helper import generate_logger, write_logs, GREEN, RESET
 import xwrpr
 
+
 def test_01_user(
         demo_flag: bool,
         log_level: int,

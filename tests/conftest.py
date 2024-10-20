@@ -71,6 +71,9 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--demo", action = "store_true", default = False, help = "Run tests in demo mode"
     )
+    parser.addoption(
+        "--trade", action = "store_true", default = False, help = "Agree to make a trade"
+    )
 
 @pytest.fixture(scope="function")
 def demo_flag(request: pytest.FixtureRequest) -> bool:
@@ -99,3 +102,17 @@ def log_level(request: pytest.FixtureRequest) -> int:
     """
 
     return _set_logger_level(request.config.getoption("--log-level"))
+
+@pytest.fixture(scope="function")
+def trade_flag(request: pytest.FixtureRequest) -> bool:
+    """
+    Fixture to dynamically change the value of TRADE based on the command-line option.
+
+    Args:
+        request (pytest.FixtureRequest): The fixture request object.
+
+    Returns:
+        bool: The value of the --trade command-line option.
+    """
+
+    return request.config.getoption("--trade")

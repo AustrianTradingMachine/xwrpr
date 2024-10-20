@@ -1696,17 +1696,17 @@ class Wrapper(HandlerManager):
         return self._open_data_channel(command = "Version")
     
     def tradeTransaction(self,
+        symbol: str,        
+        volume: float,
         cmd: int,
-        custom_comment: str,
-        expiration: datetime,
-        offset: int,
-        order: int,
         price: float,
         sl: float,
-        symbol: str,
         tp: float,
+        offset: int,
+        expiration: datetime,
         type: int,
-        volume: float
+        order: int,
+        custom_comment: str
         ) -> dict:
         """
        Starts trade transaction. tradeTransaction sends main transaction information to the server.
@@ -1714,19 +1714,18 @@ class Wrapper(HandlerManager):
         Args:
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
+            symbol              string	    no          Trade symbol
+            volume              float	    no          Trade volume
             cmd                 int	        no          Operation code
-            custom_comment      string	    no          The value the customer may provide in order to retrieve it later.
-            expiration          datetime	no          Pending order expiration time
-            offset              int	        no          Trailing offset
-            order               int	        no          0 or position number for closing/modifications
             price               float	    no          Trade price
             sl                  float	    no          Stop loss
-            symbol              string	    no          Trade symbol
             tp                  float	    no          Take profit
+            offset              int	        no          Trailing offset
+            expiration          datetime	no          Pending order expiration time
             type                int	        no          Trade transaction type
-            volume              float	    no          Trade volume
-
-
+            order               int	        no          0 or position number for closing/modifications
+            custom_comment      string	    no          The value the customer may provide in order to retrieve it later.
+            
             Possible values of "cmd" field:
                 name	            value	    description
                 -----------------------------------------------------------------------------------------------
