@@ -231,6 +231,7 @@ class _GeneralHandler(Client):
             if stream:
                 # Stream responses can be empty
                 # in this case just return an empty dictionary
+                self._logger.debug("Empty response")
                 return {}
             
             self._logger.error("Empty response")
