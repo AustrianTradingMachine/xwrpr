@@ -435,6 +435,9 @@ class Client():
                 # Pass if the socket is not connected
                 pass
 
+            # Check if the socket is in blocking mode
+            blocking = self._socket.getblocking()
+
             # Loop until the connection is established
             # or an error occurs
             connected = False
@@ -450,6 +453,11 @@ class Client():
                             # Exit loop if connection is successful
                             break 
                         except BlockingIOError as e:
+                            if blocking:
+                                # For blocking mode, raise an exception
+                                self._logger.error(f"Unexpected BlockingIOError in blocking socket mode: {e}")
+                                raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
+                                
                             if e.errno == errno.EINPROGRESS:
                                 self._logger.info("Non-blocking connection in progress...")
                                 # Wait until the socket is ready for writing (connect completed)
@@ -484,6 +492,7 @@ class Client():
                     if recreate:
                         # Try to create a new socket
                         self._logger.error("Attempting to recreate socket ...")
+                        # Exclude all guarantees that not the same address is used
                         self.create(excluded_errors = ['all'], lock = True)
 
             self._logger.info("Connection opened")
