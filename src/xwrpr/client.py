@@ -264,16 +264,16 @@ class Client():
 
         # Check the results
         if mode == 'basic' and self._socket in errored:
-            self._logger.error("Socket error")
+            self._logger.error("Socket error after check")
             # Log the failure cause
             self._addresses[self._address_key]['last_error'] = 'check'
-            raise socket.error("Socket error")
+            raise socket.error("Socket error after check")
         if mode == 'readable' and self._socket not in readable:
-            self._logger.debug("Socket not readable")
-            raise TimeoutError("Socket not readable")
+            self._logger.debug("Socket not readable after check")
+            raise TimeoutError("Socket is not readable within the specified time")
         if mode == 'writable' and self._socket not in writable:
-            self._logger.debug("Socket not writable")
-            raise TimeoutError("Socket not writable")
+            self._logger.debug("Socket not writable after check")
+            raise TimeoutError("Socket is not writable within the specified time")
         
     def create(self, excluded_errors: List[str] = [], lock: bool = True) -> None:
         """
@@ -376,7 +376,7 @@ class Client():
                     self._socket = context.wrap_socket(
                         sock = self._socket,
                         server_hostname = self._host)
-                except socket.error as e:
+                except ssl.SSLError as e:
                     self._logger.error(f"Failed to wrap socket: {e}")
                     # Log the failure cause
                     self._addresses[self._address_key]['last_error'] = 'wrap'
@@ -394,12 +394,12 @@ class Client():
                 # a timout exeption immediately
                 self._socket.settimeout(self._timeout)
                 self._socket.setblocking(False)
+                self._logger.debug("Setting non-blocking mode with timeout: %s", self._timeout)
             else:
                 # The socket is in blocking mode
                 self._socket.settimeout(None)
                 self._socket.setblocking(True)
-
-            self._logger.debug("Blocking mode: %s", self._socket.getblocking())
+                self._logger.debug("Setting blocking mode without timeout")
 
             # Socket successfully created
             created = True
@@ -457,7 +457,7 @@ class Client():
                                 # For blocking mode, raise an exception
                                 self._logger.error(f"Unexpected BlockingIOError in blocking socket mode: {e}")
                                 raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
-                                
+
                             if e.errno == errno.EINPROGRESS:
                                 self._logger.info("Non-blocking connection in progress...")
                                 # Wait until the socket is ready for writing (connect completed)
@@ -467,12 +467,17 @@ class Client():
                                     connected = True
                                     break
                                 except TimeoutError:
+                                    self._logger.error("Connection timeout in non-blocking mode")
+                                    self._addresses[self._address_key]['last_error'] = 'connect'
                                     raise
                             else:
                                 self._logger.error(f"Error connecting to server: {e}")
                                 raise
                         except (socket.error, InterruptedError) as e:
-                            self._logger.error(f"Error connecting to server {attempt}/{self._max_fails}: {e}")
+                            if isinstance(e, socket.timeout):
+                                self._logger.error(f"Socket connection timed out: {e}")
+                            else:
+                                self._logger.error(f"General connection error {attempt}/{self._max_fails}: {e}")
                             
                             if attempt < self._max_fails:
                                 self._logger.warning("Retrying connection ...")
