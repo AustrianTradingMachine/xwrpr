@@ -1732,7 +1732,7 @@ class Wrapper(HandlerManager):
             custom_comment      string	    yes         The value the customer may provide in order to retrieve it later.
 
             If arguments are optional or not depends on the "type" and "cmd" fields:
-                For type: 2, 4 only the field "order" is required, all other fields are irrelevant
+                For type: 2, 4 the field "order" is required, all other fields are irrelevant
                 For type: 0, 3 the following table shows which fields are required (r), optional (o) or irrelevant(i):
                     cmd   symbol  volume  price   expiration  sl      tp      offset
                     -----------------------------------------------------------------------------------------------
