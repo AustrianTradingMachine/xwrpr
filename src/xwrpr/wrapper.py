@@ -1703,10 +1703,10 @@ class Wrapper(HandlerManager):
     def tradeTransaction(self,
         type: int,
         order: int = 0,
+        cmd: Optional[int] = None,
         symbol: Optional[str] = None,
         volume: float = 0,
         price: float = 0,
-        cmd: Optional[int] = None,
         expiration: Optional[datetime] = None,
         sl: float = 0,
         tp: float = 0,
@@ -1720,28 +1720,37 @@ class Wrapper(HandlerManager):
             name                type        optional    description
             -----------------------------------------------------------------------------------------------
             type                int	        no          Trade transaction type
-            order               int	        yes/no      0 or position number for closing/modifications
-            symbol              string	    yes/no      Trade symbol
-            volume              float	    yes/no      Trade volume
-            price               float	    yes/no      Trade price
-            cmd                 int	        yes/no      Operation code
-            expiration          datetime	yes/no      Pending order expiration time
-            sl                  float	    yes/no      Stop loss
-            tp                  float	    yes/no      Take profit
-            offset              int	        yes/no      Trailing offset
+            order               int	        *           0 or position number for closing/modifications
+            cmd                 int	        *           Operation code
+            symbol              string	    *           Trade symbol
+            volume              float	    *           Trade volume
+            price               float	    *           Trade price
+            expiration          datetime	*           Pending order expiration time
+            sl                  float	    *           Stop loss
+            tp                  float	    *           Take profit
+            offset              int	        *           Trailing offset
             custom_comment      string	    yes         The value the customer may provide in order to retrieve it later.
 
-            If arguments are optional or not depends on the "type" and "cmd" fields:
-                For type: 2, 4 the field "order" is required, all other fields are irrelevant
-                For type: 0, 3 the following table shows which fields are required (r), optional (o) or irrelevant(i):
-                    cmd   symbol  volume  price   expiration  sl      tp      offset
-                    -----------------------------------------------------------------------------------------------
-                    0     r       r       i       i           o       o       o if stop loss is set else i
-                    1     r       r       i       i           o       o       o if stop loss is set else i
-                    2     r       r       r       o           o       o       i
-                    3     r       r       r       o           o       o       i
-                    4     r       r       r       o           o       o       i
-                    5     r       r       r       o           o       o       i
+            * If arguments are optional or not depends on the "type" and "cmd" fields.
+              The following table shows which fields are required (r), optional (o) or irrelevant(i):
+              type    order   cmd   symbol  volume  price   expiration  sl**    tp**    offset***
+              -----------------------------------------------------------------------------------------------
+              0       i       0     r       r       i       i           o       o       o if stop loss is set else i
+                              1     r       r       i       i           o       o       o if stop loss is set else i
+                              2     r       r       r       o           o       o       i
+                              3     r       r       r       o           o       o       i
+                              4     r       r       r       o           o       o       i
+                              5     r       r       r       o           o       o       i
+              2       r       i     i       i       i       i           i       i       i
+              3       r       i     i       i       i       i           o       o       o if stop loss is set else i
+              4       r       i     i       i       i       i           i       i       i
+
+            ** Stop loss must be less than the price for buy orders and greater for sell orders. Take profit must be
+               greater than the price for buy orders and less for sell orders.
+
+            *** Trailing offset is defined in pip (point in percentage). For the decimal place of a pip, see the
+                "pipsPrecision" field in the "getSymbol" or "getAllSymbols" command response.
+
 
             Possible values of "cmd" field:
                 name	            value	    description
