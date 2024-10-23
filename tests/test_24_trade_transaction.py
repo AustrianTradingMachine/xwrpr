@@ -115,16 +115,6 @@ def test_24_trade_transaction(
     
             # Make Trade
             logger.debug("Making trade")
-            with capsys.disabled():
-                print(f"\n{YELLOW}Trade details{RESET}")
-                print(f"Command: {cmd}")
-                print(f"Price: {price}")
-                print(f"Stop Loss: {sl}")
-                print(f"Take Profit: {tp}")
-                print(f"Rate of Change: {roc}")
-                print(f"Volume: 0.001")
-                print(f"Expiration: {datetime.now()+timedelta(minutes = 1)}")
-                print(f"Custom Comment: Test trade\n")
             trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
 
             # Check if the return value is a dictionary
@@ -134,8 +124,6 @@ def test_24_trade_transaction(
             # Log the trade
             logger.debug("Logging the trade")
             details = ', '.join([f"{key}: {value}" for key, value in trade_transaction.items()])
-            with capsys.disabled():
-                print(details)
             logger.info(details)
 
 
@@ -150,8 +138,6 @@ def test_24_trade_transaction(
             # Log the trade status
             logger.debug("Logging the trade status")
             details = ', '.join([f"{key}: {value}" for key, value in trade_transaction_status.items()])
-            with capsys.disabled():
-                print(details)
             logger.info(details)
 
         finally:

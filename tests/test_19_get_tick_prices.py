@@ -50,14 +50,14 @@ def test_19_get_tick_prices(
             # Check failure
             logger.debug("Checking failure conditions: level < -1")
             with pytest.raises(ValueError):
-                tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(seconds = 3), level = -2)
-            logger.debug("Checking failure conditions: timestamp > current time")
+                tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(seconds = 3), level = -2)
+            logger.debug("Checking failure conditions: timestamp < current time")
             with pytest.raises(ValueError):
-                tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(seconds = 3), level = -1)
+                tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(seconds = 3), level = -1)
 
             # Get tick prices
             logger.debug("Getting tick prices")
-            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(seconds = 3), level = 1)
+            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()+timedelta(seconds = 3), level = 1)
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a dictionary")

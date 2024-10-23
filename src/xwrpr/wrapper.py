@@ -1431,9 +1431,9 @@ class Wrapper(HandlerManager):
         timestamp = datetime_to_unixtime(time)
 
         # Check if time lies in the future
-        if timestamp >= datetime_to_unixtime(datetime.now()):
-            self._logger.error("Time lies in the future.")
-            raise ValueError("Time lies in the future.")
+        if timestamp < datetime_to_unixtime(datetime.now()):
+            self._logger.error("Time must lie in the future.")
+            raise ValueError("Time must lie in the future.")
 
         return self._open_data_channel(command = "getTickPrices", level = level, symbols = symbols, timestamp = timestamp)
     
