@@ -1014,7 +1014,7 @@ class _StreamHandler(_GeneralHandler):
         # Send KeepAlive to keep connection open
         # First command must beb sent 1 second after connection is opened
         # Otherwise the server will close the connection
-        self._stream_data(command = 'KeepAlive')
+        self._stream_data(command = 'getKeepAlive')
         # Start ping to keep connection open
         self._start_ping(handler = self)
         
@@ -1134,10 +1134,13 @@ class _StreamHandler(_GeneralHandler):
 
         # Register the stream task
         index = len(self._stream_tasks)
-        self._stream_tasks[index] = {'command': command, 'arguments': kwargs}
+        self._stream_tasks[index] = {
+            'command': command[3:], # Remove the 'get' prefix
+            'arguments': kwargs
+        }
 
         # The data from the KeepAlive command is unnecessary
-        if command != 'KeepAlive':
+        if command != 'getKeepAlive':
             # Put a killswitch for the stream task into the exchange dictionary
             exchange['thread'] = CustomThread(
                 target = self._stop_task,

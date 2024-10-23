@@ -199,6 +199,8 @@ def pretty(command: str) -> str:
         trimmed_command = command[3:]
     elif command.startswith("trade"):
         trimmed_command = command[5:]
+    else:
+        trimmed_command = command
         
     return re.sub(r'([A-Z])', r'{}\1'.format(' '), trimmed_command)[1:]
 
