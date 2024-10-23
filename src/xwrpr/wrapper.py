@@ -1703,13 +1703,13 @@ class Wrapper(HandlerManager):
     def tradeTransaction(self,
         type: int,
         order: int = 0,
-        cmd: Optional[int] = None,
-        symbol: Optional[str] = None,
-        volume: float = 0,
-        price: float = 0,
+        cmd: int = -1,
+        symbol: str = '',
+        volume: float = 0.0,
+        price: float = 0.0,
         expiration: Optional[datetime] = None,
-        sl: float = 0,
-        tp: float = 0,
+        sl: float = 0.0,
+        tp: float = 0.0,
         offset: int = 0,
         custom_comment: str = '',               
         ) -> dict:
@@ -1742,7 +1742,7 @@ class Wrapper(HandlerManager):
                               4     r       r       r       o           o       o       i
                               5     r       r       r       o           o       o       i
               2       r       i     i       i       i       i           i       i       i
-              3       r       i     i       i       i       i           o       o       o if stop loss is set else i
+              3       r       i     i       i       r       o           o       o       i
               4       r       i     i       i       i       i           i       i       i
 
             ** Stop loss must be less than the price for buy orders and greater for sell orders. Take profit must be
@@ -1785,18 +1785,18 @@ class Wrapper(HandlerManager):
                 tradeTransactionStatus  command with the order number, that came back with the response 
 
         Raises:
+            ValueError: If the type is invalid.
+            ValueError: If the order is less than or equal to 0.
+            ValueError: If the command is invalid for opening orders.
+            ValueError: If the symbol is not given for opening orders.
             ValueError: If the volume is less than or equal to 0.
             ValueError: If the price is less than or equal to 0.
-            ValueError: If the command is invalid.
             ValueError: If the expiration time is in the past.
-            ValueError: If the type is invalid.
-            ValueError: If the stop loss and take profit are less than 0.
-            ValueError: If the order is less than 0.
-            ValueError: If the stop loss is greater than the price for sell orders.
-            ValueError: If the stop loss is less than the price for buy orders.
-            ValueError: If the take profit is less than the price for sell orders.
-            ValueError: If the take profit is greater than the price for buy orders.
-            ValueError: If the order is less than 0 for closing/modifications.
+            ValueError: If the take profit is less than the price for buy orders.
+            ValueError: If the take profit is greater than the price for sell orders.
+            ValueError: If the stop loss is greater than the price for buy orders.
+            ValueError: If the stop loss is less than the price for sell orders.
+            ValueError: If the offset is less than or equal to 0 for buy orders.
         """
 
         # List of valid commands and types
@@ -1814,7 +1814,12 @@ class Wrapper(HandlerManager):
             raise ValueError("Order must be given to close, modify or delete orders.")
         
         # Check if necessary fields are given for opening or modifying orders
-        if type in [0, 3]:
+        if type == 0:
+            # Check if the command is valid
+            if cmd not in cmds:
+                self._logger.error("Invalid cmd for opening order. Choose from: "+", ".join(map(str, cmds)))
+                raise ValueError("Invalid cmd for opening order. Choose from: "+", ".join(map(str, cmds)))
+            
             # Check if symbol is given
             if not symbol:
                 self._logger.error("Symbol must be given for opening orders.")
@@ -1822,35 +1827,21 @@ class Wrapper(HandlerManager):
 
             # Check if volume is valid
             if volume <= 0:
-                self._logger.error("Volume must be given for opening and modifying orders.")
-                raise ValueError("Volume must be given for opening and modifying orders.")
+                self._logger.error("Volume must be given for opening orders.")
+                raise ValueError("Volume must be given for opening orders.")
             
-            # Check if price is valid
-            if price <= 0:
-                self._logger.error("Price must be given for opening and modifying orders.")
-                raise ValueError("Price must be given for opening and modifying orders.")
-            
-            # Check if the command is valid
-            if cmd not in cmds:
-                self._logger.error("Invalid cmd. Choose from: "+", ".join(map(str, cmds)))
-                raise ValueError("Invalid cmd. Choose from: "+", ".join(map(str, cmds)))
-            
-            # Check if the expiration time is in the past
-            if expiration < datetime.now():
-                self._logger.error("Expiration time is in the past.")
-                raise ValueError("Expiration time is in the past.")
-
-            if sl > 0:
-                # Check if the stop loss is less than the price for buy orders
-                if cmd in [0, 2, 4] and sl >= price:
-                    self._logger.error("Stop loss must be less than the price for buy orders.")
-                    raise ValueError("Stop loss must be less than the price for buy orders.")
+        if type in [0, 3]:
+            if type == 0 and cmd in [2, 3, 4, 5] or type == 3:
+                # Check if price is valid
+                if price <= 0:
+                    self._logger.error("Price must be given for opening or modifying orders.")
+                    raise ValueError("Price must be given for opening or modifying orders.")
                 
-                # Check if the stop loss is greater than the price for sell orders
-                if cmd in [1, 3, 5] and sl <= price:
-                    self._logger.error("Stop loss must be greater than the price for sell orders.")
-                    raise ValueError("Stop loss must be greater than the price for sell orders.")
-            
+                # Check if the expiration time is in the past
+                if expiration is not None and expiration <= datetime.now():
+                    self._logger.error("Expiration time is in the past.")
+                    raise ValueError("Expiration time is in the past.")
+
             if tp > 0:
                 # Check if the take profit is greater than the price for buy orders
                 if cmd in [0, 2, 4] and tp <= price:
@@ -1861,8 +1852,23 @@ class Wrapper(HandlerManager):
                 if cmd in [1, 3, 5] and tp >= price:
                     self._logger.error("Take profit must be less than the price for sell orders.")
                     raise ValueError("Take profit must be less than the price for sell orders.")
-        
+                
+            if sl > 0:
+                # Check if the stop loss is less than the price for buy orders
+                if cmd in [0, 2, 4] and sl >= price:
+                    self._logger.error("Stop loss must be less than the price for buy orders.")
+                    raise ValueError("Stop loss must be less than the price for buy orders.")
+                
+                # Check if the stop loss is greater than the price for sell orders
+                if cmd in [1, 3, 5] and sl <= price:
+                    self._logger.error("Stop loss must be greater than the price for sell orders.")
+                    raise ValueError("Stop loss must be greater than the price for sell orders.")
 
+        if type == 0 and cmd in [0, 1] and sl > 0:
+            if offset <= 0:
+                self._logger.error("Offset must be greater than 0.")
+                raise ValueError("Offset must be greater than 0.")  
+            
 
         # Convert the expiration time to unix time
         expiration_ux = datetime_to_unixtime(expiration)
