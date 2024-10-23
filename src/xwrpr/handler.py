@@ -131,7 +131,7 @@ class _GeneralHandler(Client):
             # Generate a new logger
             self._logger = generate_logger(name = 'GeneralHandler', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing GeneralHandler ...")
+        self._logger.debug("Initializing GeneralHandler ...")
 
         # Initialize the Client instance
         super().__init__(
@@ -154,7 +154,7 @@ class _GeneralHandler(Client):
         self._ping = dict()
         self._ping_lock = Lock()
 
-        self._logger.info("GeneralHandler initialized")
+        self._logger.debug("GeneralHandler initialized")
     
     def _send_request(
         self,
@@ -529,7 +529,7 @@ class _DataHandler(_GeneralHandler):
             # Generate a new logger
             self._logger = generate_logger(name = 'DataHandler', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing DataHandler ...")
+        self._logger.debug("Initializing DataHandler ...")
 
         # Defines if the server is called for demo or real trading
         self._demo = demo
@@ -569,7 +569,7 @@ class _DataHandler(_GeneralHandler):
         # Starts ping to keep connection open
         self._start_ping(handler = self)
 
-        self._logger.info("DataHandler initialized")
+        self._logger.debug("DataHandler initialized")
         
     def __del__(self) -> None:
         """
@@ -963,7 +963,7 @@ class _StreamHandler(_GeneralHandler):
             # Generate a new logger
             self._logger = generate_logger(name = 'StreamHandler', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing StreamHandler ...")
+        self._logger.debug("Initializing StreamHandler ...")
 
         # Initialize the GeneralHandler instance
         super().__init__(
@@ -1018,7 +1018,7 @@ class _StreamHandler(_GeneralHandler):
         # Start ping to keep connection open
         self._start_ping(handler = self)
         
-        self._logger.info("StreamHandler initialized")
+        self._logger.debug("StreamHandler initialized")
 
     def __del__(self) -> None:
         """
@@ -1652,7 +1652,7 @@ class HandlerManager():
             # Generate a new logger
             self._logger = generate_logger(name = 'HandlerManager', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing HandlerManager ...")
+        self._logger.debug("Initializing HandlerManager ...")
 
         self._demo = demo
 
@@ -1694,7 +1694,7 @@ class HandlerManager():
         )
         self._handler_management_thread.start()
 
-        self._logger.info("HandlerManager initialized")
+        self._logger.debug("HandlerManager initialized")
 
     def __del__(self) -> None:
         """

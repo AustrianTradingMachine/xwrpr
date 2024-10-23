@@ -118,7 +118,7 @@ class Client():
             # Generate a new logger
             self._logger = generate_logger(name = 'Client', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing Client ..")
+        self._logger.debug("Initializing Client ..")
         
         self._host = host
         self._port = port
@@ -143,7 +143,7 @@ class Client():
         # Create the socket
         self.create()
 
-        self._logger.info("Client initialized")
+        self._logger.debug("Client initialized")
 
     def _get_addresses(self) -> None:
         """
@@ -259,7 +259,7 @@ class Client():
 
         # Check if the socket is ready
         if not readable and not writable and not errored:
-            self._logger.debug("Socket didnt answer")
+            self._logger.error("Socket didnt answer")
             raise TimeoutError("Socket didnt answer")
 
         # Check the results
@@ -269,10 +269,10 @@ class Client():
             self._addresses[self._address_key]['last_error'] = 'check'
             raise socket.error("Socket error after check")
         if mode == 'readable' and self._socket not in readable:
-            self._logger.debug("Socket not readable after check")
+            self._logger.error("Socket not readable after check")
             raise TimeoutError("Socket is not readable within the specified time")
         if mode == 'writable' and self._socket not in writable:
-            self._logger.debug("Socket not writable after check")
+            self._logger.error("Socket not writable after check")
             raise TimeoutError("Socket is not writable within the specified time")
         
     def create(self, excluded_errors: List[str] = [], lock: bool = True) -> None:
@@ -459,7 +459,7 @@ class Client():
                                 raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
 
                             if e.errno == errno.EINPROGRESS:
-                                self._logger.info("Non-blocking connection in progress...")
+                                self._logger.debug("Non-blocking connection in progress...")
                                 # Wait until the socket is ready for writing (connect completed)
                                 try:
                                     self.check(mode = 'writable')
@@ -480,7 +480,7 @@ class Client():
                                 self._logger.error(f"General connection error {attempt}/{self._max_fails}: {e}")
                             
                             if attempt < self._max_fails:
-                                self._logger.warning("Retrying connection ...")
+                                self._logger.debug("Retrying connection ...")
                                 # For request limitation
                                 time.sleep(self._reaction_time)
                             else:

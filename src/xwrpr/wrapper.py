@@ -149,7 +149,7 @@ class Wrapper(HandlerManager):
             # Create a new logger
             self._logger = generate_logger(name = 'Wrp', path = Path.cwd() / "logs")
 
-        self._logger.info("Initializing wrapper ...")
+        self._logger.debug("Initializing wrapper ...")
 
         # Check the input parameters
         if max_connections > MAX_CONNECTIONS:
@@ -210,7 +210,7 @@ class Wrapper(HandlerManager):
         # Set the status to active
         self._status = Status.ACTIVE
 
-        self._logger.info("Wrapper initialized")
+        self._logger.debug("Wrapper initialized")
 
     def __del__(self) -> None:
         """
