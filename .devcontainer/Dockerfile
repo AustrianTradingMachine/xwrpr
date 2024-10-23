@@ -52,6 +52,7 @@ RUN apt-get update --fix-missing && \
         apt-transport-https \
         build-essential \
         ca-certificates \
+        timedatectl \
         iproute2 \
         wget \
         sudo \

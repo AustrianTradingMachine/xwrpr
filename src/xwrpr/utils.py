@@ -194,7 +194,13 @@ def pretty(command: str) -> str:
         str: The pretty version of the command.
     """
 
-    return re.sub(r'([A-Z])', r'{}\1'.format(' '), command)[1:]
+    # Check if command starts with "get" nor "trade" and trim it
+    if command.startswith("get"):
+        trimmed_command = command[3:]
+    elif command.startswith("trade"):
+        trimmed_command = command[5:]
+        
+    return re.sub(r'([A-Z])', r'{}\1'.format(' '), trimmed_command)[1:]
 
 def calculate_timesteps(start: datetime, end: datetime, period: str = 'minutes') -> float:
     """

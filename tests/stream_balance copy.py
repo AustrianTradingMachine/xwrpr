@@ -22,12 +22,20 @@
 ###########################################################################
 
 import xwrpr
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 from queue import Empty
 
 
 
 xtb = xwrpr.Wrapper(demo = False)
+step_rules = xtb.getStepRules()
+for record in step_rules:
+    if record['name'] == 'BITCOIN':
+        details = ', '.join([f"{key}: {value}" for key, value in record.items()])
+        print(f"Step Rules: {details}")
+
+xtb.delete()
+exit()
 exchange = xtb.streamBalance()
 print(exchange)
 

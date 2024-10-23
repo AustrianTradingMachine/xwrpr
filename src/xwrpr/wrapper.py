@@ -305,7 +305,7 @@ class Wrapper(HandlerManager):
                 marginLevel	        float	    margin level percentage
         """
 
-        return self._open_stream_channel(command = "Balance")
+        return self._open_stream_channel(command = "getBalance")
 
     def streamCandles(self, symbol: str) -> dict:
         """
@@ -344,7 +344,7 @@ class Wrapper(HandlerManager):
                 cross	            4	        cross
         """
 
-        return self._open_stream_channel(command = "Candles", symbol = symbol)
+        return self._open_stream_channel(command = "getCandles", symbol = symbol)
     
     def streamNews(self) -> dict:
         """
@@ -364,7 +364,7 @@ class Wrapper(HandlerManager):
                 title	            string	    News title
         """
 
-        return self._open_stream_channel(command = "News")
+        return self._open_stream_channel(command = "getNews")
 
     def streamProfits(self) -> dict:
         """
@@ -384,7 +384,7 @@ class Wrapper(HandlerManager):
                 profit	            float	    Profit in account currency
         """
 
-        return self._open_stream_channel(command = "Profits")
+        return self._open_stream_channel(command = "getProfits")
 
     def streamTickPrices(self, symbol: str, min_arrival_time: Optional[int] = None, max_level: Optional[int] = None) -> dict:
         """
@@ -443,7 +443,7 @@ class Wrapper(HandlerManager):
             max_level = 1
             self._logger.warning("maxLevel must be at least 1. Setting maxLevel to 1")
 
-        return self._open_stream_channel(command = "TickPrices", symbol = symbol, minArrivalTime = min_arrival_time, maxLevel = max_level)
+        return self._open_stream_channel(command = "getTickPrices", symbol = symbol, minArrivalTime = min_arrival_time, maxLevel = max_level)
 
     def streamTrades(self) -> dict:
         """
@@ -525,7 +525,7 @@ class Wrapper(HandlerManager):
                 DELETE	            4	        order delete, only used in the "tradeTransaction"  command
         """
 
-        return self._open_stream_channel(command = "Trades")
+        return self._open_stream_channel(command = "getTrades")
     
     def streamTradeStatus(self) -> dict:
         """
@@ -554,7 +554,7 @@ class Wrapper(HandlerManager):
                 REJECTED	        4	        The transaction has been rejected
         """
 
-        return self._open_stream_channel(command = "TradeStatus")
+        return self._open_stream_channel(command = "getTradeStatus")
 
     def _open_data_channel(self, **kwargs) -> Union[List[dict], dict]:
         """
@@ -651,7 +651,7 @@ class Wrapper(HandlerManager):
                 CFD	                6	        CFD
         """
 
-        return self._open_data_channel(command = "AllSymbols")
+        return self._open_data_channel(command = "getAllSymbols")
     
     def getCalendar(self) -> List[dict]:
         """
@@ -680,7 +680,7 @@ class Wrapper(HandlerManager):
                 high	            3	        high
         """
 
-        return self._open_data_channel(command = "Calendar")
+        return self._open_data_channel(command = "getCalendar")
     
     def getChartLastRequest(self, symbol: str, period: str, start: Optional[datetime] = None) -> Dict[int, List[dict]]:
         """
@@ -774,7 +774,7 @@ class Wrapper(HandlerManager):
             self._logger.warning("Start time is too far in the past for selected period "+period+". Setting start time to "+str(limit))
 
         return self._open_data_channel(
-            command = "ChartLastRequest",
+            command = "getChartLastRequest",
             info = dict(
                 period = periods[period],
                 start = start_ux,
@@ -939,7 +939,7 @@ class Wrapper(HandlerManager):
                     self._logger.warning("Ticks reach too far in the future for selected period "+period+". Setting tick time to "+str(delta))
 
         return self._open_data_channel(
-            command = "ChartRangeRequest",
+            command = "getChartRangeRequest",
             info = dict(
                 end = end_ux,
                 period = periods[period],
@@ -977,7 +977,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
 
-        return self._open_data_channel(command = "CommissionDef", symbol = symbol, volume = volume)
+        return self._open_data_channel(command = "getCommissionDef", symbol = symbol, volume = volume)
     
     def getCurrentUserData(self) -> dict:
         """
@@ -999,7 +999,7 @@ class Wrapper(HandlerManager):
                 trailingStop	    boolean	    Indicates whether this account is enabled to use trailing stop   
         """
 
-        return self._open_data_channel(command = "CurrentUserData")
+        return self._open_data_channel(command = "getCurrentUserData")
     
     def getIbsHistory(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
         """
@@ -1065,7 +1065,7 @@ class Wrapper(HandlerManager):
         # This method is deprecated
         raise NotImplementedError("getIbsHistory is deprecated and cannot be used.")
 
-        return self._open_data_channel(command = "IbsHistory", end = end_ux, start = start_ux)
+        return self._open_data_channel(command = "getIbsHistory", end = end_ux, start = start_ux)
     
     def getMarginLevel(self) -> dict:
         """
@@ -1086,7 +1086,7 @@ class Wrapper(HandlerManager):
                 margin_level	    float	    margin level percentage
         """
 
-        return self._open_data_channel(command = "MarginLevel")
+        return self._open_data_channel(command = "getMarginLevel")
     
     def getMarginTrade(self, symbol: str, volume: float) -> dict:
         """
@@ -1116,7 +1116,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Volume must be greater than 0.")
             raise ValueError("Volume must be greater than 0.")
 
-        return self._open_data_channel(command = "MarginTrade", symbol = symbol, volume = volume)
+        return self._open_data_channel(command = "getMarginTrade", symbol = symbol, volume = volume)
     
     def getNews(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
         """
@@ -1171,7 +1171,7 @@ class Wrapper(HandlerManager):
             self._logger.error("End time is greater than current time.")
             raise ValueError("End time is greater than current time.")
 
-        return self._open_data_channel(command = "News", end = end_ux, start = start_ux)
+        return self._open_data_channel(command = "getNews", end = end_ux, start = start_ux)
     
     def getProfitCalculation(self, symbol: str, volume: float, open_price: float, close_price: float, cmd: int) -> dict:
         """
@@ -1239,7 +1239,7 @@ class Wrapper(HandlerManager):
             raise ValueError("Close price must be greater than 0.")
 
         return self._open_data_channel(
-            command = "ProfitCalculation",
+            command = "getProfitCalculation",
             closePrice = close_price,
             cmd = cmd,
             openPrice = open_price,
@@ -1261,7 +1261,7 @@ class Wrapper(HandlerManager):
                 timeString	        string      Time described in form set on server (local time of server)
         """
 
-        return self._open_data_channel(command = "ServerTime")
+        return self._open_data_channel(command = "getServerTime")
     
     def getStepRules(self) -> List[Dict[str, Union[int, str, List[dict]]]]:
         """
@@ -1284,7 +1284,7 @@ class Wrapper(HandlerManager):
                 step	            float	    lotStep value in the given volume range
         """
 
-        return self._open_data_channel(command = "StepRules")
+        return self._open_data_channel(command = "getStepRules")
 
     def getSymbol(self, symbol: str) -> dict:
         """
@@ -1370,7 +1370,7 @@ class Wrapper(HandlerManager):
                 CFD	                6	        CFD
         """
 
-        return self._open_data_channel(command = "Symbol", symbol = symbol)
+        return self._open_data_channel(command = "getSymbol", symbol = symbol)
     
     def getTickPrices(self, symbols: List[str], time: datetime, level: int = -1) -> Dict[str, List[dict]]:
         """
@@ -1435,7 +1435,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Time lies in the future.")
             raise ValueError("Time lies in the future.")
 
-        return self._open_data_channel(command = "TickPrices", level = level, symbols = symbols, timestamp = timestamp)
+        return self._open_data_channel(command = "getTickPrices", level = level, symbols = symbols, timestamp = timestamp)
     
     def getTradeRecords(self, orders: List[int]) -> List[dict]:
         """
@@ -1492,7 +1492,7 @@ class Wrapper(HandlerManager):
                 CREDIT	            7	        Read only
         """
 
-        return self._open_data_channel(command = "TradeRecords", orders = orders)
+        return self._open_data_channel(command = "getTradeRecords", orders = orders)
     
     def getTrades(self, opened_only: bool) -> List[dict]:
         """
@@ -1550,7 +1550,7 @@ class Wrapper(HandlerManager):
 
         """
         
-        return self._open_data_channel(command = "Trades", openedOnly = opened_only)
+        return self._open_data_channel(command = "getTrades", openedOnly = opened_only)
     
     def getTradesHistory(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> List[dict]:
         """
@@ -1636,7 +1636,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Start time is greater than end time.")
             raise ValueError("Start time is greater than end time.")
 
-        return self._open_data_channel(command = "TradesHistory", end = end_ux, start = start_ux)
+        return self._open_data_channel(command = "getTradesHistory", end = end_ux, start = start_ux)
 
     def getTradingHours(self, symbols: List[str]) -> List[Dict[str, Union[List[dict], str]]]:
         """
@@ -1683,7 +1683,7 @@ class Wrapper(HandlerManager):
                                     7	        Sunday
         """
 
-        return self._open_data_channel(command = "TradingHours", symbols = symbols)
+        return self._open_data_channel(command = "getTradingHours", symbols = symbols)
 
     def getVersion(self) -> dict:
         """

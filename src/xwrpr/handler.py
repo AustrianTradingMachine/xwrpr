@@ -755,7 +755,7 @@ class _DataHandler(_GeneralHandler):
 
             # Send the request to the server
             self._send_request(
-                command = 'get'+command,
+                command = command,
                 arguments = {'arguments': kwargs} if bool(kwargs) else None)
                 
             # Receive the response from the server
@@ -1187,7 +1187,7 @@ class _StreamHandler(_GeneralHandler):
                 try:
                     # Send the request for the stream to the server
                     self._send_request(
-                        command = 'get'+command,
+                        command = command,
                         ssid = self._ssid,
                         arguments = kwargs if bool(kwargs) else None
                     )

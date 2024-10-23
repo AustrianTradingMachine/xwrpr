@@ -66,10 +66,11 @@ def test_24_trade_transaction(
         try:
             # Get tick prices
             logger.debug("Getting tick prices")
-            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 5), level = 0)
-            price_a = tick_prices["BITCOIN"]["ask"]
-            tick_prices = xtb.getTickPrices(symbols = ["BITCOIN"], time = datetime.now()-timedelta(minutes = 1), level = 0)
-            price_b = tick_prices["BITCOIN"]["ask"]
+            chart_request = xtb.getChartLastRequest(symbol = "BITCOIN", period = "M1", start=datetime.now()-timedelta(minutes = 7))
+            digits = chart_request["digits"]
+            price_a = chart_request["rateInfos"][0]["open"]*10**digits
+            chart_request = xtb.getChartLastRequest(symbol = "BITCOIN", period = "M1", start=datetime.now()-timedelta(minutes = 2))
+            price_b = chart_request["rateInfos"][0]["open"]*10**digits
 
             # Calculating rate of change
             logger.debug("Calculating rate of change")
@@ -80,28 +81,51 @@ def test_24_trade_transaction(
                 sl = price_b-(price_b - price_a)*0.1
                 tp = price_b+(price_b - price_a)*0.2
             else:
-                cmd = 5
+                cmd = 3
                 price = price_b-(price_a-price_b)*0.1
                 sl = price_b+(price_a-price_b)*0.1
                 tp = price_b-(price_a-price_b)*0.2
             
             # Check failure
-            logger.debug("Checking failure conditions: wrtong cmd")
+            logger.debug("Checking failure conditions: wrong type")
             with pytest.raises(ValueError):
-                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = -1, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
-            logger.debug("Checking failure conditions: wrtong type")
+                trade_transaction = xtb.tradeTransaction(type = -1, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrong cmd")
             with pytest.raises(ValueError):
-                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = -1, order = 0, custom_comment = "Test trade")
-            logger.debug("Checking failure conditions: expiration < now")
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = -1, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: no symbol")
             with pytest.raises(ValueError):
-                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()-timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
-            logger.debug("Checking failure conditions: volume <= 0")
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrong volume")
             with pytest.raises(ValueError):
-                trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrong price")
+            with pytest.raises(ValueError):
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = 0, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrong expiration")
+            with pytest.raises(ValueError):
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()-timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrong sl")
+            with pytest.raises(ValueError):
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = 2*price-sl, tp = 2, offset = 0, custom_comment = "Test trade")
+            logger.debug("Checking failure conditions: wrong tp")
+            with pytest.raises(ValueError):
+                trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = 2*price-tp, offset = 0, custom_comment = "Test trade")
 
+    
             # Make Trade
             logger.debug("Making trade")
-            trade_transaction = xtb.tradeTransaction(symbol = "BITCOIN", volume=0.001, cmd = cmd, price = price, sl = sl, tp = tp, offset = 0, expiration = datetime.now()+timedelta(minutes = 1), type = 0, order = 0, custom_comment = "Test trade")
+            with capsys.disabled():
+                print(f"\n{YELLOW}Trade details{RESET}")
+                print(f"Command: {cmd}")
+                print(f"Price: {price}")
+                print(f"Stop Loss: {sl}")
+                print(f"Take Profit: {tp}")
+                print(f"Rate of Change: {roc}")
+                print(f"Volume: 0.001")
+                print(f"Expiration: {datetime.now()+timedelta(minutes = 1)}")
+                print(f"Custom Comment: Test trade\n")
+            trade_transaction = xtb.tradeTransaction(type = 0, order = 0, cmd = cmd, symbol = "BITCOIN", volume=0.001, price = price, expiration = datetime.now()+timedelta(minutes = 1), sl = sl, tp = tp, offset = 0, custom_comment = "Test trade")
 
             # Check if the return value is a dictionary
             logger.debug("Checking if the return value is a dictionary")
@@ -110,6 +134,8 @@ def test_24_trade_transaction(
             # Log the trade
             logger.debug("Logging the trade")
             details = ', '.join([f"{key}: {value}" for key, value in trade_transaction.items()])
+            with capsys.disabled():
+                print(details)
             logger.info(details)
 
 
@@ -124,6 +150,8 @@ def test_24_trade_transaction(
             # Log the trade status
             logger.debug("Logging the trade status")
             details = ', '.join([f"{key}: {value}" for key, value in trade_transaction_status.items()])
+            with capsys.disabled():
+                print(details)
             logger.info(details)
 
         finally:
