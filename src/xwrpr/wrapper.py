@@ -26,7 +26,7 @@ import logging
 from pathlib import Path
 import configparser
 from typing import Union, List, Optional, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from xwrpr.handler import HandlerManager
 from xwrpr.utils import generate_logger, calculate_timesteps, datetime_to_unixtime
@@ -1703,8 +1703,8 @@ class Wrapper(HandlerManager):
     def tradeTransaction(self,
         type: int,
         order: int = 0,
-        cmd: int = -1,
-        symbol: str = '',
+        cmd: Optional[int] = None,
+        symbol: Optional[str] = None,
         volume: float = 0.0,
         price: float = 0.0,
         expiration: Optional[datetime] = None,
@@ -1813,7 +1813,7 @@ class Wrapper(HandlerManager):
             self._logger.error("Order must be given to close, modify or delete orders.")
             raise ValueError("Order must be given to close, modify or delete orders.")
         
-        # Check if necessary fields are given for opening or modifying orders
+        # Check if necessary fields are given for opening orders
         if type == 0:
             # Check if the command is valid
             if cmd not in cmds:
@@ -1821,7 +1821,7 @@ class Wrapper(HandlerManager):
                 raise ValueError("Invalid cmd for opening order. Choose from: "+", ".join(map(str, cmds)))
             
             # Check if symbol is given
-            if not symbol:
+            if symbol is None:
                 self._logger.error("Symbol must be given for opening orders.")
                 raise ValueError("Symbol must be given for opening orders.")
 
@@ -1829,7 +1829,8 @@ class Wrapper(HandlerManager):
             if volume <= 0:
                 self._logger.error("Volume must be given for opening orders.")
                 raise ValueError("Volume must be given for opening orders.")
-            
+        
+        # Check if necessary fields are given for opening or modifying orders
         if type in [0, 3]:
             if type == 0 and cmd in [2, 3, 4, 5] or type == 3:
                 # Check if price is valid
@@ -1837,38 +1838,74 @@ class Wrapper(HandlerManager):
                     self._logger.error("Price must be given for opening or modifying orders.")
                     raise ValueError("Price must be given for opening or modifying orders.")
                 
-                # Check if the expiration time is in the past
+                # Check if the expiration time is in the future
                 if expiration is not None and expiration <= datetime.now():
-                    self._logger.error("Expiration time is in the past.")
-                    raise ValueError("Expiration time is in the past.")
-
+                    self._logger.error("Expiration time must be in the future.")
+                    raise ValueError("Expiration time must be in the future.")
+                
+            # Check if take profit is valid
             if tp > 0:
                 # Check if the take profit is greater than the price for buy orders
-                if cmd in [0, 2, 4] and tp <= price:
+                if cmd in [2, 4] and tp <= price:
                     self._logger.error("Take profit must be greater than the price for buy orders.")
                     raise ValueError("Take profit must be greater than the price for buy orders.")
                 
                 # Check if the take profit is less than the price for sell orders
-                if cmd in [1, 3, 5] and tp >= price:
+                if cmd in [3, 5] and tp >= price:
                     self._logger.error("Take profit must be less than the price for sell orders.")
                     raise ValueError("Take profit must be less than the price for sell orders.")
                 
+            # Check if stop loss is valid
             if sl > 0:
                 # Check if the stop loss is less than the price for buy orders
-                if cmd in [0, 2, 4] and sl >= price:
+                if cmd in [2, 4] and sl >= price:
                     self._logger.error("Stop loss must be less than the price for buy orders.")
                     raise ValueError("Stop loss must be less than the price for buy orders.")
                 
                 # Check if the stop loss is greater than the price for sell orders
-                if cmd in [1, 3, 5] and sl <= price:
+                if cmd in [3, 5] and sl <= price:
                     self._logger.error("Stop loss must be greater than the price for sell orders.")
                     raise ValueError("Stop loss must be greater than the price for sell orders.")
 
-        if type == 0 and cmd in [0, 1] and sl > 0:
-            if offset <= 0:
-                self._logger.error("Offset must be greater than 0.")
-                raise ValueError("Offset must be greater than 0.")  
+            # In case of simple buy order where no price is set
+            if cmd == 0 and tp > 0 and sl > 0:
+                # Check if stop loss is less than take profit
+                if sl >= tp:
+                    self._logger.error("Stop loss must be less than take profit.")
+                    raise ValueError("Stop loss must be less than take profit.")
             
+            # In case of simple sell order where no price is set
+            if cmd == 1 and tp > 0 and sl > 0:
+                # Check if stop loss is greater than take profit
+                if sl <= tp:
+                    self._logger.error("Stop loss must be greater than take profit.")
+                    raise ValueError("Stop loss must be greater than take profit.")
+
+        # In case of simple buy or sell order where stop loss is set
+        if type == 0 and cmd in [0, 1] and sl > 0:
+            if offset < 0:
+                self._logger.error("Offset must be greater than 0.")
+                raise ValueError("Offset must be greater than 0.")
+            
+        # In case the cmd wasnt set correctly, set it to 0
+        # REST API always needs a valid cmd, no matter if it is used or not
+        if cmd is None:
+            cmd = 0
+
+        # In case the symbol wasnt set correctly, set it to "GOLD"
+        # REST API always needs a valid symbol, no matter if it is used or not
+        if symbol is None:
+            symbol = "GOLD"
+
+        # In case of simple buy or sell order where no price is set
+        # REST API always needs a valid price, no matter if it is used or not
+        if type == 0 and price == 0:
+            price = 1e-10
+
+        # In case no expiration time is set
+        # REST API always needs a valid expiration time, no matter if it is used or not
+        if expiration is None:
+            expiration = datetime.now()+timedelta(days=1)
 
         # Convert the expiration time to unix time
         expiration_ux = datetime_to_unixtime(expiration)

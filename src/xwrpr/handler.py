@@ -204,7 +204,7 @@ class _GeneralHandler(Client):
             request['arguments']['userId'] = '*****'
             request['arguments']['password'] = '*****'
 
-        self._logger.info(f"Request sent: {request}")
+        self._logger.debug(f"Request sent: {request}")
 
     def _receive_response(self, stream: bool = False) -> dict:
         """

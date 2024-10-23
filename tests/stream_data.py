@@ -28,7 +28,9 @@ from queue import Empty
 
 
 
-xtb = xwrpr.Wrapper(demo = False)
+xtb = xwrpr.Wrapper(demo = True)
+trade_transaction = xtb.tradeTransaction(type = 2, cmd = 1, order = 671999286)
+exit()
 exchange = xtb.streamBalance()
 print(exchange)
 
