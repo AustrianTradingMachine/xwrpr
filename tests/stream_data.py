@@ -33,7 +33,7 @@ xtb = xwrpr.Wrapper(demo = True)
 exchange = xtb.streamTickPrices(symbol="BITCOIN")
 print(exchange)
 
-stop_time = datetime.now() + timedelta(seconds=3)
+stop_time = datetime.now() + timedelta(seconds=90)
 while datetime.now() < stop_time:
     try:
         # Get the data

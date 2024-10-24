@@ -139,7 +139,7 @@ class _GeneralHandler(Client):
             port = port, 
 
             encrypted = True,
-            timeout = TIMEOUT if stream else None,
+            timeout = None,
             reaction_time = max_reaction_time,
 
             interval = min_request_interval,
