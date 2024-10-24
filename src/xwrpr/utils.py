@@ -28,7 +28,7 @@ import re
 import threading
 import datetime
 import tzlocal
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta # Necessary for timedeltas > 1 month
 
 
 def generate_logger(

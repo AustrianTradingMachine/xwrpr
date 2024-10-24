@@ -520,7 +520,7 @@ class Client():
         """
 
         # Thread safety necessary
-        # To guarantee request limitation
+        # Socket cann just be contacted once
         with self._lock:
             self._logger.info("Sending message ...")
 
@@ -582,104 +582,107 @@ class Client():
             str: The received message
         """
 
-        self._logger.info("Receiving message ...")
+        # Thread safety necessary
+        # Socket cann just be contacted once
+        with self._lock:
+            self._logger.info("Receiving message ...")
 
-        # Check if the socket is in blocking mode
-        blocking = self._socket.getblocking()
+            # Check if the socket is in blocking mode
+            blocking = self._socket.getblocking()
 
-        # Initialize the full message and buffer
-        full_msg = ''
-        bit_buffer = b''
-        json_buffer = ''
+            # Initialize the full message and buffer
+            full_msg = ''
+            bit_buffer = b''
+            json_buffer = ''
 
-        # Loop until the entire message is received
-        # Or an error occurs
-        while True:
-            try:
-                # No check for readability because big Messages could fail
-                # TCP/IP streams don't guarantee that the message will arrive in one complete chunk.
-
-                # Receive the message
-                msg_chunk = self._socket.recv(self._bytes_in)
-
-                # Check if the message is empty
-                if not msg_chunk:
-                    if blocking:
-                        # In blocking mode, an empty message means the connection was closed.
-                        self._logger.error("No message received in blocking socket mode")
-                        raise ValueError("No message received in blocking socket mode")
-                    else:
-                        # In non-blocking mode, just exit the loop if no message is received.
-                        break
-
-                # Append the received chunk to the buffer
-                bit_buffer += msg_chunk
-
-                # Try decoding the buffer
+            # Loop until the entire message is received
+            # Or an error occurs
+            while True:
                 try:
-                    msg = bit_buffer.decode("utf-8")
-                    self._logger.debug(f"Received complete message of size {len(msg)} bytes")
-                    # Clear the buffer after successful decoding
-                    bit_buffer = b''
-                except UnicodeDecodeError:
-                    # If the buffer does not contain a complete message yet, we will continue receiving
-                    self._logger.debug("Partial message received, waiting for more data")
-                    continue
-            except BlockingIOError as e:
-                if not blocking:
-                    # In non-blocking mode, the socket may not be ready yet, so check for readability
-                    self._logger.warning("Socket not ready for receiving, checking readability...")
-                    self.check(mode = 'readable')
-                    # Try receiving data again
-                    continue
-                else:
-                    # In blocking mode, this exception should not happen, so log and raise an error
-                    self._logger.error("Unexpected BlockingIOError in blocking socket mode")
-                    raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
-            except socket.error as e:
-                self._logger.error(f"Error receiving message: {e}")
-                self.check(mode = 'basic')
+                    # No check for readability because big Messages could fail
+                    # TCP/IP streams don't guarantee that the message will arrive in one complete chunk.
 
-            # Thanks to the JSON format we can easily check if the message is complete
-            try:
-                # Accumulate the received data into the buffer
-                json_buffer += msg
-                # Attempt to decode the buffer as JSON using raw_decode()
-                # raw_decode() can decode a partial JSON message and return the position up to which
-                # it was successfully decoded. If the entire JSON message isn't in the buffer yet,
-                # raw_decode() will raise a JSONDecodeError.
-                full_msg, pos = self._decoder.raw_decode(json_buffer)
-                self._logger.debug("Decoded message: " + str(full_msg)[:100] + ('...' if len(str(full_msg)) > 100 else ''))
-                
-                if pos == len(json_buffer):
-                    # Entire buffer has been successfully decoded as a complete JSON message
-                    json_buffer = ''
-                    self._logger.debug("Full message received")
-                    # Exit the loop
-                    break
-                elif pos < len(json_buffer):
-                    # Partially decoded JSON message - there might be additional JSON data in the buffer
-                    # Keep the remainder of the buffer after the decoded portion for further processing
-                    remainder = json_buffer[pos:]
-                    if not remainder.strip():
-                        # If the remaining part is just whitespace, consider the message fully decoded
-                        json_buffer = ''
-                        break
+                    # Receive the message
+                    msg_chunk = self._socket.recv(self._bytes_in)
+
+                    # Check if the message is empty
+                    if not msg_chunk:
+                        if blocking:
+                            # In blocking mode, an empty message means the connection was closed.
+                            self._logger.error("No message received in blocking socket mode")
+                            raise ValueError("No message received in blocking socket mode")
+                        else:
+                            # In non-blocking mode, just exit the loop if no message is received.
+                            break
+
+                    # Append the received chunk to the buffer
+                    bit_buffer += msg_chunk
+
+                    # Try decoding the buffer
+                    try:
+                        msg = bit_buffer.decode("utf-8")
+                        self._logger.debug(f"Received complete message of size {len(msg)} bytes")
+                        # Clear the buffer after successful decoding
+                        bit_buffer = b''
+                    except UnicodeDecodeError:
+                        # If the buffer does not contain a complete message yet, we will continue receiving
+                        self._logger.debug("Partial message received, waiting for more data")
+                        continue
+                except BlockingIOError as e:
+                    if not blocking:
+                        # In non-blocking mode, the socket may not be ready yet, so check for readability
+                        self._logger.warning("Socket not ready for receiving, checking readability...")
+                        self.check(mode = 'readable')
+                        # Try receiving data again
+                        continue
                     else:
+                        # In blocking mode, this exception should not happen, so log and raise an error
+                        self._logger.error("Unexpected BlockingIOError in blocking socket mode")
+                        raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
+                except socket.error as e:
+                    self._logger.error(f"Error receiving message: {e}")
+                    self.check(mode = 'basic')
+
+                # Thanks to the JSON format we can easily check if the message is complete
+                try:
+                    # Accumulate the received data into the buffer
+                    json_buffer += msg
+                    # Attempt to decode the buffer as JSON using raw_decode()
+                    # raw_decode() can decode a partial JSON message and return the position up to which
+                    # it was successfully decoded. If the entire JSON message isn't in the buffer yet,
+                    # raw_decode() will raise a JSONDecodeError.
+                    full_msg, pos = self._decoder.raw_decode(json_buffer)
+                    self._logger.debug("Decoded message: " + str(full_msg)[:100] + ('...' if len(str(full_msg)) > 100 else ''))
+                    
+                    if pos == len(json_buffer):
+                        # Entire buffer has been successfully decoded as a complete JSON message
+                        json_buffer = ''
+                        self._logger.debug("Full message received")
+                        # Exit the loop
+                        break
+                    elif pos < len(json_buffer):
+                        # Partially decoded JSON message - there might be additional JSON data in the buffer
                         # Keep the remainder of the buffer after the decoded portion for further processing
-                        json_buffer = remainder
-                        self._logger.debug("Partial message received. Length of remaining buffer: " + str(len(json_buffer)))
-            except json.JSONDecodeError:
-                # If the buffer does not contain a complete JSON message yet, we will continue receiving
-                # more data. The JSONDecodeError here indicates that more data is expected, so we silently
-                # continue without logging an error.
-                self._logger.debug("More data expected")
-                continue
+                        remainder = json_buffer[pos:]
+                        if not remainder.strip():
+                            # If the remaining part is just whitespace, consider the message fully decoded
+                            json_buffer = ''
+                            break
+                        else:
+                            # Keep the remainder of the buffer after the decoded portion for further processing
+                            json_buffer = remainder
+                            self._logger.debug("Partial message received. Length of remaining buffer: " + str(len(json_buffer)))
+                except json.JSONDecodeError:
+                    # If the buffer does not contain a complete JSON message yet, we will continue receiving
+                    # more data. The JSONDecodeError here indicates that more data is expected, so we silently
+                    # continue without logging an error.
+                    self._logger.debug("More data expected")
+                    continue
 
-        self._logger.info("Message received")
+            self._logger.info("Message received")
 
-        # Return the full message
-        return full_msg
+            # Return the full message
+            return full_msg
 
     def __del__(self) -> None:
         """

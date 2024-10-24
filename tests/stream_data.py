@@ -25,16 +25,15 @@
 import xwrpr
 from datetime import datetime, timedelta, tzinfo
 from queue import Empty
+import time
 
 
 
 xtb = xwrpr.Wrapper(demo = True)
-trade_transaction = xtb.tradeTransaction(type = 2, cmd = 1, order = 671999286)
-exit()
-exchange = xtb.streamBalance()
+exchange = xtb.streamTickPrices(symbol="BITCOIN")
 print(exchange)
 
-stop_time = datetime.now() + timedelta(seconds=10)
+stop_time = datetime.now() + timedelta(seconds=3)
 while datetime.now() < stop_time:
     try:
         # Get the data
@@ -47,4 +46,6 @@ while datetime.now() < stop_time:
 
 # Stop the stream
 exchange['thread'].start()
+
+time.sleep(3)
 xtb.delete()

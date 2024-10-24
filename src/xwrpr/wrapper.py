@@ -27,7 +27,7 @@ from pathlib import Path
 import configparser
 from typing import Union, List, Optional, Dict
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta # Necessary for timedeltas > 1 month
 from xwrpr.handler import HandlerManager
 from xwrpr.utils import generate_logger, calculate_timesteps, datetime_to_unixtime
 
@@ -1882,10 +1882,9 @@ class Wrapper(HandlerManager):
                     raise ValueError("Stop loss must be greater than take profit.")
 
         # In case of simple buy or sell order where stop loss is set
-        if type == 0 and cmd in [0, 1] and sl > 0:
-            if offset < 0:
-                self._logger.error("Offset must be greater than 0.")
-                raise ValueError("Offset must be greater than 0.")
+        if type == 0 and cmd in [0, 1] and sl > 0 and offset < 0:
+            self._logger.error("Offset must be greater or equal to 0.")
+            raise ValueError("Offset must be greater or equal to 0.")
             
         # In case the cmd wasnt set correctly, set it to 0
         # REST API always needs a valid cmd, no matter if it is used or not

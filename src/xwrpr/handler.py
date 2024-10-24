@@ -1391,6 +1391,8 @@ class _StreamHandler(_GeneralHandler):
                 if kill:
                     # Deregister the stream task
                     del self._stream_tasks[index]
+
+                self._logger.info("Stream stopped for " + pretty(command))
                     
     def _stop_stream(self, kill: bool = True) -> None:
         """
