@@ -368,8 +368,23 @@ class Client():
                 self.close(lock = False)
                 # Try the next address
                 continue
-
             self._logger.info("Socket created")
+
+            # Set the socket blocking mode
+            # Setting the blocking mode before SSL wrapping ensures that the socket behaves
+            # consistently during the entire SSL handshake and subsequent operations.
+            if self._timeout:
+                # The socket is in non-blocking mode
+                # The timeout avoids that the socket is raising
+                # a timout exeption immediately
+                self._socket.settimeout(self._timeout)
+                self._socket.setblocking(False)
+                self._logger.debug("Setting non-blocking mode with timeout: %s", self._timeout)
+            else:
+                # The socket is in blocking mode
+                self._socket.settimeout(None)
+                self._socket.setblocking(True)
+                self._logger.debug("Setting blocking mode without timeout")
 
             # If the connection is ssl encrypted
             if self._encrypted:
@@ -389,20 +404,6 @@ class Client():
                     continue
 
                 self._logger.info("Socket wrapped")
-
-            # Set the socket blocking mode
-            if self._timeout:
-                # The socket is in non-blocking mode
-                # The timeout avoids that the socket is raising
-                # a timout exeption immediately
-                self._socket.settimeout(self._timeout)
-                self._socket.setblocking(False)
-                self._logger.debug("Setting non-blocking mode with timeout: %s", self._timeout)
-            else:
-                # The socket is in blocking mode
-                self._socket.settimeout(None)
-                self._socket.setblocking(True)
-                self._logger.debug("Setting blocking mode without timeout")
 
             # Socket successfully created
             created = True
@@ -462,11 +463,13 @@ class Client():
                                 raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
 
                             if e.errno == errno.EINPROGRESS:
+                                self._logger.debug(e)
                                 self._logger.debug("Non-blocking connection in progress...")
                                 # Wait until the socket is ready for writing (connect completed)
                                 try:
                                     self.check(mode = 'writable')
                                     # Socket is ready to write
+                                    self._logger.info("Connection completed")
                                     connected = True
                                     break
                                 except TimeoutError:
@@ -640,6 +643,13 @@ class Client():
                     # In blocking mode, this exception should not happen, so log and raise an error
                     self._logger.error("Unexpected BlockingIOError in blocking socket mode")
                     raise RuntimeError("Unexpected BlockingIOError in blocking socket mode") from e
+            except ssl.SSLError as e:
+                if e.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    self._logger.warning("SSL operation would block, waiting...")
+                    continue
+                else:
+                    self._logger.error(f"SSL error while receiving message: {e}")
+                    raise
             except socket.error as e:
                 self._logger.error(f"Error receiving message: {e}")
                 # Check for basic socket errors
